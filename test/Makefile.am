@@ -110,7 +110,7 @@ EXTRA_DIST = jpeg1.jpg jpeg2.jpg png1.png mask1.png \
 	Roundel_of_the_Syrian_Air_Force.svg \
 	Royal_Coat_of_Arms_of_the_United_Kingdom.svg \
 	supermarket.svg tobacco.svg Cevennes2.jp2 Karla-BoldItalic.ttf \
-	NE.sqlite
+	NE.sqlite wms.sqlite
 
 SUBDIRS = sql_stmt_security_tests sql_stmt_tests 
 

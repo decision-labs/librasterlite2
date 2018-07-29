@@ -8456,6 +8456,12 @@ fnct_GetMapImageFromRaster (sqlite3_context * context, int argc,
     sqlite = sqlite3_context_db_handle (context);
     data = sqlite3_user_data (context);
 
+    if (strcasecmp (format, "image/png") != 0)
+      {
+	  /* only PNG can support real transparencies */
+	  transparent = 0;
+      }
+
     if (rl2_map_image_blob_from_raster
 	(sqlite, data, db_prefix, cvg_name, blob, blob_sz, width, height, style,
 	 format, bg_color, transparent, quality, reaspect, &image,
@@ -8570,6 +8576,12 @@ fnct_GetMapImageFromVector (sqlite3_context * context, int argc,
     sqlite = sqlite3_context_db_handle (context);
     data = sqlite3_user_data (context);
 
+    if (strcasecmp (format, "image/png") != 0)
+      {
+	  /* only PNG can support real transparencies */
+	  transparent = 0;
+      }
+
     if (rl2_map_image_blob_from_vector
 	(sqlite, data, db_prefix, cvg_name, blob, blob_sz, width, height, style,
 	 format, bg_color, transparent, quality, reaspect, &image,
@@ -8580,14 +8592,110 @@ fnct_GetMapImageFromVector (sqlite3_context * context, int argc,
 }
 
 static void
+fnct_GetMapImageFromWMS (sqlite3_context * context, int argc,
+			 sqlite3_value ** argv)
+{
+/* SQL function:
+/ GetMapImageFromWMS(text db_prefix, text coverage, BLOB geom, 
+/                    int width, int height)
+/ GetMapImageFromWMS(text db_prefix, text coverage, BLOB geom, 
+/                    int width, int height, text wms_version,
+/                    text style, text format, text bg_color, 
+/                    int transparent)
+/
+/ will return a BLOB containing the Image payload from a WMS Coverage
+/ or NULL (INVALID ARGS)
+/
+*/
+    int err = 0;
+    const char *db_prefix = NULL;
+    const char *cvg_name;
+    int width;
+    int height;
+    const unsigned char *blob;
+    int blob_sz;
+    const char *version = "1.0.0";
+    const char *style = "default";
+    const char *format = "image/png";
+    const char *bg_color = "#ffffff";
+    int transparent = 0;
+    sqlite3 *sqlite;
+    unsigned char *image = NULL;
+    int image_size;
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+
+/* testing arguments for validity */
+    err = 0;
+    if (sqlite3_value_type (argv[0]) == SQLITE_TEXT
+	|| sqlite3_value_type (argv[0]) == SQLITE_NULL)
+	;
+    else
+	err = 1;
+    if (sqlite3_value_type (argv[1]) != SQLITE_TEXT)
+	err = 1;
+    if (sqlite3_value_type (argv[2]) != SQLITE_BLOB)
+	err = 1;
+    if (sqlite3_value_type (argv[3]) != SQLITE_INTEGER)
+	err = 1;
+    if (sqlite3_value_type (argv[4]) != SQLITE_INTEGER)
+	err = 1;
+    if (argc > 5 && sqlite3_value_type (argv[5]) != SQLITE_TEXT)
+	err = 1;
+    if (argc > 6 && sqlite3_value_type (argv[6]) != SQLITE_TEXT)
+	err = 1;
+    if (argc > 7 && sqlite3_value_type (argv[7]) != SQLITE_TEXT)
+	err = 1;
+    if (argc > 8 && sqlite3_value_type (argv[8]) != SQLITE_TEXT)
+	err = 1;
+    if (argc > 9 && sqlite3_value_type (argv[9]) != SQLITE_INTEGER)
+	err = 1;
+    if (err != 0)
+      {
+	  sqlite3_result_null (context);
+	  return;
+      }
+
+/* retrieving the arguments */
+    if (sqlite3_value_type (argv[0]) == SQLITE_TEXT)
+	db_prefix = (const char *) sqlite3_value_text (argv[0]);
+    cvg_name = (const char *) sqlite3_value_text (argv[1]);
+    blob = sqlite3_value_blob (argv[2]);
+    blob_sz = sqlite3_value_bytes (argv[2]);
+    width = sqlite3_value_int (argv[3]);
+    height = sqlite3_value_int (argv[4]);
+    if (argc > 5)
+	version = (const char *) sqlite3_value_text (argv[5]);
+    if (argc > 6)
+	style = (const char *) sqlite3_value_text (argv[6]);
+    if (argc > 7)
+	format = (const char *) sqlite3_value_text (argv[7]);
+    if (argc > 8)
+	bg_color = (const char *) sqlite3_value_text (argv[8]);
+    if (argc > 9)
+	transparent = sqlite3_value_int (argv[9]);
+
+    sqlite = sqlite3_context_db_handle (context);
+
+    if (strcasecmp (format, "image/png") != 0)
+      {
+	  /* only PNG can support real transparencies */
+	  transparent = 0;
+      }
+
+    image = rl2_map_image_from_wms
+	(sqlite, db_prefix, cvg_name, blob, blob_sz, width, height, version,
+	 style, format, transparent, bg_color, &image_size);
+    if (image == NULL)
+	sqlite3_result_null (context);
+    else
+	sqlite3_result_blob (context, image, image_size, free);
+}
+
+static void
 fnct_GetTileImage (sqlite3_context * context, int argc, sqlite3_value ** argv)
 {
 /* SQL function:
 / GetTileImage(text db_prefix, text coverage, int tile_id)
-/ GetTileImage(text db_prefix, text coverage, int tile_id, 
-/              text bg_color)
-/ GetTileImage(text db_prefix, text coverage, int tile_id, 
-/              text bg_color, int transparent)
 /
 / will return a BLOB containing the Image payload
 / or NULL (INVALID ARGS)
@@ -8600,11 +8708,6 @@ fnct_GetTileImage (sqlite3_context * context, int argc, sqlite3_value ** argv)
     rl2PrivCoveragePtr cvg;
     sqlite3_int64 tile_id;
     int pyramid_level;
-    const char *bg_color = "#ffffff";
-    int transparent = 0;
-    unsigned char bg_red;
-    unsigned char bg_green;
-    unsigned char bg_blue;
     unsigned short width;
     unsigned short height;
     sqlite3 *sqlite;
@@ -8651,10 +8754,6 @@ fnct_GetTileImage (sqlite3_context * context, int argc, sqlite3_value ** argv)
 	err = 1;
     if (sqlite3_value_type (argv[2]) != SQLITE_INTEGER)
 	err = 1;
-    if (argc > 3 && sqlite3_value_type (argv[3]) != SQLITE_TEXT)
-	err = 1;
-    if (argc > 4 && sqlite3_value_type (argv[4]) != SQLITE_INTEGER)
-	err = 1;
     if (err)
       {
 	  sqlite3_result_null (context);
@@ -8666,14 +8765,6 @@ fnct_GetTileImage (sqlite3_context * context, int argc, sqlite3_value ** argv)
 	db_prefix = (const char *) sqlite3_value_text (argv[0]);
     cvg_name = (const char *) sqlite3_value_text (argv[1]);
     tile_id = sqlite3_value_int64 (argv[2]);
-    if (argc > 3)
-	bg_color = (const char *) sqlite3_value_text (argv[3]);
-    if (argc > 4)
-	transparent = sqlite3_value_int (argv[4]);
-
-/* parsing the background color */
-    if (rl2_parse_hexrgb (bg_color, &bg_red, &bg_green, &bg_blue) != RL2_OK)
-	goto error;
 
 /* attempting to load the Coverage definitions from the DBMS */
     sqlite = sqlite3_context_db_handle (context);
@@ -8794,9 +8885,9 @@ fnct_GetTileImage (sqlite3_context * context, int argc, sqlite3_value ** argv)
 		  {
 		      for (col = 0; col < width; col++)
 			{
-			    *p_rgba++ = bg_red;
-			    *p_rgba++ = bg_green;
-			    *p_rgba++ = bg_blue;
+			    *p_rgba++ = 0;
+			    *p_rgba++ = 0;
+			    *p_rgba++ = 0;
 			    *p_rgba++ = 0;	/* transparent */
 			}
 		  }
@@ -8805,36 +8896,21 @@ fnct_GetTileImage (sqlite3_context * context, int argc, sqlite3_value ** argv)
 		  case RL2_PIXEL_MONOCHROME:
 		      ret =
 			  get_rgba_from_monochrome_mask (width, height,
-							 buffer, mask,
-							 no_data, rgba);
+							 buffer, mask, rgba);
 		      buffer = NULL;
 		      mask = NULL;
 		      if (!ret)
 			  goto error;
-		      if (!build_rgb_alpha
-			  (width, height, rgba, &rgb, &alpha, bg_red,
-			   bg_green, bg_blue))
+		      if (!build_rgb_alpha_transparent
+			  (width, height, rgba, &rgb, &alpha))
 			  goto error;
 		      free (rgba);
 		      rgba = NULL;
-		      if (transparent)
-			{
-			    if (!get_payload_from_gray_rgba_transparent
-				(width, height, rgb, alpha,
-				 RL2_OUTPUT_FORMAT_PNG, 100, &image,
-				 &image_size, opacity))
-				goto error;
-			}
-		      else
-			{
-			    free (alpha);
-			    alpha = NULL;
-			    if (!get_payload_from_gray_rgba_opaque
-				(width, height, sqlite, 0, 0, 0, 0, -1,
-				 rgb, RL2_OUTPUT_FORMAT_PNG, 100, &image,
-				 &image_size))
-				goto error;
-			}
+		      if (!get_payload_from_gray_rgba_transparent
+			  (width, height, rgb, alpha,
+			   RL2_OUTPUT_FORMAT_PNG, 100, &image,
+			   &image_size, opacity))
+			  goto error;
 		      sqlite3_result_blob (context, image, image_size, free);
 		      break;
 		  case RL2_PIXEL_PALETTE:
@@ -8846,30 +8922,16 @@ fnct_GetTileImage (sqlite3_context * context, int argc, sqlite3_value ** argv)
 		      mask = NULL;
 		      if (!ret)
 			  goto error;
-		      if (!build_rgb_alpha
-			  (width, height, rgba, &rgb, &alpha, bg_red,
-			   bg_green, bg_blue))
+		      if (!build_rgb_alpha_transparent
+			  (width, height, rgba, &rgb, &alpha))
 			  goto error;
 		      free (rgba);
 		      rgba = NULL;
-		      if (transparent)
-			{
-			    if (!get_payload_from_rgb_rgba_transparent
-				(width, height, rgb, alpha,
-				 RL2_OUTPUT_FORMAT_PNG, 100, &image,
-				 &image_size, opacity, 0))
-				goto error;
-			}
-		      else
-			{
-			    free (alpha);
-			    alpha = NULL;
-			    if (!get_payload_from_rgb_rgba_opaque
-				(width, height, sqlite, 0, 0, 0, 0, -1,
-				 rgb, RL2_OUTPUT_FORMAT_PNG, 100, &image,
-				 &image_size))
-				goto error;
-			}
+		      if (!get_payload_from_rgb_rgba_transparent
+			  (width, height, rgb, alpha,
+			   RL2_OUTPUT_FORMAT_PNG, 100, &image,
+			   &image_size, opacity, 0))
+			  goto error;
 		      sqlite3_result_blob (context, image, image_size, free);
 		      break;
 		  case RL2_PIXEL_GRAYSCALE:
@@ -8880,30 +8942,16 @@ fnct_GetTileImage (sqlite3_context * context, int argc, sqlite3_value ** argv)
 		      mask = NULL;
 		      if (!ret)
 			  goto error;
-		      if (!build_rgb_alpha
-			  (width, height, rgba, &rgb, &alpha, bg_red,
-			   bg_green, bg_blue))
+		      if (!build_rgb_alpha_transparent
+			  (width, height, rgba, &rgb, &alpha))
 			  goto error;
 		      free (rgba);
 		      rgba = NULL;
-		      if (transparent)
-			{
-			    if (!get_payload_from_gray_rgba_transparent
-				(width, height, rgb, alpha,
-				 RL2_OUTPUT_FORMAT_PNG, 100, &image,
-				 &image_size, opacity))
-				goto error;
-			}
-		      else
-			{
-			    free (alpha);
-			    alpha = NULL;
-			    if (!get_payload_from_gray_rgba_opaque
-				(width, height, sqlite, 0, 0, 0, 0, -1,
-				 rgb, RL2_OUTPUT_FORMAT_PNG, 100, &image,
-				 &image_size))
-				goto error;
-			}
+		      if (!get_payload_from_gray_rgba_transparent
+			  (width, height, rgb, alpha,
+			   RL2_OUTPUT_FORMAT_PNG, 100, &image,
+			   &image_size, opacity))
+			  goto error;
 		      sqlite3_result_blob (context, image, image_size, free);
 		      break;
 		  case RL2_PIXEL_DATAGRID:
@@ -8915,30 +8963,16 @@ fnct_GetTileImage (sqlite3_context * context, int argc, sqlite3_value ** argv)
 		      mask = NULL;
 		      if (!ret)
 			  goto error;
-		      if (!build_rgb_alpha
-			  (width, height, rgba, &rgb, &alpha, bg_red,
-			   bg_green, bg_blue))
+		      if (!build_rgb_alpha_transparent
+			  (width, height, rgba, &rgb, &alpha))
 			  goto error;
 		      free (rgba);
 		      rgba = NULL;
-		      if (transparent)
-			{
-			    if (!get_payload_from_gray_rgba_transparent
-				(width, height, rgb, alpha,
-				 RL2_OUTPUT_FORMAT_PNG, 100, &image,
-				 &image_size, opacity))
-				goto error;
-			}
-		      else
-			{
-			    free (alpha);
-			    alpha = NULL;
-			    if (!get_payload_from_gray_rgba_opaque
-				(width, height, sqlite, 0, 0, 0, 0, -1,
-				 rgb, RL2_OUTPUT_FORMAT_PNG, 100, &image,
-				 &image_size))
-				goto error;
-			}
+		      if (!get_payload_from_gray_rgba_transparent
+			  (width, height, rgb, alpha,
+			   RL2_OUTPUT_FORMAT_PNG, 100, &image,
+			   &image_size, opacity))
+			  goto error;
 		      sqlite3_result_blob (context, image, image_size, free);
 		      break;
 		  case RL2_PIXEL_RGB:
@@ -8961,30 +8995,16 @@ fnct_GetTileImage (sqlite3_context * context, int argc, sqlite3_value ** argv)
 		      mask = NULL;
 		      if (!ret)
 			  goto error;
-		      if (!build_rgb_alpha
-			  (width, height, rgba, &rgb, &alpha, bg_red,
-			   bg_green, bg_blue))
+		      if (!build_rgb_alpha_transparent
+			  (width, height, rgba, &rgb, &alpha))
 			  goto error;
 		      free (rgba);
 		      rgba = NULL;
-		      if (transparent)
-			{
-			    if (!get_payload_from_rgb_rgba_transparent
-				(width, height, rgb, alpha,
-				 RL2_OUTPUT_FORMAT_PNG, 100, &image,
-				 &image_size, opacity, 0))
-				goto error;
-			}
-		      else
-			{
-			    free (alpha);
-			    alpha = NULL;
-			    if (!get_payload_from_rgb_rgba_opaque
-				(width, height, sqlite, 0, 0, 0, 0, -1,
-				 rgb, RL2_OUTPUT_FORMAT_PNG, 100, &image,
-				 &image_size))
-				goto error;
-			}
+		      if (!get_payload_from_rgb_rgba_transparent
+			  (width, height, rgb, alpha,
+			   RL2_OUTPUT_FORMAT_PNG, 100, &image,
+			   &image_size, opacity, 0))
+			  goto error;
 		      sqlite3_result_blob (context, image, image_size, free);
 		      break;
 		  case RL2_PIXEL_MULTIBAND:
@@ -8997,30 +9017,16 @@ fnct_GetTileImage (sqlite3_context * context, int argc, sqlite3_value ** argv)
 		      mask = NULL;
 		      if (!ret)
 			  goto error;
-		      if (!build_rgb_alpha
-			  (width, height, rgba, &rgb, &alpha, bg_red,
-			   bg_green, bg_blue))
+		      if (!build_rgb_alpha_transparent
+			  (width, height, rgba, &rgb, &alpha))
 			  goto error;
 		      free (rgba);
 		      rgba = NULL;
-		      if (transparent)
-			{
-			    if (!get_payload_from_gray_rgba_transparent
-				(width, height, rgb, alpha,
-				 RL2_OUTPUT_FORMAT_PNG, 100, &image,
-				 &image_size, opacity))
-				goto error;
-			}
-		      else
-			{
-			    free (alpha);
-			    alpha = NULL;
-			    if (!get_payload_from_gray_rgba_opaque
-				(width, height, sqlite, 0, 0, 0, 0, -1,
-				 rgb, RL2_OUTPUT_FORMAT_PNG, 100, &image,
-				 &image_size))
-				goto error;
-			}
+		      if (!get_payload_from_gray_rgba_transparent
+			  (width, height, rgb, alpha,
+			   RL2_OUTPUT_FORMAT_PNG, 100, &image,
+			   &image_size, opacity))
+			  goto error;
 		      sqlite3_result_blob (context, image, image_size, free);
 		      break;
 		  default:
@@ -9135,6 +9141,7 @@ get_triple_band_tile_image (sqlite3_context * context, const char *db_prefix,
 	      || cvg->sampleType == RL2_SAMPLE_DOUBLE)
 	      break;
 	  unsupported_tile = 1;
+	  break;
       default:
 	  unsupported_tile = 1;
 	  break;
@@ -10598,22 +10605,22 @@ register_rl2_sql_functions (void *p_db, const void *p_data)
     sqlite3_create_function (db, "RL2_GetMapImageFromVector", 12,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
 			     fnct_GetMapImageFromVector, 0, 0);
+    sqlite3_create_function (db, "GetMapImageFromWMS", 5,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_GetMapImageFromWMS, 0, 0);
+    sqlite3_create_function (db, "RL2_GetMapImageFromWMS", 5,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_GetMapImageFromWMS, 0, 0);
+    sqlite3_create_function (db, "GetMapImageFromWMS", 10,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_GetMapImageFromWMS, 0, 0);
+    sqlite3_create_function (db, "RL2_GetMapImageFromWMS", 10,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_GetMapImageFromWMS, 0, 0);
     sqlite3_create_function (db, "GetTileImage", 3,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
 			     fnct_GetTileImage, 0, 0);
     sqlite3_create_function (db, "RL2_GetTileImage", 3,
-			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
-			     fnct_GetTileImage, 0, 0);
-    sqlite3_create_function (db, "GetTileImage", 4,
-			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
-			     fnct_GetTileImage, 0, 0);
-    sqlite3_create_function (db, "RL2_GetTileImage", 4,
-			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
-			     fnct_GetTileImage, 0, 0);
-    sqlite3_create_function (db, "GetTileImage", 5,
-			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
-			     fnct_GetTileImage, 0, 0);
-    sqlite3_create_function (db, "RL2_GetTileImage", 5,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
 			     fnct_GetTileImage, 0, 0);
     sqlite3_create_function (db, "GetTripleBandTileImage", 6,

@@ -652,6 +652,8 @@ LIBLZMA_LIBS
 LIBLZMA_CFLAGS
 LIBWEBP_LIBS
 LIBWEBP_CFLAGS
+LIBOPENJP2_LIBS
+LIBOPENJP2_CFLAGS
 LIBPNG_LIBS
 LIBPNG_CFLAGS
 PKG_CONFIG_LIBDIR
@@ -818,6 +820,8 @@ PKG_CONFIG_PATH
 PKG_CONFIG_LIBDIR
 LIBPNG_CFLAGS
 LIBPNG_LIBS
+LIBOPENJP2_CFLAGS
+LIBOPENJP2_LIBS
 LIBWEBP_CFLAGS
 LIBWEBP_LIBS
 LIBLZMA_CFLAGS
@@ -1499,6 +1503,10 @@ Some influential environment variables:
   LIBPNG_CFLAGS
               C compiler flags for LIBPNG, overriding pkg-config
   LIBPNG_LIBS linker flags for LIBPNG, overriding pkg-config
+  LIBOPENJP2_CFLAGS
+              C compiler flags for LIBOPENJP2, overriding pkg-config
+  LIBOPENJP2_LIBS
+              linker flags for LIBOPENJP2, overriding pkg-config
   LIBWEBP_CFLAGS
               C compiler flags for LIBWEBP, overriding pkg-config
   LIBWEBP_LIBS
@@ -3142,8 +3150,6 @@ $as_echo "#define _LARGEFILE_SOURCE 1" >>confdefs.h
 # disablibg debug support
 
 $as_echo "#define NDEBUG 1" >>confdefs.h
-
-
 
 
 
@@ -17898,7 +17904,6 @@ fi
 
 
 
-
 #-----------------------------------------------------------------------
 #   --enable-openjpeg
 #
@@ -17909,107 +17914,84 @@ else
   enable_openjpeg=yes
 fi
 
-    if test x"$enable_openjpeg" != "xno"; then
-    #
-    # testing OpenJpeg-2 headers
-    # they could be either on -/include/openjpeg-2.0
-    #                   or on -/include/openjpeg-2.1
-    #                   or on -/include/openjpeg-2.2
-    #
-    for ac_header in openjpeg-2.0/openjpeg.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "openjpeg-2.0/openjpeg.h" "ac_cv_header_openjpeg_2_0_openjpeg_h" "$ac_includes_default"
-if test "x$ac_cv_header_openjpeg_2_0_openjpeg_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_OPENJPEG_2_0_OPENJPEG_H 1
-_ACEOF
+if test x"$enable_openjpeg" != "xno"; then
 
-fi
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for LIBOPENJP2" >&5
+$as_echo_n "checking for LIBOPENJP2... " >&6; }
 
-done
-
-    for ac_header in openjpeg-2.1/openjpeg.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "openjpeg-2.1/openjpeg.h" "ac_cv_header_openjpeg_2_1_openjpeg_h" "$ac_includes_default"
-if test "x$ac_cv_header_openjpeg_2_1_openjpeg_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_OPENJPEG_2_1_OPENJPEG_H 1
-_ACEOF
-
-fi
-
-done
-
-    for ac_header in openjpeg-2.2/openjpeg.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "openjpeg-2.2/openjpeg.h" "ac_cv_header_openjpeg_2_2_openjpeg_h" "$ac_includes_default"
-if test "x$ac_cv_header_openjpeg_2_2_openjpeg_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_OPENJPEG_2_2_OPENJPEG_H 1
-_ACEOF
-
-fi
-
-done
-
-    if test x"$ac_cv_header_openjpeg_2_0_openjpeg_h" != x"yes" &&
-        test x"$ac_cv_header_openjpeg_2_1_openjpeg_h" != x"yes" &&
-        test x"$ac_cv_header_openjpeg_2_2_openjpeg_h" != x"yes";
-    then
-        as_fn_error $? "'OpenJpeg-2' is required but the header (openjpeg.h) doesn't seem to be installed on this system" "$LINENO" 5
-    fi
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for opj_create_decompress in -lopenjp2" >&5
-$as_echo_n "checking for opj_create_decompress in -lopenjp2... " >&6; }
-if ${ac_cv_lib_openjp2_opj_create_decompress+:} false; then :
-  $as_echo_n "(cached) " >&6
+if test -n "$LIBOPENJP2_CFLAGS"; then
+    pkg_cv_LIBOPENJP2_CFLAGS="$LIBOPENJP2_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libopenjp2\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libopenjp2") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LIBOPENJP2_CFLAGS=`$PKG_CONFIG --cflags "libopenjp2" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lopenjp2 -lm $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char opj_create_decompress ();
-int
-main ()
-{
-return opj_create_decompress ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_openjp2_opj_create_decompress=yes
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$LIBOPENJP2_LIBS"; then
+    pkg_cv_LIBOPENJP2_LIBS="$LIBOPENJP2_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libopenjp2\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libopenjp2") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LIBOPENJP2_LIBS=`$PKG_CONFIG --libs "libopenjp2" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
 else
-  ac_cv_lib_openjp2_opj_create_decompress=no
+  pkg_failed=yes
 fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
+ else
+    pkg_failed=untried
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_openjp2_opj_create_decompress" >&5
-$as_echo "$ac_cv_lib_openjp2_opj_create_decompress" >&6; }
-if test "x$ac_cv_lib_openjp2_opj_create_decompress" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBOPENJP2 1
-_ACEOF
 
-  LIBS="-lopenjp2 $LIBS"
 
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
 else
-  as_fn_error $? "'libopenjp2' is required but it doesn't seems to be installed on this system." "$LINENO" 5
+        _pkg_short_errors_supported=no
 fi
+        if test $_pkg_short_errors_supported = yes; then
+	        LIBOPENJP2_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libopenjp2" 2>&1`
+        else
+	        LIBOPENJP2_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libopenjp2" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$LIBOPENJP2_PKG_ERRORS" >&5
+
+	as_fn_error $? "'libopenjp2' (v2.1 or later) is required but it doesn't seem to be installed on this system." "$LINENO" 5
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	as_fn_error $? "'libopenjp2' (v2.1 or later) is required but it doesn't seem to be installed on this system." "$LINENO" 5
+else
+	LIBOPENJP2_CFLAGS=$pkg_cv_LIBOPENJP2_CFLAGS
+	LIBOPENJP2_LIBS=$pkg_cv_LIBOPENJP2_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+fi
+
 
 else
   $as_echo "#define OMIT_OPENJPEG 1" >>confdefs.h
 
 fi
-#-----------------------------------------------------------------------
 
 #-----------------------------------------------------------------------
 #   --enable-webp

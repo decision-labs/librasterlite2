@@ -283,12 +283,22 @@ EXTRA_DIST = getmaxthreads1.testcase \
 	getvectorimage21.testcase \
 	getvectorimage22.testcase \
 	getvectorimage23.testcase \
+	getwmsimage1.testcase \
+	getwmsimage2.testcase \
+	getwmsimage3.testcase \
+	getwmsimage4.testcase \
+	getwmsimage5.testcase \
+	getwmsimage6.testcase \
+	getwmsimage7.testcase \
+	getwmsimage8.testcase \
+	getwmsimage9.testcase \
+	getwmsimage10.testcase \
+	getwmsimage11.testcase \
+	getwmsimage12.testcase \
 	gettileimage1.testcase \
 	gettileimage2.testcase \
 	gettileimage3.testcase \
 	gettileimage4.testcase \
-	gettileimage5.testcase \
-	gettileimage6.testcase \
 	getbandhistogram1.testcase \
 	getbandhistogram2.testcase \
 	getbandhistogram3.testcase \

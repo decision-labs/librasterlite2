@@ -521,7 +521,7 @@ check_coverage_no_data (rl2PrivPixelPtr pxl_no_data,
 /* checking if the NoData pixel is consistent with the Coverage */
     if (pxl_no_data == NULL)
 	return 1;
-    if (rl2_is_pixel_none ((rl2PixelPtr) pxl_no_data))
+    if (rl2_is_pixel_none ((rl2PixelPtr) pxl_no_data) == RL2_TRUE)
 	return 1;		/* always accepting NoData = NONE as valid */
     if (pxl_no_data->sampleType != sample_type)
 	return 0;
@@ -1463,6 +1463,22 @@ create_raster_common (unsigned int width, unsigned int height,
 	    }
 	  break;
       };
+
+    if (pixel_type == RL2_PIXEL_MONOCHROME && mask != NULL)
+      {
+	  /* ensuring all masked pixels to be WHITE */
+	  unsigned char *msk = mask;
+	  p = bufpix;
+	  for (row = 0; row < height; row++)
+	    {
+		for (col = 0; col < width; col++)
+		  {
+		      if (*msk++ == 0)
+			  *p = 0;	// White pixel
+		      p++;
+		  }
+	    }
+      }
 
     rst = malloc (sizeof (rl2PrivRaster));
     if (rst == NULL)

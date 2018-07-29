@@ -5863,6 +5863,7 @@ rl2_raster_decode (int scale, const unsigned char *blob_odd,
     raster =
 	rl2_create_raster (width, height, sample_type, pixel_type, num_bands,
 			   pixels, pixels_sz, palette, mask, mask_sz, NULL);
+
     if (raster == NULL)
 	goto error;
     if (odd_data != NULL)

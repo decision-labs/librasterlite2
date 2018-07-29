@@ -1,0 +1,7 @@
+RL2_GetMapImageFromWms - NULL format
+:memory: #use in-memory database
+SELECT RL2_GetMapImageFromWms(NULL, 'landsat', BuildMbr(1, 1, 10, 10), 640, 480, '1.3.0', 'default', NULL, '#ffffff', 1);
+1 # rows (not including the header row)
+1 # columns
+RL2_GetMapImageFromWms(NULL, 'landsat', BuildMbr(1, 1, 10, 10), 640, 480, '1.3.0', 'default', NULL, '#ffffff', 1)
+(NULL)

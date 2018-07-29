@@ -1175,6 +1175,7 @@ extern "C"
 	int transparent;
 	double opacity;
 	int quality;
+	rl2PixelPtr no_data;
 	unsigned char format_id;
 	unsigned char bg_red;
 	unsigned char bg_green;
@@ -1186,8 +1187,10 @@ extern "C"
 	int level_id;
 	int scale;
 	unsigned char *outbuf;
+	unsigned char *mask;
 	rl2PalettePtr palette;
 	unsigned char out_pixel;
+	int is_blob_image;
 	unsigned char *image;
 	int image_size;
 	void *graphics_ctx;
@@ -1322,6 +1325,7 @@ extern "C"
 	int blob_odd_sz;
 	int blob_even_sz;
 	unsigned char *outbuf;
+	unsigned char *mask;
 	unsigned int width;
 	unsigned int height;
 	unsigned char sample_type;
@@ -1570,6 +1574,70 @@ extern "C"
 						 rl2PalettePtr palette,
 						 rl2PixelPtr no_data);
 
+    RL2_PRIVATE int rl2_load_dbms_tiles_transparent (sqlite3 * handle,
+						     int max_threads,
+						     sqlite3_stmt * stmt_tiles,
+						     sqlite3_stmt * stmt_data,
+						     unsigned char *outbuf,
+						     unsigned char *mask,
+						     unsigned int width,
+						     unsigned int height,
+						     unsigned char sample_type,
+						     unsigned char num_bands,
+						     unsigned char auto_ndvi,
+						     unsigned char
+						     red_band_index,
+						     unsigned char
+						     nir_band_index,
+						     double x_res, double y_res,
+						     double minx, double miny,
+						     double maxx, double maxy,
+						     int level, int scale,
+						     rl2PalettePtr palette,
+						     rl2PixelPtr no_data,
+						     rl2RasterSymbolizerPtr
+						     style,
+						     rl2RasterStatisticsPtr
+						     stats);
+
+    RL2_PRIVATE int rl2_load_dbms_tiles_section_transparent (sqlite3 * handle,
+							     int max_threads,
+							     sqlite3_int64
+							     section_id,
+							     sqlite3_stmt *
+							     stmt_tiles,
+							     sqlite3_stmt *
+							     stmt_data,
+							     unsigned char
+							     *outbuf,
+							     unsigned char
+							     *mask,
+							     unsigned int width,
+							     unsigned int
+							     height,
+							     unsigned char
+							     sample_type,
+							     unsigned char
+							     num_bands,
+							     unsigned char
+							     auto_ndvi,
+							     unsigned char
+							     red_band_index,
+							     unsigned char
+							     nir_band_index,
+							     double x_res,
+							     double y_res,
+							     double minx,
+							     double miny,
+							     double maxx,
+							     double maxy,
+							     int level,
+							     int scale,
+							     rl2PalettePtr
+							     palette,
+							     rl2PixelPtr
+							     no_data);
+
     RL2_PRIVATE void
 	compute_aggregate_sq_diff (rl2RasterStatisticsPtr aggreg_stats);
 
@@ -1778,19 +1846,24 @@ extern "C"
 						   unsigned int height,
 						   unsigned char *pixels,
 						   unsigned char *mask,
-						   rl2PrivPixelPtr no_data,
 						   unsigned char *rgba);
-
-    RL2_PRIVATE int get_rgba_from_monochrome_opaque (unsigned int width,
-						     unsigned int height,
-						     unsigned char *pixels,
-						     unsigned char *rgba);
 
     RL2_PRIVATE int get_rgba_from_monochrome_transparent (unsigned int width,
 							  unsigned int height,
 							  unsigned char
 							  *pixels,
 							  unsigned char *rgba);
+
+    RL2_PRIVATE int get_rgba_from_monochrome_transparent_mask (unsigned int
+							       width,
+							       unsigned int
+							       height,
+							       unsigned char
+							       *pixels,
+							       unsigned char
+							       *mask,
+							       unsigned char
+							       *rgba);
 
     RL2_PRIVATE int get_rgba_from_palette_mask (unsigned int base_width,
 						unsigned int base_height,
@@ -1800,11 +1873,12 @@ extern "C"
 						rl2PrivPixelPtr no_data,
 						unsigned char *rgba);
 
-    RL2_PRIVATE int get_rgba_from_palette_opaque (unsigned int base_width,
-						  unsigned int base_height,
-						  unsigned char *pixels,
-						  rl2PalettePtr palette,
-						  unsigned char *rgba);
+    RL2_PRIVATE int get_rgba_from_palette (unsigned int base_width,
+					   unsigned int base_height,
+					   unsigned char *pixels,
+					   unsigned char *mask,
+					   rl2PalettePtr palette,
+					   unsigned char *rgba);
 
     RL2_PRIVATE int get_rgba_from_palette_transparent (unsigned int width,
 						       unsigned int height,
@@ -1815,6 +1889,16 @@ extern "C"
 						       unsigned char bg_green,
 						       unsigned char bg_blue);
 
+    RL2_PRIVATE int get_rgba_from_palette_transparent_mask (unsigned int width,
+							    unsigned int height,
+							    unsigned char
+							    *pixels,
+							    unsigned char *mask,
+							    rl2PalettePtr
+							    palette,
+							    unsigned char
+							    *rgba);
+
     RL2_PRIVATE int get_rgba_from_grayscale_mask (unsigned int width,
 						  unsigned int height,
 						  unsigned char *pixels,
@@ -1822,10 +1906,11 @@ extern "C"
 						  rl2PrivPixelPtr no_data,
 						  unsigned char *rgba);
 
-    RL2_PRIVATE int get_rgba_from_grayscale_opaque (unsigned int width,
-						    unsigned int height,
-						    unsigned char *pixels,
-						    unsigned char *rgba);
+    RL2_PRIVATE int get_rgba_from_grayscale (unsigned int width,
+					     unsigned int height,
+					     unsigned char *pixels,
+					     unsigned char *mask,
+					     unsigned char *rgba);
 
     RL2_PRIVATE int get_rgba_from_grayscale_transparent (unsigned int width,
 							 unsigned int height,
@@ -1834,17 +1919,29 @@ extern "C"
 							 unsigned char *rgba,
 							 unsigned char bg_gray);
 
+    RL2_PRIVATE int get_rgba_from_grayscale_transparent_mask (unsigned int
+							      width,
+							      unsigned int
+							      height,
+							      unsigned char
+							      *pixels,
+							      unsigned char
+							      *mask,
+							      unsigned char
+							      *rgba);
+
+    RL2_PRIVATE int get_rgba_from_rgb (unsigned int width,
+				       unsigned int height,
+				       unsigned char *pixels,
+				       unsigned char *mask,
+				       unsigned char *rgba);
+
     RL2_PRIVATE int get_rgba_from_rgb_mask (unsigned int width,
 					    unsigned int height,
 					    unsigned char *pixels,
 					    unsigned char *mask,
 					    rl2PrivPixelPtr no_data,
 					    unsigned char *rgba);
-
-    RL2_PRIVATE int get_rgba_from_rgb_opaque (unsigned int width,
-					      unsigned int height,
-					      unsigned char *pixels,
-					      unsigned char *rgba);
 
     RL2_PRIVATE int get_rgba_from_rgb_transparent (unsigned int width,
 						   unsigned int height,
@@ -1853,6 +1950,12 @@ extern "C"
 						   unsigned char bg_red,
 						   unsigned char bg_green,
 						   unsigned char bg_blue);
+
+    RL2_PRIVATE int get_rgba_from_rgb_transparent_mask (unsigned int width,
+							unsigned int height,
+							unsigned char *pixels,
+							unsigned char *mask,
+							unsigned char *rgba);
 
     RL2_PRIVATE int get_rgba_from_datagrid_mask (unsigned int width,
 						 unsigned int height,
@@ -1936,6 +2039,12 @@ extern "C"
 				     unsigned char bg_red,
 				     unsigned char bg_green,
 				     unsigned char bg_blue);
+
+    RL2_PRIVATE int build_rgb_alpha_transparent (unsigned int width,
+						 unsigned int height,
+						 unsigned char *rgba,
+						 unsigned char **rgb,
+						 unsigned char **alpha);
 
     RL2_PRIVATE int get_rgba_from_multiband8 (unsigned int width,
 					      unsigned int height,
@@ -2098,6 +2207,28 @@ extern "C"
 					 rl2RasterSymbolizerPtr style,
 					 rl2RasterStatisticsPtr stats);
 
+    RL2_PRIVATE int rl2_copy_raw_pixels_transparent (rl2RasterPtr raster,
+						     unsigned char *outbuf,
+						     unsigned char *mask,
+						     unsigned int width,
+						     unsigned int height,
+						     unsigned char sample_type,
+						     unsigned char num_bands,
+						     unsigned char auto_ndvi,
+						     unsigned char
+						     red_band_index,
+						     unsigned char
+						     nir_band_index,
+						     double x_res, double y_res,
+						     double minx, double maxy,
+						     double tile_minx,
+						     double tile_maxy,
+						     rl2PixelPtr no_data,
+						     rl2RasterSymbolizerPtr
+						     style,
+						     rl2RasterStatisticsPtr
+						     stats);
+
     RL2_PRIVATE int rl2_copy_raw_mask (rl2RasterPtr raster,
 				       unsigned char *maskbuf,
 				       unsigned int width,
@@ -2212,6 +2343,41 @@ extern "C"
 						    style,
 						    rl2RasterStatisticsPtr
 						    stats);
+
+    RL2_PRIVATE int rl2_get_raw_raster_data_common_transparent (sqlite3 *
+								handle,
+								int max_threads,
+								rl2CoveragePtr
+								cvg,
+								int by_section,
+								sqlite3_int64
+								section_id,
+								unsigned int
+								width,
+								unsigned int
+								height,
+								double minx,
+								double miny,
+								double maxx,
+								double maxy,
+								double x_res,
+								double y_res,
+								unsigned char
+								**buffer,
+								int *buf_size,
+								unsigned char
+								**mask,
+								int *mask_size,
+								rl2PalettePtr *
+								palette,
+								unsigned char
+								out_pixel,
+								rl2PixelPtr
+								no_data,
+								rl2RasterSymbolizerPtr
+								style,
+								rl2RasterStatisticsPtr
+								stats);
 
     RL2_PRIVATE int rl2_get_raw_raster_mask_common (sqlite3 * handle,
 						    int max_threads,
@@ -2450,8 +2616,6 @@ extern "C"
     RL2_PRIVATE int
 	parse_sld_se_stroke_dasharray (const char *value, int *count,
 				       double **list);
-
-    RL2_PRIVATE void rl2_prime_white_opaque_background (void *ctx);
 
     RL2_PRIVATE char *rl2_init_tmp_atm_table (void *data);
 

@@ -4001,6 +4001,24 @@ extern "C"
 					 rl2RasterStatisticsPtr stats);
 
     RL2_DECLARE int
+	rl2_get_raw_raster_data_transparent (sqlite3 * handle, int max_threads,
+					     rl2CoveragePtr cvg,
+					     unsigned int width,
+					     unsigned int height, double minx,
+					     double miny, double maxx,
+					     double maxy, double x_res,
+					     double y_res,
+					     unsigned char **buffer,
+					     int *buf_size,
+					     unsigned char **mask,
+					     int *mask_size,
+					     rl2PalettePtr * palette,
+					     unsigned char *out_pixel,
+					     rl2PixelPtr no_data,
+					     rl2RasterSymbolizerPtr style,
+					     rl2RasterStatisticsPtr stats);
+
+    RL2_DECLARE int
 	rl2_get_raw_raster_data_mixed_resolutions (sqlite3 * handle,
 						   int max_threads,
 						   rl2CoveragePtr cvg,
@@ -4019,6 +4037,38 @@ extern "C"
 						   rl2RasterSymbolizerPtr style,
 						   rl2RasterStatisticsPtr
 						   stats);
+
+    RL2_DECLARE int
+	rl2_get_raw_raster_data_mixed_resolutions_transparent (sqlite3 * handle,
+							       int max_threads,
+							       rl2CoveragePtr
+							       cvg,
+							       unsigned int
+							       width,
+							       unsigned int
+							       height,
+							       double minx,
+							       double miny,
+							       double maxx,
+							       double maxy,
+							       double x_res,
+							       double y_res,
+							       unsigned char
+							       **buffer,
+							       int *buf_size,
+							       unsigned char
+							       **mask,
+							       int *mask_size,
+							       rl2PalettePtr *
+							       palette,
+							       unsigned char
+							       *out_pixel,
+							       rl2PixelPtr
+							       no_data,
+							       rl2RasterSymbolizerPtr
+							       style,
+							       rl2RasterStatisticsPtr
+							       stats);
 
     RL2_DECLARE int
 	rl2_create_dbms_coverage (sqlite3 * handle, const char *coverage,
@@ -6076,7 +6126,8 @@ extern "C"
 						     const char *cvg_name,
 						     const unsigned char *blob,
 						     int blob_sz,
-						     const char *style);
+						     const char *style,
+						     unsigned char *xml_style);
 
     RL2_DECLARE int rl2_map_image_blob_from_vector (sqlite3 * sqlite,
 						    const void *data,
@@ -6122,6 +6173,19 @@ extern "C"
 							int
 							with_edge_or_link_seeds,
 							int with_face_seeds);
+
+    RL2_DECLARE unsigned char *rl2_map_image_from_wms (sqlite3 * sqlite,
+						       const char *db_prefix,
+						       const char *cvg_name,
+						       const unsigned char
+						       *blob, int blob_sz,
+						       int width, int height,
+						       const char *version,
+						       const char *style,
+						       const char *format,
+						       int transparent,
+						       const char *bg_color,
+						       int *image_size);
 
     RL2_DECLARE rl2FeatureTypeStylePtr rl2_feature_type_style_from_xml (const
 									char

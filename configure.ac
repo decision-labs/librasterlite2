@@ -28,10 +28,6 @@ AH_TEMPLATE([NDEBUG],
 AC_DEFINE(NDEBUG)
 AH_TEMPLATE([TARGET_CPU],
             [Should contain a text-string describing the intended target CPU])
-AH_TEMPLATE([OPENJPEG_2_1],
-            [testing for OpenJpeg 2.1])
-AH_TEMPLATE([OPENJPEG_2_2],
-            [testing for OpenJpeg 2.2])
             
 # config depending options
 AH_TEMPLATE([OMIT_LZMA],
@@ -141,34 +137,19 @@ PKG_CHECK_MODULES([LIBPNG], [libpng], , AC_MSG_ERROR(['libpng' is required but i
 AC_SUBST(LIBPNG_CFLAGS)
 AC_SUBST(LIBPNG_LIBS)
 
-
 #-----------------------------------------------------------------------
 #   --enable-openjpeg
 #
 AC_ARG_ENABLE(openjpeg, [AS_HELP_STRING(
   [--enable-openjpeg], [enables OpenJpeg inclusion [default=yes]])],
   [], [enable_openjpeg=yes])
-    if test x"$enable_openjpeg" != "xno"; then
-    #
-    # testing OpenJpeg-2 headers
-    # they could be either on -/include/openjpeg-2.0
-    #                   or on -/include/openjpeg-2.1
-    #                   or on -/include/openjpeg-2.2
-    #
-    AC_CHECK_HEADERS(openjpeg-2.0/openjpeg.h)
-    AC_CHECK_HEADERS(openjpeg-2.1/openjpeg.h)
-    AC_CHECK_HEADERS(openjpeg-2.2/openjpeg.h)
-    if test x"$ac_cv_header_openjpeg_2_0_openjpeg_h" != x"yes" &&
-        test x"$ac_cv_header_openjpeg_2_1_openjpeg_h" != x"yes" &&
-        test x"$ac_cv_header_openjpeg_2_2_openjpeg_h" != x"yes";
-    then
-        AC_MSG_ERROR(['OpenJpeg-2' is required but the header (openjpeg.h) doesn't seem to be installed on this system])
-    fi 
-    AC_CHECK_LIB(openjp2,opj_create_decompress,,AC_MSG_ERROR(['libopenjp2' is required but it doesn't seems to be installed on this system.]),-lm)
+if test x"$enable_openjpeg" != "xno"; then
+  PKG_CHECK_MODULES([LIBOPENJP2], [libopenjp2], , AC_MSG_ERROR(['libopenjp2' (v2.1 or later) is required but it doesn't seem to be installed on this system.]))
+  AC_SUBST(LIBOPENJP2_CFLAGS)
+  AC_SUBST(LIBOPENJP2_LIBS)
 else
   AC_DEFINE(OMIT_OPENJPEG)
 fi
-#-----------------------------------------------------------------------
 
 #-----------------------------------------------------------------------
 #   --enable-webp
