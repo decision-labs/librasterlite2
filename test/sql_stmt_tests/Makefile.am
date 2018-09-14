@@ -227,6 +227,25 @@ EXTRA_DIST = getmaxthreads1.testcase \
 	dropcoverage1.testcase \
 	dropcoverage2.testcase \
 	dropcoverage3.testcase \
+	drapegeom1.testcase \
+	drapegeom2.testcase \
+	drapegeom3.testcase \
+	drapegeom4.testcase \
+	drapegeom5.testcase \
+	drapegeom6.testcase \
+	drapegeom7.testcase \
+	drapegeom8.testcase \
+	drapegeom9.testcase \
+	drapegeom10.testcase \
+	drapegeom11.testcase \
+	drapegeom12.testcase \
+	drapegeom13.testcase \
+	drapegeom14.testcase \
+	drapegeom15.testcase \
+	drapegeom16.testcase \
+	drapegeom17.testcase \
+	drapegeom18.testcase \
+	drapegeom19.testcase \
 	getfontfacename1.testcase \
 	getfontfacename2.testcase \
 	getfontfacename3.testcase \

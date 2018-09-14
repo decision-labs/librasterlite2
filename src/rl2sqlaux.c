@@ -6080,7 +6080,7 @@ do_transform_raster_bbox (struct aux_renderer *aux)
 
     sqlite3_reset (stmt);
     sqlite3_clear_bindings (stmt);
-    line = rl2CreateLinestring (5);
+    line = rl2CreateLinestring (5, GAIA_XY);
     rl2SetPoint (line->coords, 0, minx, miny);
     rl2SetPoint (line->coords, 1, maxx, miny);
     rl2SetPoint (line->coords, 2, maxx, maxy);

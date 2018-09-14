@@ -1,0 +1,7 @@
+DrapeGeometries - both Coverage and List (2)
+:memory: #use in-memory database
+SELECT RL2_DrapeGeometries('main', 'dem', 'list', 'table', 'geom2d', 'geom3d', 1.5, 1.0, 1.2, 1);
+1 # rows (not including the header row)
+1 # columns
+RL2_DrapeGeometries('main', 'dem', 'list', 'table', 'geom2d', 'geom3d', 1.5, 1.0, 1.2, 1)
+-1

@@ -1,0 +1,7 @@
+DrapeGeometries - NULL spatial table
+:memory: #use in-memory database
+SELECT RL2_DrapeGeometries('main', 'dem', NULL, NULL, 'geom2d', 'geom3d');
+1 # rows (not including the header row)
+1 # columns
+RL2_DrapeGeometries('main', 'dem', NULL, NULL, 'geom2d', 'geom3d')
+-1

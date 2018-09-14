@@ -6195,6 +6195,18 @@ extern "C"
 									char
 									*xml);
 
+    RL2_DECLARE int rl2_drape_geometries (sqlite3 * sqlite,
+					  const void *priv_data,
+					  const char *db_prefix,
+					  const char *raster_coverage,
+					  const char *coverage_list_table,
+					  const char *spatial_table,
+					  const char *old_geom,
+					  const char *new_geom,
+					  double no_data_value,
+					  double densify_dist,
+					  double z_simplify_dist, int update_m);
+
 #ifdef __cplusplus
 }
 #endif

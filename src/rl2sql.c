@@ -8138,6 +8138,167 @@ fnct_WriteSectionNdviAsciiGrid (sqlite3_context * context, int argc,
     common_write_ndvi_ascii_grid (1, context, argc, argv);
 }
 
+static void
+fnct_GetDrapingLastError (sqlite3_context * context, int argc,
+			  sqlite3_value ** argv)
+{
+/* SQL function:
+/ GetDrapingLastError()
+/
+/ will return the latest Draping message (Error or Warning)
+/ or NULL if no such message exists
+/
+*/
+    struct rl2_private_data *priv_data = sqlite3_user_data (context);
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+    if (priv_data == NULL)
+	sqlite3_result_null (context);
+    else if (priv_data->draping_message == NULL)
+	sqlite3_result_null (context);
+    else
+	sqlite3_result_text (context, priv_data->draping_message, -1,
+			     SQLITE_STATIC);
+}
+
+static void
+fnct_DrapeGeometries (sqlite3_context * context, int argc,
+		      sqlite3_value ** argv)
+{
+/* SQL function:
+/ DrapeGeometries(text db_prefix, text raster_coverage, text coverage_list_table,
+/                 text spatial_table, text geom2d, text geom3d)
+/    or
+/ DrapeGeometries(text db_prefix, text raster_coverage, text coverage_list_table,
+/                 text spatial_table, text geom2d, text geom3d, 
+/                 double no_data_value)
+/    or
+/ DrapeGeometries(text db_prefix, text raster_coverage, text coverage_list_table,
+/                 text spatial_table, text geom2d, text geom3d, 
+/                 double no_data_value, double densify_dist, 
+/                 double z_simplify_dist)
+/    or
+/ DrapeGeometries(text db_prefix, text raster_coverage, text coverage_list_table,
+/                 text spatial_table, text geom2d, text geom3d, 
+/                 double no_data_value, double densify_dist, 
+/                 double z_simplify_dist, bool update_m)
+/
+/ will return 1 (TRUE, success) or 0 (FALSE, failure)
+/ or -1 (INVALID ARGS)
+/
+*/
+    int err = 0;
+    const char *db_prefix = NULL;
+    const char *raster_coverage = NULL;
+    const char *coverage_list_table = NULL;
+    const char *spatial_table = NULL;
+    const char *old_geom;
+    const char *new_geom;
+    double no_data_value = 0.0;
+    double densify_dist = 0.0;
+    double z_simplify_dist = 0.0;
+    int update_m = 0;
+    sqlite3 *sqlite;
+    struct rl2_private_data *priv_data = sqlite3_user_data (context);
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+    sqlite = sqlite3_context_db_handle (context);
+    if (sqlite3_value_type (argv[0]) == SQLITE_NULL)
+	db_prefix = NULL;
+    else if (sqlite3_value_type (argv[0]) == SQLITE_TEXT)
+	db_prefix = (const char *) sqlite3_value_text (argv[0]);
+    else
+	err = 1;
+    if (sqlite3_value_type (argv[1]) == SQLITE_NULL)
+	raster_coverage = NULL;
+    else if (sqlite3_value_type (argv[1]) == SQLITE_TEXT)
+	raster_coverage = (const char *) sqlite3_value_text (argv[1]);
+    else
+	err = 1;
+    if (sqlite3_value_type (argv[2]) == SQLITE_NULL)
+	coverage_list_table = NULL;
+    else if (sqlite3_value_type (argv[2]) == SQLITE_TEXT)
+	coverage_list_table = (const char *) sqlite3_value_text (argv[2]);
+    else
+	err = 1;
+    if (sqlite3_value_type (argv[3]) == SQLITE_TEXT)
+	spatial_table = (const char *) sqlite3_value_text (argv[3]);
+    else
+	err = 1;
+    if (sqlite3_value_type (argv[4]) == SQLITE_TEXT)
+	old_geom = (const char *) sqlite3_value_text (argv[4]);
+    else
+	err = 1;
+    if (sqlite3_value_type (argv[5]) == SQLITE_TEXT)
+	new_geom = (const char *) sqlite3_value_text (argv[5]);
+    else
+	err = 1;
+    if (argc >= 7)
+      {
+	  if (sqlite3_value_type (argv[6]) == SQLITE_INTEGER)
+	    {
+		int val = sqlite3_value_int (argv[6]);
+		no_data_value = val;
+	    }
+	  else if (sqlite3_value_type (argv[6]) == SQLITE_FLOAT)
+	      no_data_value = sqlite3_value_double (argv[6]);
+	  else
+	      err = 1;
+      }
+    if (argc >= 8)
+      {
+	  if (sqlite3_value_type (argv[7]) == SQLITE_INTEGER)
+	    {
+		int val = sqlite3_value_int (argv[7]);
+		densify_dist = val;
+	    }
+	  else if (sqlite3_value_type (argv[7]) == SQLITE_FLOAT)
+	      densify_dist = sqlite3_value_double (argv[7]);
+	  else
+	      err = 1;
+      }
+    if (argc >= 9)
+      {
+	  if (sqlite3_value_type (argv[8]) == SQLITE_INTEGER)
+	    {
+		int val = sqlite3_value_int (argv[8]);
+		z_simplify_dist = val;
+	    }
+	  else if (sqlite3_value_type (argv[8]) == SQLITE_FLOAT)
+	      z_simplify_dist = sqlite3_value_double (argv[8]);
+	  else
+	      err = 1;
+      }
+    if (argc >= 10)
+      {
+	  if (sqlite3_value_type (argv[9]) == SQLITE_INTEGER)
+	      update_m = sqlite3_value_int (argv[9]);
+	  else
+	      err = 1;
+      }
+    if (db_prefix == NULL && raster_coverage == NULL
+	&& coverage_list_table == NULL)
+	err = 1;
+    if (db_prefix == NULL && raster_coverage != NULL
+	&& coverage_list_table != NULL)
+	err = 1;
+    if (db_prefix != NULL && raster_coverage != NULL
+	&& coverage_list_table != NULL)
+	err = 1;
+    if (err)
+      {
+	  sqlite3_result_int (context, -1);
+	  return;
+      }
+    rl2_reset_draping_message (priv_data);
+    if (rl2_drape_geometries
+	(sqlite, priv_data, db_prefix, raster_coverage, coverage_list_table,
+	 spatial_table, old_geom, new_geom, no_data_value, densify_dist,
+	 z_simplify_dist, update_m))
+	sqlite3_result_int (context, 1);
+    else
+	sqlite3_result_int (context, 0);
+}
+
+
 static int
 do_find_section_by_point (sqlite3 * handle, const char *db_prefix,
 			  const char *coverage, const unsigned char *blob,
@@ -10719,6 +10880,36 @@ register_rl2_sql_functions (void *p_db, const void *p_data)
     sqlite3_create_function (db, "RL2_ImportSectionRawPixels", 9,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
 			     fnct_ImportSectionRawPixels, 0, 0);
+    sqlite3_create_function (db, "GetDrapingLastError", 0,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_GetDrapingLastError, 0, 0);
+    sqlite3_create_function (db, "RL2_GetDrapingLastError", 0,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_GetDrapingLastError, 0, 0);
+    sqlite3_create_function (db, "DrapeGeometries", 6,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_DrapeGeometries, 0, 0);
+    sqlite3_create_function (db, "RL2_DrapeGeometries", 6,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_DrapeGeometries, 0, 0);
+    sqlite3_create_function (db, "DrapeGeometries", 7,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_DrapeGeometries, 0, 0);
+    sqlite3_create_function (db, "RL2_DrapeGeometries", 7,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_DrapeGeometries, 0, 0);
+    sqlite3_create_function (db, "DrapeGeometries", 9,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_DrapeGeometries, 0, 0);
+    sqlite3_create_function (db, "RL2_DrapeGeometries", 9,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_DrapeGeometries, 0, 0);
+    sqlite3_create_function (db, "DrapeGeometries", 10,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_DrapeGeometries, 0, 0);
+    sqlite3_create_function (db, "RL2_DrapeGeometries", 10,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_DrapeGeometries, 0, 0);
 
 /*
 // enabling ImportRaster and ExportRaster
@@ -11362,6 +11553,8 @@ register_rl2_sql_functions (void *p_db, const void *p_data)
       }
 }
 
+#ifndef LOADABLE_EXTENSION
+
 static void
 rl2_splash_screen (int verbose)
 {
@@ -11375,8 +11568,6 @@ rl2_splash_screen (int verbose)
 	    }
       }
 }
-
-#ifndef LOADABLE_EXTENSION
 
 RL2_DECLARE void
 rl2_init (sqlite3 * handle, const void *priv_data, int verbose)
@@ -11396,6 +11587,7 @@ init_rl2_extension (sqlite3 * db, char **pzErrMsg,
     SQLITE_EXTENSION_INIT2 (pApi);
 
     register_rl2_sql_functions (db, priv_data);
+    *pzErrMsg = NULL;
     return 0;
 }
 
