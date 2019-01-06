@@ -8025,15 +8025,15 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
 		if (reproject_on_the_fly)
 		    sql =
 			sqlite3_mprintf
-			("SELECT ST_Intersection(ST_Transform(ST_GetFaceGeometry(%Q, face_id), %d), "
-			 "BuildMbr(%f, %f, %f, %f))",
+			("SELECT CastToXY(ST_Intersection(ST_Transform(ST_GetFaceGeometry(%Q, face_id), %d), "
+			 "BuildMbr(%f, %f, %f, %f)))",
 			 toponame, out_srid, ext_min_x, ext_min_y, ext_max_x,
 			 ext_max_y);
 		else
 		    sql =
 			sqlite3_mprintf
-			("SELECT ST_Intersection(ST_GetFaceGeometry(%Q, face_id), "
-			 "BuildMbr(%f, %f, %f, %f))", toponame, ext_min_x,
+			("SELECT CastToXY(ST_Intersection(ST_GetFaceGeometry(%Q, face_id), "
+			 "BuildMbr(%f, %f, %f, %f)))", toponame, ext_min_x,
 			 ext_min_y, ext_max_x, ext_max_y);
 	    }
 	  else
@@ -8045,14 +8045,15 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
 		if (reproject_on_the_fly)
 		    sql =
 			sqlite3_mprintf
-			("SELECT ST_Intersection(ST_Transform(\"%s\", %d), "
-			 "BuildMbr(%f, %f, %f, %f))", quoted, out_srid,
+			("SELECT CastToXY(ST_Intersection(ST_Transform(\"%s\", %d), "
+			 "BuildMbr(%f, %f, %f, %f)))", quoted, out_srid,
 			 ext_min_x, ext_min_y, ext_max_x, ext_max_y);
 		else
-		    sql = sqlite3_mprintf ("SELECT ST_Intersection(\"%s\", "
-					   "BuildMbr(%f, %f, %f, %f))", quoted,
-					   ext_min_x, ext_min_y, ext_max_x,
-					   ext_max_y);
+		    sql =
+			sqlite3_mprintf
+			("SELECT CastToXY(ST_Intersection(\"%s\", "
+			 "BuildMbr(%f, %f, %f, %f)))", quoted, ext_min_x,
+			 ext_min_y, ext_max_x, ext_max_y);
 		free (quoted);
 	    }
 	  sqlite3_free (toponame);
@@ -8419,6 +8420,7 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
 	    }
 
 	  /* preparing the SQL statement */
+	  fprintf (stderr, "%s\n", sql);
 	  ret = sqlite3_prepare_v2 (sqlite, sql, strlen (sql), &stmt, NULL);
 	  sqlite3_free (sql);
 	  if (ret != SQLITE_OK)
