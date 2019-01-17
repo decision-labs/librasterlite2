@@ -1,5 +1,11 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* testing for CharLS 2.0 */
+#undef CHARLS_2
+
+/* Define to 1 if you have the <CharLS/charls.h> header file. */
+#undef HAVE_CHARLS_CHARLS_H
+
 /* Define to 1 if you have the <CharLS/interface.h> header file. */
 #undef HAVE_CHARLS_INTERFACE_H
 

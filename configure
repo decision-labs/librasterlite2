@@ -3153,6 +3153,7 @@ $as_echo "#define NDEBUG 1" >>confdefs.h
 
 
 
+
 # config depending options
 
 
@@ -18183,8 +18184,15 @@ else
   enable_charls=yes
 fi
 
-if test x"$enable_charls" != "xno"; then
-    for ac_header in CharLS/interface.h
+  if test x"$enable_charls" != "xno"; then
+  #
+  # testing CharLS headers
+  # they could be either
+  # -/include/CharLS/interface.h (version 1.0)
+  # or
+  # -/include/CharLS/charls.h (version 2.0)
+  #
+  for ac_header in CharLS/interface.h
 do :
   ac_fn_c_check_header_mongrel "$LINENO" "CharLS/interface.h" "ac_cv_header_CharLS_interface_h" "$ac_includes_default"
 if test "x$ac_cv_header_CharLS_interface_h" = xyes; then :
@@ -18192,13 +18200,28 @@ if test "x$ac_cv_header_CharLS_interface_h" = xyes; then :
 #define HAVE_CHARLS_INTERFACE_H 1
 _ACEOF
 
-else
-  as_fn_error $? "cannot find CharLS/interface.h, bailing out" "$LINENO" 5
 fi
 
 done
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for JpegLsEncode in -lCharLS" >&5
+  for ac_header in CharLS/charls.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "CharLS/charls.h" "ac_cv_header_CharLS_charls_h" "$ac_includes_default"
+if test "x$ac_cv_header_CharLS_charls_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_CHARLS_CHARLS_H 1
+_ACEOF
+
+fi
+
+done
+
+  if test x"$ac_cv_header_CharLS_interface_h" != x"yes" &&
+    test x"$ac_cv_header_CharLS_charls_h" != x"yes";
+  then
+	as_fn_error $? "'CharLS' is required but no header file (interface.h or charls.h) seems to be installed on this system" "$LINENO" 5
+  fi
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for JpegLsEncode in -lCharLS" >&5
 $as_echo_n "checking for JpegLsEncode in -lCharLS... " >&6; }
 if ${ac_cv_lib_CharLS_JpegLsEncode+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -18245,6 +18268,28 @@ else
   as_fn_error $? "'libCharLS' is required but it doesn't seems to be installed on this system." "$LINENO" 5
 fi
 
+  # testing for CharLS 1.0 or 2.0
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef HAVE_CHARLS_CHARLS_H
+									#include <CharLS/charls.h>
+									#else
+									#include <Charls/interface.h>
+									#endif
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+						{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+						$as_echo "#define CHARLS_2 1" >>confdefs.h
+
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 else
   $as_echo "#define OMIT_CHARLS 1" >>confdefs.h
 
