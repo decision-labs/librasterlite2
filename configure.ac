@@ -192,7 +192,7 @@ fi
 #
 AC_ARG_ENABLE(lz4, [AS_HELP_STRING(
   [--enable-lz4], [enables LZ4 inclusion [default=yes]])],
-  [], [enable_lzma=yes])
+  [], [enable_lz4=yes])
 if test x"$enable_lz4" != "xno"; then
     PKG_CHECK_MODULES([LIBLZ4], [liblz4], , AC_MSG_ERROR(['liblz4' is required but it doesn't seems to be installed on this system.]))
     AC_SUBST(LIBLZ4_CFLAGS)

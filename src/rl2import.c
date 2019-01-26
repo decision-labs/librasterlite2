@@ -293,8 +293,6 @@ do_insert_tile (sqlite3 * handle, unsigned char *blob_odd, int blob_odd_sz,
 	;
     else
       {
-	  fprintf (stderr, "id=%d odd=%d (%d) even=%d (%d)\n", tile_id,
-		   blob_odd, blob_odd_sz, blob_even, blob_even_sz);
 	  fprintf (stderr, "INSERT INTO tile_data; sqlite3_step() error: %s\n",
 		   sqlite3_errmsg (handle));
 	  goto error;
