@@ -153,6 +153,38 @@ fnct_rl2_lzma_version (sqlite3_context * context, int argc,
 }
 
 static void
+fnct_rl2_lz4_version (sqlite3_context * context, int argc,
+		      sqlite3_value ** argv)
+{
+/* SQL function:
+/ rl2_lz4_version()
+/
+/ return a text string representing the current LZ4 version
+*/
+    int len;
+    const char *p_result = rl2_lz4_version ();
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+    len = strlen (p_result);
+    sqlite3_result_text (context, p_result, len, SQLITE_TRANSIENT);
+}
+
+static void
+fnct_rl2_zstd_version (sqlite3_context * context, int argc,
+		       sqlite3_value ** argv)
+{
+/* SQL function:
+/ rl2_zstd_version()
+/
+/ return a text string representing the current ZSTD version
+*/
+    int len;
+    const char *p_result = rl2_zstd_version ();
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+    len = strlen (p_result);
+    sqlite3_result_text (context, p_result, len, SQLITE_TRANSIENT);
+}
+
+static void
 fnct_rl2_png_version (sqlite3_context * context, int argc,
 		      sqlite3_value ** argv)
 {
@@ -386,6 +418,70 @@ fnct_rl2_has_codec_lzma_no (sqlite3_context * context, int argc,
 / will return 1 (TRUE) or 0 (FALSE) depending of OMIT_LZMA
 */
     int ret = rl2_is_supported_codec (RL2_COMPRESSION_LZMA_NO);
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+    if (ret < 0)
+	ret = 0;
+    sqlite3_result_int (context, ret);
+}
+
+static void
+fnct_rl2_has_codec_lz4 (sqlite3_context * context, int argc,
+			sqlite3_value ** argv)
+{
+/* SQL function:
+/ rl2_has_codec_lz4()
+/
+/ will return 1 (TRUE) or 0 (FALSE) depending of OMIT_LZ4
+*/
+    int ret = rl2_is_supported_codec (RL2_COMPRESSION_LZ4);
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+    if (ret < 0)
+	ret = 0;
+    sqlite3_result_int (context, ret);
+}
+
+static void
+fnct_rl2_has_codec_lz4_no (sqlite3_context * context, int argc,
+			   sqlite3_value ** argv)
+{
+/* SQL function:
+/ rl2_has_codec_lz4_no()
+/
+/ will return 1 (TRUE) or 0 (FALSE) depending of OMIT_LZ4
+*/
+    int ret = rl2_is_supported_codec (RL2_COMPRESSION_LZ4_NO);
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+    if (ret < 0)
+	ret = 0;
+    sqlite3_result_int (context, ret);
+}
+
+static void
+fnct_rl2_has_codec_zstd (sqlite3_context * context, int argc,
+			 sqlite3_value ** argv)
+{
+/* SQL function:
+/ rl2_has_codec_zstd()
+/
+/ will return 1 (TRUE) or 0 (FALSE) depending of OMIT_ZSTD
+*/
+    int ret = rl2_is_supported_codec (RL2_COMPRESSION_ZSTD);
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+    if (ret < 0)
+	ret = 0;
+    sqlite3_result_int (context, ret);
+}
+
+static void
+fnct_rl2_has_codec_zstd_no (sqlite3_context * context, int argc,
+			    sqlite3_value ** argv)
+{
+/* SQL function:
+/ rl2_has_codec_zstd_no()
+/
+/ will return 1 (TRUE) or 0 (FALSE) depending of OMIT_ZSTD
+*/
+    int ret = rl2_is_supported_codec (RL2_COMPRESSION_ZSTD_NO);
     RL2_UNUSED ();		/* LCOV_EXCL_LINE */
     if (ret < 0)
 	ret = 0;
@@ -2616,6 +2712,14 @@ fnct_CreateRasterCoverage (sqlite3_context * context, int argc,
 	compr = RL2_COMPRESSION_LZMA;
     if (strcasecmp (compression, "LZMA_NO") == 0)
 	compr = RL2_COMPRESSION_LZMA_NO;
+    if (strcasecmp (compression, "LZ4") == 0)
+	compr = RL2_COMPRESSION_LZ4;
+    if (strcasecmp (compression, "LZ4_NO") == 0)
+	compr = RL2_COMPRESSION_LZ4_NO;
+    if (strcasecmp (compression, "ZSTD") == 0)
+	compr = RL2_COMPRESSION_ZSTD;
+    if (strcasecmp (compression, "ZSTD_NO") == 0)
+	compr = RL2_COMPRESSION_ZSTD_NO;
     if (strcasecmp (compression, "PNG") == 0)
 	compr = RL2_COMPRESSION_PNG;
     if (strcasecmp (compression, "GIF") == 0)
@@ -3013,20 +3117,25 @@ fnct_CopyRasterCoverage (sqlite3_context * context, int argc,
 /* checks if a Raster Coverage of the same name already exists on Main */
     if (rl2_check_raster_coverage_destination (sqlite, coverage_name) != RL2_OK)
       {
+	  if (transaction)
+	      sqlite3_exec (sqlite, "ROLLBACK", NULL, NULL, NULL);
 	  sqlite3_result_int (context, 0);
 	  return;
       }
-/* checks if the Raster Coverage origine do really exists */
+/* checks if the Raster Coverage origin do really exists */
     if (rl2_check_raster_coverage_origin (sqlite, db_prefix, coverage_name) !=
 	RL2_OK)
       {
+	  if (transaction)
+	      sqlite3_exec (sqlite, "ROLLBACK", NULL, NULL, NULL);
 	  sqlite3_result_int (context, 0);
 	  return;
       }
 /* attemtping to copy */
     if (rl2_copy_raster_coverage (sqlite, db_prefix, coverage_name) != RL2_OK)
       {
-	  sqlite3_exec (sqlite, "ROLLBACK", NULL, NULL, NULL);
+	  if (transaction)
+	      sqlite3_exec (sqlite, "ROLLBACK", NULL, NULL, NULL);
 	  sqlite3_result_int (context, 0);
 	  return;
       }
@@ -10241,6 +10350,12 @@ register_rl2_sql_functions (void *p_db, const void *p_data)
     sqlite3_create_function (db, "rl2_lzma_version", 0,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, 0,
 			     fnct_rl2_lzma_version, 0, 0);
+    sqlite3_create_function (db, "rl2_lz4_version", 0,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, 0,
+			     fnct_rl2_lz4_version, 0, 0);
+    sqlite3_create_function (db, "rl2_zstd_version", 0,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, 0,
+			     fnct_rl2_zstd_version, 0, 0);
     sqlite3_create_function (db, "rl2_png_version", 0,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, 0,
 			     fnct_rl2_png_version, 0, 0);
@@ -10280,6 +10395,18 @@ register_rl2_sql_functions (void *p_db, const void *p_data)
     sqlite3_create_function (db, "rl2_has_codec_lzma_no", 0,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, 0,
 			     fnct_rl2_has_codec_lzma_no, 0, 0);
+    sqlite3_create_function (db, "rl2_has_codec_lz4", 0,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, 0,
+			     fnct_rl2_has_codec_lz4, 0, 0);
+    sqlite3_create_function (db, "rl2_has_codec_lz4_no", 0,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, 0,
+			     fnct_rl2_has_codec_lz4_no, 0, 0);
+    sqlite3_create_function (db, "rl2_has_codec_zstd", 0,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, 0,
+			     fnct_rl2_has_codec_zstd, 0, 0);
+    sqlite3_create_function (db, "rl2_has_codec_zstd_no", 0,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, 0,
+			     fnct_rl2_has_codec_zstd_no, 0, 0);
     sqlite3_create_function (db, "rl2_has_codec_jpeg", 0,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, 0,
 			     fnct_rl2_has_codec_jpeg, 0, 0);

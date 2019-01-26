@@ -187,6 +187,18 @@ insert_into_raster_coverages (sqlite3 * handle, const char *coverage,
       case RL2_COMPRESSION_LZMA_NO:
 	  xcompression = "LZMA_NO";
 	  break;
+      case RL2_COMPRESSION_LZ4:
+	  xcompression = "LZ4";
+	  break;
+      case RL2_COMPRESSION_LZ4_NO:
+	  xcompression = "LZ4_NO";
+	  break;
+      case RL2_COMPRESSION_ZSTD:
+	  xcompression = "ZSTD";
+	  break;
+      case RL2_COMPRESSION_ZSTD_NO:
+	  xcompression = "ZSTD_NO";
+	  break;
       case RL2_COMPRESSION_PNG:
 	  xcompression = "PNG";
 	  break;
@@ -2369,6 +2381,26 @@ rl2_create_coverage_from_dbms (sqlite3 * handle, const char *db_prefix,
 			{
 			    ok_compression = 1;
 			    compression = RL2_COMPRESSION_LZMA_NO;
+			}
+		      if (strcasecmp (value, "LZ4") == 0)
+			{
+			    ok_compression = 1;
+			    compression = RL2_COMPRESSION_LZ4;
+			}
+		      if (strcasecmp (value, "LZ4_NO") == 0)
+			{
+			    ok_compression = 1;
+			    compression = RL2_COMPRESSION_LZ4_NO;
+			}
+		      if (strcasecmp (value, "ZSTD") == 0)
+			{
+			    ok_compression = 1;
+			    compression = RL2_COMPRESSION_ZSTD;
+			}
+		      if (strcasecmp (value, "ZSTD_NO") == 0)
+			{
+			    ok_compression = 1;
+			    compression = RL2_COMPRESSION_ZSTD_NO;
 			}
 		      if (strcasecmp (value, "PNG") == 0)
 			{
@@ -9619,6 +9651,26 @@ rl2_copy_raster_coverage (sqlite3 * sqlite, const char *db_prefix,
 			    ok_compression = 1;
 			    compression = value;
 			}
+		      if (strcasecmp (value, "LZ4") == 0)
+			{
+			    ok_compression = 1;
+			    compression = value;
+			}
+		      if (strcasecmp (value, "LZ4_NO") == 0)
+			{
+			    ok_compression = 1;
+			    compression = value;
+			}
+		      if (strcasecmp (value, "ZSTD") == 0)
+			{
+			    ok_compression = 1;
+			    compression = value;
+			}
+		      if (strcasecmp (value, "ZSTD_NO") == 0)
+			{
+			    ok_compression = 1;
+			    compression = value;
+			}
 		      if (strcasecmp (value, "PNG") == 0)
 			{
 			    ok_compression = 1;
@@ -9672,6 +9724,14 @@ rl2_copy_raster_coverage (sqlite3 * sqlite, const char *db_prefix,
 				compr = RL2_COMPRESSION_LZMA;
 			    if (strcasecmp (compression, "LZMA_NO") == 0)
 				compr = RL2_COMPRESSION_LZMA_NO;
+			    if (strcasecmp (compression, "LZ4") == 0)
+				compr = RL2_COMPRESSION_LZ4;
+			    if (strcasecmp (compression, "LZ4_NO") == 0)
+				compr = RL2_COMPRESSION_LZ4_NO;
+			    if (strcasecmp (compression, "ZSTD") == 0)
+				compr = RL2_COMPRESSION_ZSTD;
+			    if (strcasecmp (compression, "ZSTD_NO") == 0)
+				compr = RL2_COMPRESSION_ZSTD_NO;
 			    if (strcasecmp (compression, "PNG") == 0)
 				compr = RL2_COMPRESSION_PNG;
 			    if (strcasecmp (compression, "GIF") == 0)

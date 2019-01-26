@@ -2677,6 +2677,44 @@ main (int argc, char *argv[])
 	  return -1;
       }
 
+#ifndef OMIT_LZ4
+    result = 1;
+#else
+    result = 0;
+#endif /* ; */
+    ret = execute_with_retval (db_handle, "SELECT rl2_has_codec_lz4()");
+    if (ret != result)
+      {
+	  fprintf (stderr, "rl2_has_codec_lz4() unexpected result: %d\n", ret);
+	  return -1;
+      }
+    ret = execute_with_retval (db_handle, "SELECT rl2_has_codec_lz4_no()");
+    if (ret != result)
+      {
+	  fprintf (stderr, "rl2_has_codec_lz4_no() unexpected result: %d\n",
+		   ret);
+	  return -1;
+      }
+
+#ifndef OMIT_ZSTD
+    result = 1;
+#else
+    result = 0;
+#endif /* ; */
+    ret = execute_with_retval (db_handle, "SELECT rl2_has_codec_zstd()");
+    if (ret != result)
+      {
+	  fprintf (stderr, "rl2_has_codec_zstd() unexpected result: %d\n", ret);
+	  return -1;
+      }
+    ret = execute_with_retval (db_handle, "SELECT rl2_has_codec_zstd_no()");
+    if (ret != result)
+      {
+	  fprintf (stderr, "rl2_has_codec_zstd_no() unexpected result: %d\n",
+		   ret);
+	  return -1;
+      }
+
 #ifndef OMIT_CHARLS
     result = 1;
 #else

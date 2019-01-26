@@ -142,6 +142,9 @@
 /* Should be defined in order to disable CharLS support. */
 #undef OMIT_CHARLS
 
+/* Should be defined in order to disable LZ4 support. */
+#undef OMIT_LZ4
+
 /* Should be defined in order to disable LZMA support. */
 #undef OMIT_LZMA
 
@@ -150,6 +153,9 @@
 
 /* Should be defined in order to disable WebP support. */
 #undef OMIT_WEBP
+
+/* Should be defined in order to disable ZSTD support. */
+#undef OMIT_ZSTD
 
 /* Name of package */
 #undef PACKAGE

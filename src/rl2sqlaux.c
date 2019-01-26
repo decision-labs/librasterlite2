@@ -288,6 +288,14 @@ get_coverage_defs (sqlite3 * sqlite, const char *db_prefix,
 		    xcompression = RL2_COMPRESSION_DEFLATE;
 		if (strcmp (compr, "DEFLATE_NO") == 0)
 		    xcompression = RL2_COMPRESSION_DEFLATE_NO;
+		if (strcmp (compr, "LZ4") == 0)
+		    xcompression = RL2_COMPRESSION_LZ4;
+		if (strcmp (compr, "LZ4_NO") == 0)
+		    xcompression = RL2_COMPRESSION_LZ4_NO;
+		if (strcmp (compr, "ZSTD") == 0)
+		    xcompression = RL2_COMPRESSION_ZSTD;
+		if (strcmp (compr, "ZSTD_NO") == 0)
+		    xcompression = RL2_COMPRESSION_ZSTD_NO;
 		if (strcmp (compr, "LZMA") == 0)
 		    xcompression = RL2_COMPRESSION_LZMA;
 		if (strcmp (compr, "LZMA_NO") == 0)

@@ -34,6 +34,10 @@ AH_TEMPLATE([CHARLS_2],
 # config depending options
 AH_TEMPLATE([OMIT_LZMA],
             [Should be defined in order to disable LZMA support.])
+AH_TEMPLATE([OMIT_LZ4],
+            [Should be defined in order to disable LZ4 support.])
+AH_TEMPLATE([OMIT_ZSTD],
+            [Should be defined in order to disable ZSTD support.])
 AH_TEMPLATE([OMIT_WEBP],
             [Should be defined in order to disable WebP support.])
 AH_TEMPLATE([OMIT_OPENJPEG],
@@ -180,6 +184,36 @@ if test x"$enable_lzma" != "xno"; then
     AC_SUBST(LIBLZMA_LIBS)
 else
   AC_DEFINE(OMIT_LZMA)
+fi
+#-----------------------------------------------------------------------
+
+#-----------------------------------------------------------------------
+#   --enable-lz4
+#
+AC_ARG_ENABLE(lz4, [AS_HELP_STRING(
+  [--enable-lz4], [enables LZ4 inclusion [default=yes]])],
+  [], [enable_lzma=yes])
+if test x"$enable_lz4" != "xno"; then
+    PKG_CHECK_MODULES([LIBLZ4], [liblz4], , AC_MSG_ERROR(['liblz4' is required but it doesn't seems to be installed on this system.]))
+    AC_SUBST(LIBLZ4_CFLAGS)
+    AC_SUBST(LIBLZ4_LIBS)
+else
+  AC_DEFINE(OMIT_LZ4)
+fi
+#-----------------------------------------------------------------------
+
+#-----------------------------------------------------------------------
+#   --enable-zstd
+#
+AC_ARG_ENABLE(zstd, [AS_HELP_STRING(
+  [--enable-zstd], [enables ZSTD inclusion [default=yes]])],
+  [], [enable_zstd=yes])
+if test x"$enable_zstd" != "xno"; then
+    PKG_CHECK_MODULES([LIBZSTD], [libzstd], , AC_MSG_ERROR(['libzstd' is required but it doesn't seems to be installed on this system.]))
+    AC_SUBST(LIBZSTD_CFLAGS)
+    AC_SUBST(LIBZSTD_LIBS)
+else
+  AC_DEFINE(OMIT_ZSTD)
 fi
 #-----------------------------------------------------------------------
 

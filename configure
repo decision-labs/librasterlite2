@@ -648,6 +648,10 @@ LIBCAIRO_LIBS
 LIBCAIRO_CFLAGS
 LIBSPATIALITE_LIBS
 LIBSPATIALITE_CFLAGS
+LIBZSTD_LIBS
+LIBZSTD_CFLAGS
+LIBLZ4_LIBS
+LIBLZ4_CFLAGS
 LIBLZMA_LIBS
 LIBLZMA_CFLAGS
 LIBWEBP_LIBS
@@ -800,6 +804,8 @@ enable_gcov
 enable_openjpeg
 enable_webp
 enable_lzma
+enable_lz4
+enable_zstd
 enable_charls
 '
       ac_precious_vars='build_alias
@@ -826,6 +832,10 @@ LIBWEBP_CFLAGS
 LIBWEBP_LIBS
 LIBLZMA_CFLAGS
 LIBLZMA_LIBS
+LIBLZ4_CFLAGS
+LIBLZ4_LIBS
+LIBZSTD_CFLAGS
+LIBZSTD_LIBS
 LIBSPATIALITE_CFLAGS
 LIBSPATIALITE_LIBS
 LIBCAIRO_CFLAGS
@@ -1472,6 +1482,8 @@ Optional Features:
   --enable-openjpeg       enables OpenJpeg inclusion [default=yes]
   --enable-webp           enables WebP inclusion [default=yes]
   --enable-lzma           enables LZMA inclusion [default=yes]
+  --enable-lz4            enables LZ4 inclusion [default=yes]
+  --enable-zstd           enables ZSTD inclusion [default=yes]
   --enable-charls         enables CharLS inclusion [default=yes]
 
 Optional Packages:
@@ -1515,6 +1527,13 @@ Some influential environment variables:
               C compiler flags for LIBLZMA, overriding pkg-config
   LIBLZMA_LIBS
               linker flags for LIBLZMA, overriding pkg-config
+  LIBLZ4_CFLAGS
+              C compiler flags for LIBLZ4, overriding pkg-config
+  LIBLZ4_LIBS linker flags for LIBLZ4, overriding pkg-config
+  LIBZSTD_CFLAGS
+              C compiler flags for LIBZSTD, overriding pkg-config
+  LIBZSTD_LIBS
+              linker flags for LIBZSTD, overriding pkg-config
   LIBSPATIALITE_CFLAGS
               C compiler flags for LIBSPATIALITE, overriding pkg-config
   LIBSPATIALITE_LIBS
@@ -3155,6 +3174,8 @@ $as_echo "#define NDEBUG 1" >>confdefs.h
 
 
 # config depending options
+
+
 
 
 
@@ -18170,6 +18191,186 @@ fi
 
 else
   $as_echo "#define OMIT_LZMA 1" >>confdefs.h
+
+fi
+#-----------------------------------------------------------------------
+
+#-----------------------------------------------------------------------
+#   --enable-lz4
+#
+# Check whether --enable-lz4 was given.
+if test "${enable_lz4+set}" = set; then :
+  enableval=$enable_lz4;
+else
+  enable_lzma=yes
+fi
+
+if test x"$enable_lz4" != "xno"; then
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for LIBLZ4" >&5
+$as_echo_n "checking for LIBLZ4... " >&6; }
+
+if test -n "$LIBLZ4_CFLAGS"; then
+    pkg_cv_LIBLZ4_CFLAGS="$LIBLZ4_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"liblz4\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "liblz4") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LIBLZ4_CFLAGS=`$PKG_CONFIG --cflags "liblz4" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$LIBLZ4_LIBS"; then
+    pkg_cv_LIBLZ4_LIBS="$LIBLZ4_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"liblz4\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "liblz4") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LIBLZ4_LIBS=`$PKG_CONFIG --libs "liblz4" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        LIBLZ4_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "liblz4" 2>&1`
+        else
+	        LIBLZ4_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "liblz4" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$LIBLZ4_PKG_ERRORS" >&5
+
+	as_fn_error $? "'liblz4' is required but it doesn't seems to be installed on this system." "$LINENO" 5
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	as_fn_error $? "'liblz4' is required but it doesn't seems to be installed on this system." "$LINENO" 5
+else
+	LIBLZ4_CFLAGS=$pkg_cv_LIBLZ4_CFLAGS
+	LIBLZ4_LIBS=$pkg_cv_LIBLZ4_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+fi
+
+
+else
+  $as_echo "#define OMIT_LZ4 1" >>confdefs.h
+
+fi
+#-----------------------------------------------------------------------
+
+#-----------------------------------------------------------------------
+#   --enable-zstd
+#
+# Check whether --enable-zstd was given.
+if test "${enable_zstd+set}" = set; then :
+  enableval=$enable_zstd;
+else
+  enable_zstd=yes
+fi
+
+if test x"$enable_zstd" != "xno"; then
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for LIBZSTD" >&5
+$as_echo_n "checking for LIBZSTD... " >&6; }
+
+if test -n "$LIBZSTD_CFLAGS"; then
+    pkg_cv_LIBZSTD_CFLAGS="$LIBZSTD_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libzstd\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libzstd") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LIBZSTD_CFLAGS=`$PKG_CONFIG --cflags "libzstd" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$LIBZSTD_LIBS"; then
+    pkg_cv_LIBZSTD_LIBS="$LIBZSTD_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libzstd\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libzstd") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LIBZSTD_LIBS=`$PKG_CONFIG --libs "libzstd" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        LIBZSTD_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libzstd" 2>&1`
+        else
+	        LIBZSTD_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libzstd" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$LIBZSTD_PKG_ERRORS" >&5
+
+	as_fn_error $? "'libzstd' is required but it doesn't seems to be installed on this system." "$LINENO" 5
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	as_fn_error $? "'libzstd' is required but it doesn't seems to be installed on this system." "$LINENO" 5
+else
+	LIBZSTD_CFLAGS=$pkg_cv_LIBZSTD_CFLAGS
+	LIBZSTD_LIBS=$pkg_cv_LIBZSTD_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+fi
+
+
+else
+  $as_echo "#define OMIT_ZSTD 1" >>confdefs.h
 
 fi
 #-----------------------------------------------------------------------

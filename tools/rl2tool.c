@@ -1578,6 +1578,18 @@ exec_catalog (sqlite3 * handle)
 		else if (strcmp (compression, "LZMA_NO") == 0)
 		    printf
 			("          Compression: LZMA noDelta (7-zip, lossless)\n");
+		else if (strcmp (compression, "LZ4") == 0)
+		    printf
+			("          Compression: LZ4 DeltaFilter (fast lossless)\n");
+		else if (strcmp (compression, "LZ4_NO") == 0)
+		    printf
+			("          Compression: LZ4 noDelta (fast lossless)\n");
+		else if (strcmp (compression, "ZSTD") == 0)
+		    printf
+			("          Compression: ZSTD DeltaFilter (Zstandard, lossless)\n");
+		else if (strcmp (compression, "ZSTD_NO") == 0)
+		    printf
+			("          Compression: ZSTD noDelta (Zstandard, lossless)\n");
 		else if (strcmp (compression, "PNG") == 0)
 		    printf ("          Compression: PNG, lossless\n");
 		else if (strcmp (compression, "JPEG") == 0)
@@ -3010,6 +3022,18 @@ check_create_args (const char *db_path, const char *coverage, int sample,
 			 "*** ERROR *** librasterlite2 was built by disabling LZMA support\n");
 		err = 1;
 		break;
+	    case RL2_COMPRESSION_LZ4:
+	    case RL2_COMPRESSION_LZ4_NO:
+		fprintf (stderr,
+			 "*** ERROR *** librasterlite2 was built by disabling LZ4 support\n");
+		err = 1;
+		break;
+	    case RL2_COMPRESSION_ZSTD:
+	    case RL2_COMPRESSION_ZSTD_NO:
+		fprintf (stderr,
+			 "*** ERROR *** librasterlite2 was built by disabling ZSTD support\n");
+		err = 1;
+		break;
 	    case RL2_COMPRESSION_CHARLS:
 		fprintf (stderr,
 			 "*** ERROR *** librasterlite2 was built by disabling CharLS support\n");
@@ -3057,6 +3081,24 @@ check_create_args (const char *db_path, const char *coverage, int sample,
 	  break;
       case RL2_COMPRESSION_LZMA_NO:
 	  printf ("          Compression: LZMA noDelta (7-zip, lossless)\n");
+	  *quality = 100;
+	  break;
+      case RL2_COMPRESSION_LZ4:
+	  printf
+	      ("          Compression: LZ4 DeltaFilter (fast lossless)\n");
+	  *quality = 100;
+	  break;
+      case RL2_COMPRESSION_LZ4_NO:
+	  printf ("          Compression: LZ4 noDelta (fast lossless)\n");
+	  *quality = 100;
+	  break;
+      case RL2_COMPRESSION_ZSTD:
+	  printf
+	      ("          Compression: ZSTD DeltaFilter (Zstandard, lossless)\n");
+	  *quality = 100;
+	  break;
+      case RL2_COMPRESSION_ZSTD_NO:
+	  printf ("          Compression: ZSTD noDelta (Zstandard, lossless)\n");
 	  *quality = 100;
 	  break;
       case RL2_COMPRESSION_GIF:
@@ -3302,6 +3344,12 @@ check_export_args (const char *db_path, const char *dst_path,
 		      break;
 		  case RL2_COMPRESSION_LZMA:
 		      printf ("       compression: LZMA\n");
+		      break;
+		  case RL2_COMPRESSION_LZ4:
+		      printf ("       compression: LZ4\n");
+		      break;
+		  case RL2_COMPRESSION_ZSTD:
+		      printf ("       compression: ZSTD\n");
 		      break;
 		  case RL2_COMPRESSION_JPEG:
 		      printf ("       compression: JPEG\n");
@@ -3598,6 +3646,12 @@ check_section_export_args (const char *db_path, const char *dst_path,
 		      break;
 		  case RL2_COMPRESSION_LZMA:
 		      printf ("       compression: LZMA\n");
+		      break;
+		  case RL2_COMPRESSION_LZ4:
+		      printf ("       compression: LZ4\n");
+		      break;
+		  case RL2_COMPRESSION_ZSTD:
+		      printf ("       compression: ZSTD\n");
 		      break;
 		  case RL2_COMPRESSION_JPEG:
 		      printf ("       compression: JPEG\n");
@@ -4367,6 +4421,8 @@ do_version ()
     fprintf (stderr, "libcurl ........: %s\n", rl2_curl_version ());
     fprintf (stderr, "DEFLATE ........: %s\n", rl2_zlib_version ());
     fprintf (stderr, "LZMA ...........: %s\n", rl2_lzma_version ());
+    fprintf (stderr, "LZ4 ............: %s\n", rl2_lz4_version ());
+    fprintf (stderr, "ZSTD ...........: %s\n", rl2_zstd_version ());
     fprintf (stderr, "PNG ............: %s\n", rl2_png_version ());
     fprintf (stderr, "JPEG ...........: %s\n", rl2_jpeg_version ());
     fprintf (stderr, "TIFF ...........: %s\n", rl2_tiff_version ());
@@ -4433,7 +4489,7 @@ do_help (int mode)
 	  fprintf (stderr, "Compression Keywords:\n");
 	  fprintf (stderr, "----------------------------------\n");
 	  fprintf (stderr,
-		   "NONE DEFLATE DEFLATE_NO LZMA LZMA_NO PNG JPEG WEBP LL_WEBP FAX4 CHARLS JP2 LL_JP2\n\n");
+		   "NONE DEFLATE DEFLATE_NO LZMA LZMA_NO LZ4 LZ4_NO ZSTD ZSTD_NO PNG JPEG WEBP LL_WEBP FAX4 CHARLS JP2 LL_JP2\n\n");
 	  fprintf (stderr, "Extra args supported by MULTIBAND:\n");
 	  fprintf (stderr, "----------------------------------\n");
 	  fprintf (stderr, "-red or --red-band     pixel    RED band index\n");
@@ -4975,7 +5031,15 @@ main (int argc, char *argv[])
 		      if (strcasecmp (argv[i], "LZMA") == 0)
 			  compression = RL2_COMPRESSION_LZMA;
 		      if (strcasecmp (argv[i], "LZMA_NO") == 0)
-			  compression = RL2_COMPRESSION_LZMA_NO;
+			  compression = RL2_COMPRESSION_LZMA_NO;;
+		      if (strcasecmp (argv[i], "LZ4") == 0)
+			  compression = RL2_COMPRESSION_LZ4;
+		      if (strcasecmp (argv[i], "LZ4_NO") == 0)
+			  compression = RL2_COMPRESSION_LZ4_NO;;
+		      if (strcasecmp (argv[i], "ZSTD") == 0)
+			  compression = RL2_COMPRESSION_ZSTD;
+		      if (strcasecmp (argv[i], "ZSTD_NO") == 0)
+			  compression = RL2_COMPRESSION_ZSTD_NO;
 		      if (strcasecmp (argv[i], "LZW") == 0)
 			  compression = RL2_COMPRESSION_LZW;
 		      if (strcasecmp (argv[i], "GIF") == 0)
