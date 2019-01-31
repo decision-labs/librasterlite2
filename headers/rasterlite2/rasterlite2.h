@@ -145,37 +145,37 @@ extern "C"
 /** RasterLite2 constant: Compression LZMA Delta */
 #define RL2_COMPRESSION_LZMA		0x23
 /** RasterLite2 constant: Compression LZMA noDelta */
-#define RL2_COMPRESSION_LZMA_NO		0xd3
+#define RL2_COMPRESSION_LZMA_NO	0xd3
+/** RasterLite2 constant: Compression GIF */
+#define RL2_COMPRESSION_GIF		0x24
+/** RasterLite2 constant: Compression PNG */
+#define RL2_COMPRESSION_PNG		0x25
+/** RasterLite2 constant: Compression JPEG */
+#define RL2_COMPRESSION_JPEG		0x26
+/** RasterLite2 constant: Compression WEBP (lossy mode) */
+#define RL2_COMPRESSION_LOSSY_WEBP	0x27
+/** RasterLite2 constant: Compression WEBP (lossless mode) */
+#define RL2_COMPRESSION_LOSSLESS_WEBP	0x28
+/** RasterLite2 constant: Compression CCITTFAX3 */
+#define RL2_COMPRESSION_CCITTFAX3	0x29
+/** RasterLite2 constant: Compression CCITTFAX4 */
+#define RL2_COMPRESSION_CCITTFAX4	0x30
+/** RasterLite2 constant: Compression LZW */
+#define RL2_COMPRESSION_LZW		0x31
+/** RasterLite2 constant: Compression CHARLS */
+#define RL2_COMPRESSION_CHARLS		0x32
+/** RasterLite2 constant: Compression JPEG2000 (lossy mode) */
+#define RL2_COMPRESSION_LOSSY_JP2	0x33
+/** RasterLite2 constant: Compression JPEG2000 (lossless mode) */
+#define RL2_COMPRESSION_LOSSLESS_JP2	0x34
 /** RasterLite2 constant: Compression LZ4 Delta */
-#define RL2_COMPRESSION_LZ4			0x24
+#define RL2_COMPRESSION_LZ4		0x35
 /** RasterLite2 constant: Compression LZ4 noDelta */
 #define RL2_COMPRESSION_LZ4_NO		0xd4
 /** RasterLite2 constant: Compression ZSTD Delta */
-#define RL2_COMPRESSION_ZSTD		0x25
+#define RL2_COMPRESSION_ZSTD		0x36
 /** RasterLite2 constant: Compression ZSTD noDelta */
-#define RL2_COMPRESSION_ZSTD_NO		0xd5
-/** RasterLite2 constant: Compression GIF */
-#define RL2_COMPRESSION_GIF			0x26
-/** RasterLite2 constant: Compression PNG */
-#define RL2_COMPRESSION_PNG			0x27
-/** RasterLite2 constant: Compression JPEG */
-#define RL2_COMPRESSION_JPEG		0x28
-/** RasterLite2 constant: Compression WEBP (lossy mode) */
-#define RL2_COMPRESSION_LOSSY_WEBP	0x29
-/** RasterLite2 constant: Compression WEBP (lossless mode) */
-#define RL2_COMPRESSION_LOSSLESS_WEBP	0x30
-/** RasterLite2 constant: Compression CCITTFAX3 */
-#define RL2_COMPRESSION_CCITTFAX3	0x31
-/** RasterLite2 constant: Compression CCITTFAX4 */
-#define RL2_COMPRESSION_CCITTFAX4	0x32
-/** RasterLite2 constant: Compression LZW */
-#define RL2_COMPRESSION_LZW			0x33
-/** RasterLite2 constant: Compression CHARLS */
-#define RL2_COMPRESSION_CHARLS		0x34
-/** RasterLite2 constant: Compression JPEG2000 (lossy mode) */
-#define RL2_COMPRESSION_LOSSY_JP2	0x35
-/** RasterLite2 constant: Compression JPEG2000 (lossless mode) */
-#define RL2_COMPRESSION_LOSSLESS_JP2	0x36
+#define RL2_COMPRESSION_ZSTD_NO	0xd5
 
 /** RasterLite2 constant: UNKNOWN number of Bands */
 #define RL2_BANDS_UNKNOWN		0x00

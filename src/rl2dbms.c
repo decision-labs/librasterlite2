@@ -6355,6 +6355,8 @@ rl2_get_raw_raster_data_common (sqlite3 * handle, int max_threads,
     *buf_size = bufpix_size;
     if (palette != NULL)
 	*palette = plt;
+    else if (plt)		/* patch suggested by Even Rouault 2019-01-28 */
+	rl2_destroy_palette (plt);
     if (shaded_relief != NULL)
 	free (shaded_relief);
 
@@ -6371,6 +6373,8 @@ rl2_get_raw_raster_data_common (sqlite3 * handle, int max_threads,
 	rl2_destroy_pixel (kill_no_data);
     if (shaded_relief != NULL)
 	free (shaded_relief);
+    if (plt)			/* patch suggested by Even Rouault 2019-01-28 */
+	rl2_destroy_palette (plt);
     return RL2_ERROR;
 }
 

@@ -18202,7 +18202,7 @@ fi
 if test "${enable_lz4+set}" = set; then :
   enableval=$enable_lz4;
 else
-  enable_lzma=yes
+  enable_lz4=yes
 fi
 
 if test x"$enable_lz4" != "xno"; then

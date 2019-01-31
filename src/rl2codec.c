@@ -67,6 +67,8 @@ the terms of any one of the MPL, the GPL or the LGPL.
 #include "rasterlite2/rl2tiff.h"
 #include "rasterlite2_private.h"
 
+#define ZSTD_LEVEL	3
+
 static int
 endianArch ()
 {
@@ -1018,6 +1020,10 @@ check_encode_self_consistency (unsigned char sample_type,
 			case RL2_COMPRESSION_DEFLATE_NO:
 			case RL2_COMPRESSION_LZMA:
 			case RL2_COMPRESSION_LZMA_NO:
+			case RL2_COMPRESSION_LZ4:
+			case RL2_COMPRESSION_LZ4_NO:
+			case RL2_COMPRESSION_ZSTD:
+			case RL2_COMPRESSION_ZSTD_NO:
 			case RL2_COMPRESSION_PNG:
 			case RL2_COMPRESSION_LOSSY_WEBP:
 			case RL2_COMPRESSION_LOSSLESS_WEBP:
@@ -2585,7 +2591,7 @@ rl2_raster_encode (rl2RasterPtr rst, int compression,
 	      goto error;
 	  compressed_data_size =
 	      ZSTD_compress (zstd_buf, cBuffSize, pixels_odd, (size_t) size_odd,
-			     ZSTD_CLEVEL_DEFAULT);
+			     ZSTD_LEVEL);
 	  if (compressed_data_size > 0)
 	    {
 		/* ok, ZSTD compression was successful */
@@ -2638,7 +2644,7 @@ rl2_raster_encode (rl2RasterPtr rst, int compression,
 	    }
 	  compressed_data_size =
 	      ZSTD_compress (zstd_buf, cBuffSize, pixels_odd, (size_t) size_odd,
-			     ZSTD_CLEVEL_DEFAULT);
+			     ZSTD_LEVEL);
 	  if (compressed_data_size > 0)
 	    {
 		/* ok, ZSTD compression was successful */
@@ -3243,7 +3249,7 @@ rl2_raster_encode (rl2RasterPtr rst, int compression,
 		    goto error;
 		compressed_data_size =
 		    ZSTD_compress (zstd_buf, cBuffSize, pixels_even,
-				   (size_t) size_even, ZSTD_CLEVEL_DEFAULT);
+				   (size_t) size_even, ZSTD_LEVEL);
 		if (rl2_delta_encode (pixels_even, size_even, delta_dist) !=
 		    RL2_OK)
 		    goto error;
@@ -3293,7 +3299,7 @@ rl2_raster_encode (rl2RasterPtr rst, int compression,
 		  }
 		compressed_data_size =
 		    ZSTD_compress (zstd_buf, cBuffSize, pixels_even,
-				   (size_t) size_even, ZSTD_CLEVEL_DEFAULT);
+				   (size_t) size_even, ZSTD_LEVEL);
 		if (compressed_data_size > 0)
 		  {
 		      /* ok, ZSTD compression was successful */
@@ -9236,7 +9242,8 @@ rl2_lz4_version (void)
 /* returning the LZ4 version string */
     static char version[128];
 #ifndef OMIT_LZ4
-    sprintf (version, "liblz4 %s", LZ4_versionString ());
+    sprintf (version, "liblz4 %d.%d.%d", LZ4_VERSION_MAJOR, LZ4_VERSION_MINOR,
+	     LZ4_VERSION_RELEASE);
     return version;
 #else
     strcpy (version, "unsupported");
@@ -9250,7 +9257,8 @@ rl2_zstd_version (void)
 /* returning the ZSTD version string */
     static char version[128];
 #ifndef OMIT_ZSTD
-    sprintf (version, "libzstd %s", ZSTD_versionString ());
+    sprintf (version, "libzstd %d.%d.%d", ZSTD_VERSION_MAJOR,
+	     ZSTD_VERSION_MINOR, ZSTD_VERSION_RELEASE);
     return version;
 #else
     strcpy (version, "unsupported");

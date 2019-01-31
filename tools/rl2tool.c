@@ -2912,7 +2912,10 @@ check_create_args (const char *db_path, const char *coverage, int sample,
 	  unsigned char xpixel;
 	  unsigned char xbands;
 	  int band_idx;
-	  if (rl2_get_pixel_type (pxl, &xsample, &xpixel, &xbands) != RL2_OK)
+	  if (rl2_is_pixel_none (pxl) == RL2_TRUE)
+	      printf ("        NO-DATA pixel: NONE (all pixels are valid)\n");
+	  else if (rl2_get_pixel_type (pxl, &xsample, &xpixel, &xbands) !=
+		   RL2_OK)
 	      fprintf (stderr, "*** ERROR *** invalid NO-DATA pixel\n");
 	  else
 	    {
@@ -3084,8 +3087,7 @@ check_create_args (const char *db_path, const char *coverage, int sample,
 	  *quality = 100;
 	  break;
       case RL2_COMPRESSION_LZ4:
-	  printf
-	      ("          Compression: LZ4 DeltaFilter (fast lossless)\n");
+	  printf ("          Compression: LZ4 DeltaFilter (fast lossless)\n");
 	  *quality = 100;
 	  break;
       case RL2_COMPRESSION_LZ4_NO:
@@ -3098,7 +3100,8 @@ check_create_args (const char *db_path, const char *coverage, int sample,
 	  *quality = 100;
 	  break;
       case RL2_COMPRESSION_ZSTD_NO:
-	  printf ("          Compression: ZSTD noDelta (Zstandard, lossless)\n");
+	  printf
+	      ("          Compression: ZSTD noDelta (Zstandard, lossless)\n");
 	  *quality = 100;
 	  break;
       case RL2_COMPRESSION_GIF:
@@ -5456,7 +5459,6 @@ main (int argc, char *argv[])
       }
 
 /* checking the arguments */
-    fprintf (stderr, "*********** check\n");
     switch (mode)
       {
       case ARG_MODE_CREATE:
