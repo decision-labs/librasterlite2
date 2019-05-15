@@ -48,9 +48,6 @@
 /* Define to 1 if you have the `jpeg' library (-ljpeg). */
 #undef HAVE_LIBJPEG
 
-/* Define to 1 if you have the `proj' library (-lproj). */
-#undef HAVE_LIBPROJ
-
 /* Define to 1 if you have the `sqlite3' library (-lsqlite3). */
 #undef HAVE_LIBSQLITE3
 
@@ -72,6 +69,12 @@
 
 /* Define to 1 if you have the <png.h> header file. */
 #undef HAVE_PNG_H
+
+/* Define to 1 if you have the <proj_api.h> header file. */
+#undef HAVE_PROJ_API_H
+
+/* Define to 1 if you have the <proj.h> header file. */
+#undef HAVE_PROJ_H
 
 /* Define to 1 if you have the <sqlite3ext.h> header file. */
 #undef HAVE_SQLITE3EXT_H
@@ -177,6 +180,9 @@
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
+
+/* Should be defined in order to enable PROJ.6 support. */
+#undef PROJ_NEW
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS

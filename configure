@@ -636,16 +636,20 @@ am__EXEEXT_TRUE
 LTLIBOBJS
 MINGW_FALSE
 MINGW_TRUE
+LIBCAIRO_LIBS
+LIBCAIRO_CFLAGS
+LIBPIXMAN_LIBS
+LIBPIXMAN_CFLAGS
+LIBFONTCONFIG_LIBS
+LIBFONTCONFIG_CFLAGS
 LIBFREETYPE2_LIBS
 LIBFREETYPE2_CFLAGS
-FREETYPE2_LIBS
-FREETYPE2_CFLAGS
 LIBXML2_LIBS
 LIBXML2_CFLAGS
 LIBCURL_LIBS
 LIBCURL_CFLAGS
-LIBCAIRO_LIBS
-LIBCAIRO_CFLAGS
+LIBPNG_LIBS
+LIBPNG_CFLAGS
 LIBSPATIALITE_LIBS
 LIBSPATIALITE_CFLAGS
 LIBZSTD_LIBS
@@ -658,8 +662,6 @@ LIBWEBP_LIBS
 LIBWEBP_CFLAGS
 LIBOPENJP2_LIBS
 LIBOPENJP2_CFLAGS
-LIBPNG_LIBS
-LIBPNG_CFLAGS
 PKG_CONFIG_LIBDIR
 PKG_CONFIG_PATH
 PKG_CONFIG
@@ -824,8 +826,6 @@ CXXCPP
 PKG_CONFIG
 PKG_CONFIG_PATH
 PKG_CONFIG_LIBDIR
-LIBPNG_CFLAGS
-LIBPNG_LIBS
 LIBOPENJP2_CFLAGS
 LIBOPENJP2_LIBS
 LIBWEBP_CFLAGS
@@ -838,14 +838,20 @@ LIBZSTD_CFLAGS
 LIBZSTD_LIBS
 LIBSPATIALITE_CFLAGS
 LIBSPATIALITE_LIBS
-LIBCAIRO_CFLAGS
-LIBCAIRO_LIBS
+LIBPNG_CFLAGS
+LIBPNG_LIBS
 LIBCURL_CFLAGS
 LIBCURL_LIBS
 LIBXML2_CFLAGS
 LIBXML2_LIBS
-FREETYPE2_CFLAGS
-FREETYPE2_LIBS'
+LIBFREETYPE2_CFLAGS
+LIBFREETYPE2_LIBS
+LIBFONTCONFIG_CFLAGS
+LIBFONTCONFIG_LIBS
+LIBPIXMAN_CFLAGS
+LIBPIXMAN_LIBS
+LIBCAIRO_CFLAGS
+LIBCAIRO_LIBS'
 
 
 # Initialize some variables set by options.
@@ -1512,9 +1518,6 @@ Some influential environment variables:
               directories to add to pkg-config's search path
   PKG_CONFIG_LIBDIR
               path overriding pkg-config's built-in search path
-  LIBPNG_CFLAGS
-              C compiler flags for LIBPNG, overriding pkg-config
-  LIBPNG_LIBS linker flags for LIBPNG, overriding pkg-config
   LIBOPENJP2_CFLAGS
               C compiler flags for LIBOPENJP2, overriding pkg-config
   LIBOPENJP2_LIBS
@@ -1538,10 +1541,9 @@ Some influential environment variables:
               C compiler flags for LIBSPATIALITE, overriding pkg-config
   LIBSPATIALITE_LIBS
               linker flags for LIBSPATIALITE, overriding pkg-config
-  LIBCAIRO_CFLAGS
-              C compiler flags for LIBCAIRO, overriding pkg-config
-  LIBCAIRO_LIBS
-              linker flags for LIBCAIRO, overriding pkg-config
+  LIBPNG_CFLAGS
+              C compiler flags for LIBPNG, overriding pkg-config
+  LIBPNG_LIBS linker flags for LIBPNG, overriding pkg-config
   LIBCURL_CFLAGS
               C compiler flags for LIBCURL, overriding pkg-config
   LIBCURL_LIBS
@@ -1550,10 +1552,22 @@ Some influential environment variables:
               C compiler flags for LIBXML2, overriding pkg-config
   LIBXML2_LIBS
               linker flags for LIBXML2, overriding pkg-config
-  FREETYPE2_CFLAGS
-              C compiler flags for FREETYPE2, overriding pkg-config
-  FREETYPE2_LIBS
-              linker flags for FREETYPE2, overriding pkg-config
+  LIBFREETYPE2_CFLAGS
+              C compiler flags for LIBFREETYPE2, overriding pkg-config
+  LIBFREETYPE2_LIBS
+              linker flags for LIBFREETYPE2, overriding pkg-config
+  LIBFONTCONFIG_CFLAGS
+              C compiler flags for LIBFONTCONFIG, overriding pkg-config
+  LIBFONTCONFIG_LIBS
+              linker flags for LIBFONTCONFIG, overriding pkg-config
+  LIBPIXMAN_CFLAGS
+              C compiler flags for LIBPIXMAN, overriding pkg-config
+  LIBPIXMAN_LIBS
+              linker flags for LIBPIXMAN, overriding pkg-config
+  LIBCAIRO_CFLAGS
+              C compiler flags for LIBCAIRO, overriding pkg-config
+  LIBCAIRO_LIBS
+              linker flags for LIBCAIRO, overriding pkg-config
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -3174,6 +3188,7 @@ $as_echo "#define NDEBUG 1" >>confdefs.h
 
 
 # config depending options
+
 
 
 
@@ -17637,53 +17652,6 @@ else
   as_fn_error $? "'libtiff' is required but it doesn't seems to be installed on this system." "$LINENO" 5
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for pj_init_plus in -lproj" >&5
-$as_echo_n "checking for pj_init_plus in -lproj... " >&6; }
-if ${ac_cv_lib_proj_pj_init_plus+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lproj -lm $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char pj_init_plus ();
-int
-main ()
-{
-return pj_init_plus ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_proj_pj_init_plus=yes
-else
-  ac_cv_lib_proj_pj_init_plus=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_proj_pj_init_plus" >&5
-$as_echo "$ac_cv_lib_proj_pj_init_plus" >&6; }
-if test "x$ac_cv_lib_proj_pj_init_plus" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBPROJ 1
-_ACEOF
-
-  LIBS="-lproj $LIBS"
-
-else
-  as_fn_error $? "'l'libproj' is required but the version on this system does not support the required features (Version 4.8.0 or later is needed)." "$LINENO" 5
-fi
-
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTIFSetFromProj4 in -lgeotiff" >&5
 $as_echo_n "checking for GTIFSetFromProj4 in -lgeotiff... " >&6; }
 if ${ac_cv_lib_geotiff_GTIFSetFromProj4+:} false; then :
@@ -17732,6 +17700,164 @@ else
 fi
 
 
+for ac_header in proj.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "proj.h" "ac_cv_header_proj_h" "$ac_includes_default"
+if test "x$ac_cv_header_proj_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_PROJ_H 1
+_ACEOF
+ proj_new_incl=1
+else
+  for ac_header in proj_api.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "proj_api.h" "ac_cv_header_proj_api_h" "$ac_includes_default"
+if test "x$ac_cv_header_proj_api_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_PROJ_API_H 1
+_ACEOF
+ proj_new_incl=0
+else
+  as_fn_error $? "cannot find proj_api.h, bailing out" "$LINENO" 5
+fi
+
+done
+
+fi
+
+done
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing proj_normalize_for_visualization" >&5
+$as_echo_n "checking for library containing proj_normalize_for_visualization... " >&6; }
+if ${ac_cv_search_proj_normalize_for_visualization+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char proj_normalize_for_visualization ();
+int
+main ()
+{
+return proj_normalize_for_visualization ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' proj; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_proj_normalize_for_visualization=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_proj_normalize_for_visualization+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_proj_normalize_for_visualization+:} false; then :
+
+else
+  ac_cv_search_proj_normalize_for_visualization=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_proj_normalize_for_visualization" >&5
+$as_echo "$ac_cv_search_proj_normalize_for_visualization" >&6; }
+ac_res=$ac_cv_search_proj_normalize_for_visualization
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+  proj_new_lib=1
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing pj_init_plus" >&5
+$as_echo_n "checking for library containing pj_init_plus... " >&6; }
+if ${ac_cv_search_pj_init_plus+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char pj_init_plus ();
+int
+main ()
+{
+return pj_init_plus ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' proj; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib -lm -lpthread -lsqlite3 $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_pj_init_plus=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_pj_init_plus+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_pj_init_plus+:} false; then :
+
+else
+  ac_cv_search_pj_init_plus=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_pj_init_plus" >&5
+$as_echo "$ac_cv_search_pj_init_plus" >&6; }
+ac_res=$ac_cv_search_pj_init_plus
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+  proj_new_lib=0
+else
+  as_fn_error $? "'libproj' is required but it doesn't seem to be installed on this system." "$LINENO" 5
+fi
+
+fi
+
+if test $proj_new_incl -eq 1 && test $proj_new_lib -eq 1; then
+   $as_echo "#define PROJ_NEW 1" >>confdefs.h
+
+fi
+
+#-----------------------------------------------------------------------
+#   --enable-openjpeg
+#
+# Check whether --enable-openjpeg was given.
+if test "${enable_openjpeg+set}" = set; then :
+  enableval=$enable_openjpeg;
+else
+  enable_openjpeg=yes
+fi
+
+if test x"$enable_openjpeg" != "xno"; then
 
 
 
@@ -17852,91 +17978,6 @@ $as_echo "no" >&6; }
 		PKG_CONFIG=""
 	fi
 fi
-
-pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for LIBPNG" >&5
-$as_echo_n "checking for LIBPNG... " >&6; }
-
-if test -n "$LIBPNG_CFLAGS"; then
-    pkg_cv_LIBPNG_CFLAGS="$LIBPNG_CFLAGS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libpng\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "libpng") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_LIBPNG_CFLAGS=`$PKG_CONFIG --cflags "libpng" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-if test -n "$LIBPNG_LIBS"; then
-    pkg_cv_LIBPNG_LIBS="$LIBPNG_LIBS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libpng\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "libpng") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_LIBPNG_LIBS=`$PKG_CONFIG --libs "libpng" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-
-
-
-if test $pkg_failed = yes; then
-   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
-        _pkg_short_errors_supported=yes
-else
-        _pkg_short_errors_supported=no
-fi
-        if test $_pkg_short_errors_supported = yes; then
-	        LIBPNG_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libpng" 2>&1`
-        else
-	        LIBPNG_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libpng" 2>&1`
-        fi
-	# Put the nasty error message in config.log where it belongs
-	echo "$LIBPNG_PKG_ERRORS" >&5
-
-	as_fn_error $? "'libpng' is required but it doesn't seems to be installed on this system." "$LINENO" 5
-elif test $pkg_failed = untried; then
-     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-	as_fn_error $? "'libpng' is required but it doesn't seems to be installed on this system." "$LINENO" 5
-else
-	LIBPNG_CFLAGS=$pkg_cv_LIBPNG_CFLAGS
-	LIBPNG_LIBS=$pkg_cv_LIBPNG_LIBS
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-fi
-
-
-
-#-----------------------------------------------------------------------
-#   --enable-openjpeg
-#
-# Check whether --enable-openjpeg was given.
-if test "${enable_openjpeg+set}" = set; then :
-  enableval=$enable_openjpeg;
-else
-  enable_openjpeg=yes
-fi
-
-if test x"$enable_openjpeg" != "xno"; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for LIBOPENJP2" >&5
@@ -18573,19 +18614,19 @@ fi
 
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for LIBCAIRO" >&5
-$as_echo_n "checking for LIBCAIRO... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for LIBPNG" >&5
+$as_echo_n "checking for LIBPNG... " >&6; }
 
-if test -n "$LIBCAIRO_CFLAGS"; then
-    pkg_cv_LIBCAIRO_CFLAGS="$LIBCAIRO_CFLAGS"
+if test -n "$LIBPNG_CFLAGS"; then
+    pkg_cv_LIBPNG_CFLAGS="$LIBPNG_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"cairo\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "cairo") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libpng\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libpng") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_LIBCAIRO_CFLAGS=`$PKG_CONFIG --cflags "cairo" 2>/dev/null`
+  pkg_cv_LIBPNG_CFLAGS=`$PKG_CONFIG --cflags "libpng" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -18593,16 +18634,16 @@ fi
  else
     pkg_failed=untried
 fi
-if test -n "$LIBCAIRO_LIBS"; then
-    pkg_cv_LIBCAIRO_LIBS="$LIBCAIRO_LIBS"
+if test -n "$LIBPNG_LIBS"; then
+    pkg_cv_LIBPNG_LIBS="$LIBPNG_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"cairo\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "cairo") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libpng\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libpng") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_LIBCAIRO_LIBS=`$PKG_CONFIG --libs "cairo" 2>/dev/null`
+  pkg_cv_LIBPNG_LIBS=`$PKG_CONFIG --libs "libpng" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -18623,21 +18664,21 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        LIBCAIRO_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "cairo" 2>&1`
+	        LIBPNG_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libpng" 2>&1`
         else
-	        LIBCAIRO_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "cairo" 2>&1`
+	        LIBPNG_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libpng" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
-	echo "$LIBCAIRO_PKG_ERRORS" >&5
+	echo "$LIBPNG_PKG_ERRORS" >&5
 
-	as_fn_error $? "'libcairo' is required but it doesn't seems to be installed on this system." "$LINENO" 5
+	as_fn_error $? "'libpng' is required but it doesn't seems to be installed on this system." "$LINENO" 5
 elif test $pkg_failed = untried; then
      	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-	as_fn_error $? "'libcairo' is required but it doesn't seems to be installed on this system." "$LINENO" 5
+	as_fn_error $? "'libpng' is required but it doesn't seems to be installed on this system." "$LINENO" 5
 else
-	LIBCAIRO_CFLAGS=$pkg_cv_LIBCAIRO_CFLAGS
-	LIBCAIRO_LIBS=$pkg_cv_LIBCAIRO_LIBS
+	LIBPNG_CFLAGS=$pkg_cv_LIBPNG_CFLAGS
+	LIBPNG_LIBS=$pkg_cv_LIBPNG_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 
@@ -18795,11 +18836,11 @@ fi
 
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for FREETYPE2" >&5
-$as_echo_n "checking for FREETYPE2... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for LIBFREETYPE2" >&5
+$as_echo_n "checking for LIBFREETYPE2... " >&6; }
 
-if test -n "$FREETYPE2_CFLAGS"; then
-    pkg_cv_FREETYPE2_CFLAGS="$FREETYPE2_CFLAGS"
+if test -n "$LIBFREETYPE2_CFLAGS"; then
+    pkg_cv_LIBFREETYPE2_CFLAGS="$LIBFREETYPE2_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
     { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"freetype2\""; } >&5
@@ -18807,7 +18848,7 @@ if test -n "$FREETYPE2_CFLAGS"; then
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_FREETYPE2_CFLAGS=`$PKG_CONFIG --cflags "freetype2" 2>/dev/null`
+  pkg_cv_LIBFREETYPE2_CFLAGS=`$PKG_CONFIG --cflags "freetype2" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -18815,8 +18856,8 @@ fi
  else
     pkg_failed=untried
 fi
-if test -n "$FREETYPE2_LIBS"; then
-    pkg_cv_FREETYPE2_LIBS="$FREETYPE2_LIBS"
+if test -n "$LIBFREETYPE2_LIBS"; then
+    pkg_cv_LIBFREETYPE2_LIBS="$LIBFREETYPE2_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
     { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"freetype2\""; } >&5
@@ -18824,7 +18865,7 @@ if test -n "$FREETYPE2_LIBS"; then
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_FREETYPE2_LIBS=`$PKG_CONFIG --libs "freetype2" 2>/dev/null`
+  pkg_cv_LIBFREETYPE2_LIBS=`$PKG_CONFIG --libs "freetype2" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -18845,12 +18886,12 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        FREETYPE2_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "freetype2" 2>&1`
+	        LIBFREETYPE2_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "freetype2" 2>&1`
         else
-	        FREETYPE2_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "freetype2" 2>&1`
+	        LIBFREETYPE2_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "freetype2" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
-	echo "$FREETYPE2_PKG_ERRORS" >&5
+	echo "$LIBFREETYPE2_PKG_ERRORS" >&5
 
 	as_fn_error $? "'freetype2' is required but it doesn't seem to be installed on this system." "$LINENO" 5
 elif test $pkg_failed = untried; then
@@ -18858,8 +18899,230 @@ elif test $pkg_failed = untried; then
 $as_echo "no" >&6; }
 	as_fn_error $? "'freetype2' is required but it doesn't seem to be installed on this system." "$LINENO" 5
 else
-	FREETYPE2_CFLAGS=$pkg_cv_FREETYPE2_CFLAGS
-	FREETYPE2_LIBS=$pkg_cv_FREETYPE2_LIBS
+	LIBFREETYPE2_CFLAGS=$pkg_cv_LIBFREETYPE2_CFLAGS
+	LIBFREETYPE2_LIBS=$pkg_cv_LIBFREETYPE2_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+fi
+
+
+
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for LIBFONTCONFIG" >&5
+$as_echo_n "checking for LIBFONTCONFIG... " >&6; }
+
+if test -n "$LIBFONTCONFIG_CFLAGS"; then
+    pkg_cv_LIBFONTCONFIG_CFLAGS="$LIBFONTCONFIG_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"fontconfig\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "fontconfig") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LIBFONTCONFIG_CFLAGS=`$PKG_CONFIG --cflags "fontconfig" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$LIBFONTCONFIG_LIBS"; then
+    pkg_cv_LIBFONTCONFIG_LIBS="$LIBFONTCONFIG_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"fontconfig\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "fontconfig") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LIBFONTCONFIG_LIBS=`$PKG_CONFIG --libs "fontconfig" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        LIBFONTCONFIG_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "fontconfig" 2>&1`
+        else
+	        LIBFONTCONFIG_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "fontconfig" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$LIBFONTCONFIG_PKG_ERRORS" >&5
+
+	as_fn_error $? "'freetype2' is required but it doesn't seem to be installed on this system." "$LINENO" 5
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	as_fn_error $? "'freetype2' is required but it doesn't seem to be installed on this system." "$LINENO" 5
+else
+	LIBFONTCONFIG_CFLAGS=$pkg_cv_LIBFONTCONFIG_CFLAGS
+	LIBFONTCONFIG_LIBS=$pkg_cv_LIBFONTCONFIG_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+fi
+
+
+
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for LIBPIXMAN" >&5
+$as_echo_n "checking for LIBPIXMAN... " >&6; }
+
+if test -n "$LIBPIXMAN_CFLAGS"; then
+    pkg_cv_LIBPIXMAN_CFLAGS="$LIBPIXMAN_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"pixman-1\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "pixman-1") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LIBPIXMAN_CFLAGS=`$PKG_CONFIG --cflags "pixman-1" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$LIBPIXMAN_LIBS"; then
+    pkg_cv_LIBPIXMAN_LIBS="$LIBPIXMAN_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"pixman-1\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "pixman-1") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LIBPIXMAN_LIBS=`$PKG_CONFIG --libs "pixman-1" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        LIBPIXMAN_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "pixman-1" 2>&1`
+        else
+	        LIBPIXMAN_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "pixman-1" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$LIBPIXMAN_PKG_ERRORS" >&5
+
+	as_fn_error $? "'libpixman' is required but it doesn't seems to be installed on this system." "$LINENO" 5
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	as_fn_error $? "'libpixman' is required but it doesn't seems to be installed on this system." "$LINENO" 5
+else
+	LIBPIXMAN_CFLAGS=$pkg_cv_LIBPIXMAN_CFLAGS
+	LIBPIXMAN_LIBS=$pkg_cv_LIBPIXMAN_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+fi
+
+
+
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for LIBCAIRO" >&5
+$as_echo_n "checking for LIBCAIRO... " >&6; }
+
+if test -n "$LIBCAIRO_CFLAGS"; then
+    pkg_cv_LIBCAIRO_CFLAGS="$LIBCAIRO_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"cairo\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "cairo") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LIBCAIRO_CFLAGS=`$PKG_CONFIG --cflags "cairo" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$LIBCAIRO_LIBS"; then
+    pkg_cv_LIBCAIRO_LIBS="$LIBCAIRO_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"cairo\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "cairo") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LIBCAIRO_LIBS=`$PKG_CONFIG --libs "cairo" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        LIBCAIRO_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "cairo" 2>&1`
+        else
+	        LIBCAIRO_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "cairo" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$LIBCAIRO_PKG_ERRORS" >&5
+
+	as_fn_error $? "'libcairo' is required but it doesn't seems to be installed on this system." "$LINENO" 5
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	as_fn_error $? "'libcairo' is required but it doesn't seems to be installed on this system." "$LINENO" 5
+else
+	LIBCAIRO_CFLAGS=$pkg_cv_LIBCAIRO_CFLAGS
+	LIBCAIRO_LIBS=$pkg_cv_LIBCAIRO_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 

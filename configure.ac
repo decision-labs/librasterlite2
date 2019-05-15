@@ -44,6 +44,8 @@ AH_TEMPLATE([OMIT_OPENJPEG],
             [Should be defined in order to disable OpenJpeg support.])
 AH_TEMPLATE([OMIT_CHARLS],
             [Should be defined in order to disable CharLS support.])
+AH_TEMPLATE([PROJ_NEW],
+            [Should be defined in order to enable PROJ.6 support.])
 
 # Checks for header files.
 AC_CHECK_HEADERS(stdlib.h,, [AC_MSG_ERROR([cannot find stdlib.h, bailing out])])
@@ -136,12 +138,15 @@ AC_CHECK_LIB(z,inflateInit_,,AC_MSG_ERROR(['libz' is required but it doesn't see
 AC_CHECK_LIB(jpeg,jpeg_start_compress,,AC_MSG_ERROR(['libjpeg' is required but it doesn't seems to be installed on this system.]),-lm)
 AC_CHECK_LIB(gif,DGifSlurp,,AC_MSG_ERROR(['libgif' is required but it doesn't seems to be installed on this system.]),-lm)
 AC_CHECK_LIB(tiff,TIFFClientOpen,,AC_MSG_ERROR(['libtiff' is required but it doesn't seems to be installed on this system.]),-lm)
-AC_CHECK_LIB(proj,pj_init_plus,,AC_MSG_ERROR(['l'libproj' is required but the version on this system does not support the required features (Version 4.8.0 or later is needed).]),-lm)
 AC_CHECK_LIB(geotiff,GTIFSetFromProj4,,AC_MSG_ERROR(['libgeotiff' [>= v.1.2.5] is required but it doesn't seems to be installed on this system.]),-lm)
 
-PKG_CHECK_MODULES([LIBPNG], [libpng], , AC_MSG_ERROR(['libpng' is required but it doesn't seems to be installed on this system.]))
-AC_SUBST(LIBPNG_CFLAGS)
-AC_SUBST(LIBPNG_LIBS)
+AC_CHECK_HEADERS(proj.h, [proj_new_incl=1], 
+   [AC_CHECK_HEADERS(proj_api.h, [proj_new_incl=0], [AC_MSG_ERROR([cannot find proj_api.h, bailing out])])])
+AC_SEARCH_LIBS(proj_normalize_for_visualization, proj, [proj_new_lib=1],
+   [AC_SEARCH_LIBS(pj_init_plus, proj, [proj_new_lib=0], [AC_MSG_ERROR(['libproj' is required but it doesn't seem to be installed on this system.])], [-lm -lpthread -lsqlite3])])
+if test $proj_new_incl -eq 1 && test $proj_new_lib -eq 1; then
+   AC_DEFINE(PROJ_NEW)
+fi
 
 #-----------------------------------------------------------------------
 #   --enable-openjpeg
@@ -261,9 +266,9 @@ PKG_CHECK_MODULES([LIBSPATIALITE], [spatialite], , AC_MSG_ERROR(['libspatialite'
 AC_SUBST(LIBSPATIALITE_CFLAGS)
 AC_SUBST(LIBSPATIALITE_LIBS)
 
-PKG_CHECK_MODULES([LIBCAIRO], [cairo], , AC_MSG_ERROR(['libcairo' is required but it doesn't seems to be installed on this system.]))
-AC_SUBST(LIBCAIRO_CFLAGS)
-AC_SUBST(LIBCAIRO_LIBS)
+PKG_CHECK_MODULES([LIBPNG], [libpng], , AC_MSG_ERROR(['libpng' is required but it doesn't seems to be installed on this system.]))
+AC_SUBST(LIBPNG_CFLAGS)
+AC_SUBST(LIBPNG_LIBS)
 
 PKG_CHECK_MODULES([LIBCURL], [libcurl], , AC_MSG_ERROR(['libcurl' is required but it doesn't seem to be installed on this system.]))
 AC_SUBST(LIBCURL_CFLAGS)
@@ -273,9 +278,21 @@ PKG_CHECK_MODULES([LIBXML2], [libxml-2.0], , AC_MSG_ERROR(['libxml2' is required
 AC_SUBST(LIBXML2_CFLAGS)
 AC_SUBST(LIBXML2_LIBS)
 
-PKG_CHECK_MODULES([FREETYPE2], [freetype2], , AC_MSG_ERROR(['freetype2' is required but it doesn't seem to be installed on this system.]))
+PKG_CHECK_MODULES([LIBFREETYPE2], [freetype2], , AC_MSG_ERROR(['freetype2' is required but it doesn't seem to be installed on this system.]))
 AC_SUBST(LIBFREETYPE2_CFLAGS)
 AC_SUBST(LIBFREETYPE2_LIBS)
+
+PKG_CHECK_MODULES([LIBFONTCONFIG], [fontconfig], , AC_MSG_ERROR(['freetype2' is required but it doesn't seem to be installed on this system.]))
+AC_SUBST(LIBFONTCONFIG_CFLAGS)
+AC_SUBST(LIBFONTCONFIG_LIBS)
+
+PKG_CHECK_MODULES([LIBPIXMAN], [pixman-1], , AC_MSG_ERROR(['libpixman' is required but it doesn't seems to be installed on this system.]))
+AC_SUBST(LIBPIXMAN_CFLAGS)
+AC_SUBST(LIBPIXMAN_LIBS)
+
+PKG_CHECK_MODULES([LIBCAIRO], [cairo], , AC_MSG_ERROR(['libcairo' is required but it doesn't seems to be installed on this system.]))
+AC_SUBST(LIBCAIRO_CFLAGS)
+AC_SUBST(LIBCAIRO_LIBS)
 
 # Checking for MinGW
 AM_CONDITIONAL([MINGW], [test "$target_alias" = "mingw32"])
