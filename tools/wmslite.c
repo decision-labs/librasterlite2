@@ -281,6 +281,7 @@ struct wms_args
 {
 /* a struct wrapping a WMS request URL */
     sqlite3 *db_handle;
+    const void *priv_data;
     sqlite3_stmt *stmt_get_map_raster;
     sqlite3_stmt *stmt_get_map_vector;
     char *service_name;
@@ -1602,6 +1603,7 @@ alloc_wms_args (const char *service_name)
 	return NULL;
     args = malloc (sizeof (struct wms_args));
     args->db_handle = NULL;
+    args->priv_data = NULL;
     args->stmt_get_map_raster = NULL;
     args->stmt_get_map_vector = NULL;
     len = strlen (service_name);
@@ -3357,7 +3359,8 @@ wms_get_map (struct wms_args *args, int socket, struct server_log_item *log)
 	rl2_gray_to_tiff (args->width, args->height, black, &payload,
 			  &payload_size);
     if (args->format == RL2_OUTPUT_FORMAT_PDF)
-	rl2_gray_pdf (args->width, args->height, &payload, &payload_size);
+	rl2_gray_pdf (args->priv_data, args->width, args->height, &payload,
+		      &payload_size);
     free (black);
     /* preparing the HTTP response */
     gaiaOutBufferInitialize (&http_response);
@@ -3472,6 +3475,7 @@ win32_http_request (void *data)
       {
 	  /* preparing the WMS GetMap payload */
 	  args->db_handle = req->conn->handle;
+	  args->priv_data = req->conn->priv_data;
 	  args->stmt_get_map_raster = req->conn->stmt_get_map_raster;
 	  args->stmt_get_map_vector = req->conn->stmt_get_map_vector;
 	  log_get_map_1 (req->log, timestamp, http_status, method, url, args);
@@ -3584,6 +3588,7 @@ berkeley_http_request (void *data)
       {
 	  /* preparing the WMS GetMap payload */
 	  args->db_handle = req->conn->handle;
+	  args->priv_data = req->conn->priv_data;
 	  args->stmt_get_map_raster = req->conn->stmt_get_map_raster;
 	  args->stmt_get_map_vector = req->conn->stmt_get_map_vector;
 	  log_get_map_1 (req->log, timestamp, http_status, method, url, args);

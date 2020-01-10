@@ -429,7 +429,7 @@ exec_create (sqlite3 * handle, const char *coverage,
 }
 
 static int
-exec_import (sqlite3 * handle, int max_threads, const char *src_path,
+exec_import (sqlite3 * handle, const void *priv_data, const char *src_path,
 	     const char *dir_path, const char *file_ext, const char *coverage,
 	     int worldfile, int force_srid, int pyramidize)
 {
@@ -454,11 +454,11 @@ exec_import (sqlite3 * handle, int max_threads, const char *src_path,
 
     if (src_path != NULL)
 	ret =
-	    rl2_load_raster_into_dbms (handle, max_threads, src_path, cvg,
+	    rl2_load_raster_into_dbms (handle, priv_data, src_path, cvg,
 				       worldfile, force_srid, pyramidize, 1);
     else
 	ret =
-	    rl2_load_mrasters_into_dbms (handle, max_threads, dir_path,
+	    rl2_load_mrasters_into_dbms (handle, priv_data, dir_path,
 					 file_ext, cvg, worldfile, force_srid,
 					 pyramidize, 1);
     rl2_destroy_coverage (cvg);
@@ -1070,7 +1070,7 @@ exec_delete (sqlite3 * handle, const char *coverage, const char *section,
 }
 
 static int
-exec_pyramidize (sqlite3 * handle, int max_threads, const char *coverage,
+exec_pyramidize (sqlite3 * handle, const void *priv_data, const char *coverage,
 		 const char *section, int ok_section_id,
 		 sqlite3_int64 section_id, int force_pyramid)
 {
@@ -1078,7 +1078,7 @@ exec_pyramidize (sqlite3 * handle, int max_threads, const char *coverage,
     int ret;
     if (section == NULL && !ok_section_id)
 	ret =
-	    rl2_build_all_section_pyramids (handle, max_threads, coverage,
+	    rl2_build_all_section_pyramids (handle, priv_data, coverage,
 					    force_pyramid, 1);
     else
       {
@@ -1102,7 +1102,7 @@ exec_pyramidize (sqlite3 * handle, int max_threads, const char *coverage,
 		  }
 	    }
 	  ret =
-	      rl2_build_section_pyramid (handle, max_threads, coverage,
+	      rl2_build_section_pyramid (handle, priv_data, coverage,
 					 section_id, force_pyramid, 1);
       }
     if (ret == RL2_OK)
@@ -1111,11 +1111,13 @@ exec_pyramidize (sqlite3 * handle, int max_threads, const char *coverage,
 }
 
 static int
-exec_pyramidize_monolithic (sqlite3 * handle, const char *coverage,
-			    int virt_levels)
+exec_pyramidize_monolithic (sqlite3 * handle, const void *priv_data,
+			    const char *coverage, int virt_levels)
 {
 /* building Pyramid levels (Monolithic) */
-    int ret = rl2_build_monolithic_pyramid (handle, coverage, virt_levels, 1);
+    int ret =
+	rl2_build_monolithic_pyramid (handle, priv_data, coverage, virt_levels,
+				      1);
     if (ret == RL2_OK)
 	return 1;
     return 0;
@@ -2225,8 +2227,8 @@ exec_list (sqlite3 * handle, const char *coverage, const char *section,
 }
 
 static int
-exec_map (sqlite3 * handle, const char *coverage, const char *dst_path,
-	  unsigned int width, unsigned int height)
+exec_map (sqlite3 * handle, const void *priv_data, const char *coverage,
+	  const char *dst_path, unsigned int width, unsigned int height)
 {
 /* Rasterlite-2 datasource Map */
     char *sql;
@@ -2326,7 +2328,7 @@ exec_map (sqlite3 * handle, const char *coverage, const char *dst_path,
     base_y = cy + ((double) (height / 2) * ratio);
 
 /* creating a graphics context */
-    ctx = rl2_graph_create_context (width, height);
+    ctx = rl2_graph_create_context (priv_data, width, height);
     if (ctx == NULL)
       {
 	  fprintf (stderr, "Unable to create a graphics backend\n");
@@ -5682,7 +5684,7 @@ main (int argc, char *argv[])
 	  break;
       case ARG_MODE_IMPORT:
 	  ret =
-	      exec_import (handle, max_threads, src_path, dir_path, file_ext,
+	      exec_import (handle, priv_data, src_path, dir_path, file_ext,
 			   coverage, worldfile, srid, pyramidize);
 	  break;
       case ARG_MODE_EXPORT:
@@ -5706,11 +5708,13 @@ main (int argc, char *argv[])
 	  break;
       case ARG_MODE_PYRAMIDIZE:
 	  ret =
-	      exec_pyramidize (handle, max_threads, coverage, section,
+	      exec_pyramidize (handle, priv_data, coverage, section,
 			       ok_section_id, section_id, force_pyramid);
 	  break;
       case ARG_MODE_PYRMONO:
-	  ret = exec_pyramidize_monolithic (handle, coverage, virt_levels);
+	  ret =
+	      exec_pyramidize_monolithic (handle, priv_data, coverage,
+					  virt_levels);
 	  break;
       case ARG_MODE_DE_PYRAMIDIZE:
 	  ret =
@@ -5725,7 +5729,7 @@ main (int argc, char *argv[])
 	      exec_list (handle, coverage, section, ok_section_id, section_id);
 	  break;
       case ARG_MODE_MAP:
-	  ret = exec_map (handle, coverage, dst_path, width, height);
+	  ret = exec_map (handle, priv_data, coverage, dst_path, width, height);
 	  break;
       case ARG_MODE_HISTOGRAM:
 	  ret =

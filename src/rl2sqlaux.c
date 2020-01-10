@@ -94,10 +94,17 @@ struct aux_raster_render
     int width;
     int height;
     int reaspect;
-    const char *style;
-    unsigned char *xml_style;
+    const char *style_name;
+    const unsigned char *xml_style;
     unsigned char out_pixel;
     struct aux_raster_image *output;
+    int is_map_canvas;
+    int srid;
+    double minx;
+    double miny;
+    double maxx;
+    double maxy;
+    rl2GraphicsContextPtr graphics_ctx;
 };
 
 struct aux_vector_render
@@ -113,8 +120,8 @@ struct aux_vector_render
     int width;
     int height;
     int reaspect;
-    const char *style;
-    const unsigned char *quick_style;
+    const char *style_name;
+    const unsigned char *xml_style;
     int with_nodes;
     int with_edges_or_links;
     int with_faces;
@@ -699,6 +706,7 @@ rl2_parse_bbox_srid (sqlite3 * handle, const unsigned char *blob, int blob_sz,
     double mny;
     double mxx;
     double mxy;
+    int err;
     int count = 0;
 
     sql = "SELECT ST_Srid(?), MBRMinX(?), MBRMinY(?), MBRMaxX(?), MBRMaxY(?)";
@@ -724,12 +732,29 @@ rl2_parse_bbox_srid (sqlite3 * handle, const unsigned char *blob, int blob_sz,
 	      break;
 	  if (ret == SQLITE_ROW)
 	    {
-		srd = sqlite3_column_int (stmt, 0);
-		mnx = sqlite3_column_double (stmt, 1);
-		mny = sqlite3_column_double (stmt, 2);
-		mxx = sqlite3_column_double (stmt, 3);
-		mxy = sqlite3_column_double (stmt, 4);
-		count++;
+		err = 0;
+		if (sqlite3_column_type (stmt, 0) == SQLITE_NULL)
+		    err = 1;
+		else
+		    srd = sqlite3_column_int (stmt, 0);
+		if (sqlite3_column_type (stmt, 1) == SQLITE_NULL)
+		    err = 1;
+		else
+		    mnx = sqlite3_column_double (stmt, 1);
+		if (sqlite3_column_type (stmt, 2) == SQLITE_NULL)
+		    err = 1;
+		else
+		    mny = sqlite3_column_double (stmt, 2);
+		if (sqlite3_column_type (stmt, 3) == SQLITE_NULL)
+		    err = 1;
+		else
+		    mxx = sqlite3_column_double (stmt, 3);
+		if (sqlite3_column_type (stmt, 4) == SQLITE_NULL)
+		    err = 1;
+		else
+		    mxy = sqlite3_column_double (stmt, 4);
+		if (!err)
+		    count++;
 	    }
 	  else
 	    {
@@ -1709,11 +1734,12 @@ rgb_to_rgba (unsigned int width, unsigned int height, unsigned char *rgb)
 
 RL2_PRIVATE int
 get_payload_from_monochrome_opaque (unsigned int width, unsigned int height,
-				    sqlite3 * handle, double minx,
-				    double miny, double maxx, double maxy,
-				    int srid, unsigned char *pixels,
-				    unsigned char format, int quality,
-				    unsigned char **image, int *image_sz)
+				    sqlite3 * handle, const void *priv_data,
+				    double minx, double miny, double maxx,
+				    double maxy, int srid,
+				    unsigned char *pixels, unsigned char format,
+				    int quality, unsigned char **image,
+				    int *image_sz)
 {
 /* input: Monochrome    output: Grayscale */
     int ret;
@@ -1773,7 +1799,8 @@ get_payload_from_monochrome_opaque (unsigned int width, unsigned int height,
 	  rgba = gray_to_rgba (width, height, gray);
 	  if (rgba == NULL)
 	      goto error;
-	  ret = rl2_rgba_to_pdf (width, height, rgba, image, image_sz);
+	  ret =
+	      rl2_rgba_to_pdf (priv_data, width, height, rgba, image, image_sz);
 	  rgba = NULL;
 	  if (ret != RL2_OK)
 	      goto error;
@@ -1863,11 +1890,12 @@ get_payload_from_monochrome_transparent (unsigned int width,
 
 RL2_PRIVATE int
 get_payload_from_palette_opaque (unsigned int width, unsigned int height,
-				 sqlite3 * handle, double minx, double miny,
-				 double maxx, double maxy, int srid,
-				 unsigned char *pixels, rl2PalettePtr palette,
-				 unsigned char format, int quality,
-				 unsigned char **image, int *image_sz)
+				 sqlite3 * handle, const void *priv_data,
+				 double minx, double miny, double maxx,
+				 double maxy, int srid, unsigned char *pixels,
+				 rl2PalettePtr palette, unsigned char format,
+				 int quality, unsigned char **image,
+				 int *image_sz)
 {
 /* input: Palette    output: Grayscale or RGB */
     int ret;
@@ -1943,7 +1971,9 @@ get_payload_from_palette_opaque (unsigned int width, unsigned int height,
 		rgba = rgb_to_rgba (width, height, rgb);
 		if (rgba == NULL)
 		    goto error;
-		ret = rl2_rgba_to_pdf (width, height, rgba, image, image_sz);
+		ret =
+		    rl2_rgba_to_pdf (priv_data, width, height, rgba, image,
+				     image_sz);
 		rgba = NULL;
 		if (ret != RL2_OK)
 		    goto error;
@@ -2006,7 +2036,9 @@ get_payload_from_palette_opaque (unsigned int width, unsigned int height,
 		rgba = gray_to_rgba (width, height, gray);
 		if (rgba == NULL)
 		    goto error;
-		ret = rl2_rgba_to_pdf (width, height, rgba, image, image_sz);
+		ret =
+		    rl2_rgba_to_pdf (priv_data, width, height, rgba, image,
+				     image_sz);
 		rgba = NULL;
 		if (ret != RL2_OK)
 		    goto error;
@@ -2166,9 +2198,9 @@ get_payload_from_palette_transparent (unsigned int width,
 
 RL2_PRIVATE int
 get_payload_from_grayscale_opaque (unsigned int width, unsigned int height,
-				   sqlite3 * handle, double minx, double miny,
-				   double maxx, double maxy, int srid,
-				   unsigned char *pixels,
+				   sqlite3 * handle, const void *priv_data,
+				   double minx, double miny, double maxx,
+				   double maxy, int srid, unsigned char *pixels,
 				   unsigned char format, int quality,
 				   unsigned char **image, int *image_sz)
 {
@@ -2209,7 +2241,8 @@ get_payload_from_grayscale_opaque (unsigned int width, unsigned int height,
 	  rgba = gray_to_rgba (width, height, pixels);
 	  if (rgba == NULL)
 	      goto error;
-	  ret = rl2_rgba_to_pdf (width, height, rgba, image, image_sz);
+	  ret =
+	      rl2_rgba_to_pdf (priv_data, width, height, rgba, image, image_sz);
 	  rgba = NULL;
 	  if (ret != RL2_OK)
 	      goto error;
@@ -2279,10 +2312,11 @@ get_payload_from_grayscale_transparent (unsigned int width,
 
 RL2_PRIVATE int
 get_payload_from_rgb_opaque (unsigned int width, unsigned int height,
-			     sqlite3 * handle, double minx, double miny,
-			     double maxx, double maxy, int srid,
-			     unsigned char *pixels, unsigned char format,
-			     int quality, unsigned char **image, int *image_sz)
+			     sqlite3 * handle, const void *priv_data,
+			     double minx, double miny, double maxx, double maxy,
+			     int srid, unsigned char *pixels,
+			     unsigned char format, int quality,
+			     unsigned char **image, int *image_sz)
 {
 /* input: RGB    output: RGB */
     int ret;
@@ -2320,7 +2354,8 @@ get_payload_from_rgb_opaque (unsigned int width, unsigned int height,
 	  rgba = rgb_to_rgba (width, height, pixels);
 	  if (rgba == NULL)
 	      goto error;
-	  ret = rl2_rgba_to_pdf (width, height, rgba, image, image_sz);
+	  ret =
+	      rl2_rgba_to_pdf (priv_data, width, height, rgba, image, image_sz);
 	  rgba = NULL;
 	  if (ret != RL2_OK)
 	      goto error;
@@ -4692,11 +4727,11 @@ get_rgba_from_multiband_mask (unsigned int width, unsigned int height,
 
 RL2_PRIVATE int
 get_payload_from_gray_rgba_opaque (unsigned int width, unsigned int height,
-				   sqlite3 * handle, double minx, double miny,
-				   double maxx, double maxy, int srid,
-				   unsigned char *rgb, unsigned char format,
-				   int quality, unsigned char **image,
-				   int *image_sz)
+				   sqlite3 * handle, const void *priv_data,
+				   double minx, double miny, double maxx,
+				   double maxy, int srid, unsigned char *rgb,
+				   unsigned char format, int quality,
+				   unsigned char **image, int *image_sz)
 {
 /* Grayscale, Opaque */
     int ret;
@@ -4751,7 +4786,8 @@ get_payload_from_gray_rgba_opaque (unsigned int width, unsigned int height,
 	  rgba = gray_to_rgba (width, height, gray);
 	  if (rgba == NULL)
 	      goto error;
-	  ret = rl2_rgba_to_pdf (width, height, rgba, image, image_sz);
+	  ret =
+	      rl2_rgba_to_pdf (priv_data, width, height, rgba, image, image_sz);
 	  rgba = NULL;
 	  if (ret != RL2_OK)
 	      goto error;
@@ -4830,11 +4866,11 @@ get_payload_from_gray_rgba_transparent (unsigned int width,
 
 RL2_PRIVATE int
 get_payload_from_rgb_rgba_opaque (unsigned int width, unsigned int height,
-				  sqlite3 * handle, double minx, double miny,
-				  double maxx, double maxy, int srid,
-				  unsigned char *rgb, unsigned char format,
-				  int quality, unsigned char **image,
-				  int *image_sz)
+				  sqlite3 * handle, const void *priv_data,
+				  double minx, double miny, double maxx,
+				  double maxy, int srid, unsigned char *rgb,
+				  unsigned char format, int quality,
+				  unsigned char **image, int *image_sz)
 {
 /* RGB, Opaque */
     int ret;
@@ -4872,7 +4908,8 @@ get_payload_from_rgb_rgba_opaque (unsigned int width, unsigned int height,
 	  rgba = rgb_to_rgba (width, height, rgb);
 	  if (rgba == NULL)
 	      goto error;
-	  ret = rl2_rgba_to_pdf (width, height, rgba, image, image_sz);
+	  ret =
+	      rl2_rgba_to_pdf (priv_data, width, height, rgba, image, image_sz);
 	  rgba = NULL;
 	  if (ret != RL2_OK)
 	      goto error;
@@ -4889,8 +4926,8 @@ get_payload_from_rgb_rgba_opaque (unsigned int width, unsigned int height,
 RL2_PRIVATE int
 get_payload_from_rgb_rgba_transparent (unsigned int width,
 				       unsigned int height,
-				       unsigned char *rgb,
-				       unsigned char *alpha,
+				       const void *priv_data,
+				       unsigned char *rgb, unsigned char *alpha,
 				       unsigned char format, int quality,
 				       unsigned char **image, int *image_sz,
 				       double opacity, int half_transparency)
@@ -4949,7 +4986,8 @@ get_payload_from_rgb_rgba_transparent (unsigned int width,
 	  unsigned char *rgba = rgb_to_rgba (width, height, rgb);
 	  if (rgba == NULL)
 	      goto error;
-	  ret = rl2_rgba_to_pdf (width, height, rgba, image, image_sz);
+	  ret =
+	      rl2_rgba_to_pdf (priv_data, width, height, rgba, image, image_sz);
 	  rgba = NULL;
 	  if (ret != RL2_OK)
 	      goto error;
@@ -6560,7 +6598,8 @@ do_paint_map_from_raster (struct aux_raster_render *args)
     int blob_sz;
     int width;
     int height;
-    const char *style;
+    const char *style_name;
+    const unsigned char *xml_style;
     const char *format;
     int transparent;
     int quality;
@@ -6610,12 +6649,16 @@ do_paint_map_from_raster (struct aux_raster_render *args)
     canvas = args->canvas;
     db_prefix = args->db_prefix;
     cvg_name = args->cvg_name;
-    blob = args->blob;
-    blob_sz = args->blob_sz;
+    if (args->is_map_canvas == 0)
+      {
+	  blob = args->blob;
+	  blob_sz = args->blob_sz;
+      }
     width = args->width;
     height = args->height;
-    style = args->style;
-    if (args->output != NULL)
+    style_name = args->style_name;
+    xml_style = args->xml_style;
+    if (args->output != NULL && args->is_map_canvas == 0)
       {
 	  bg_red = args->output->bg_red;
 	  bg_green = args->output->bg_green;
@@ -6630,7 +6673,7 @@ do_paint_map_from_raster (struct aux_raster_render *args)
 /* coarse args validation */
     if (sqlite == NULL)
 	goto error;
-    if (canvas == NULL)
+    if (args->is_map_canvas == 0 && canvas == NULL)
 	goto error;
     if (data != NULL)
       {
@@ -6646,7 +6689,7 @@ do_paint_map_from_raster (struct aux_raster_render *args)
     if (height < 64)
 	goto error;
 /* validating the format */
-    if (args->output == NULL)
+    if (args->output == NULL || args->is_map_canvas)
 	ok_format = 1;
     else
       {
@@ -6675,11 +6718,22 @@ do_paint_map_from_raster (struct aux_raster_render *args)
     if (!ok_format)
 	goto error;
 
+    if (args->is_map_canvas)
+      {
+	  out_srid = args->srid;
+	  minx = args->minx;
+	  miny = args->miny;
+	  maxx = args->maxx;
+	  maxy = args->maxy;
+      }
+    else
+      {
 /* checking the Geometry */
-    if (rl2_parse_bbox_srid
-	(sqlite, blob, blob_sz, &out_srid, &minx, &miny, &maxx,
-	 &maxy) != RL2_OK)
-	goto error;
+	  if (rl2_parse_bbox_srid
+	      (sqlite, blob, blob_sz, &out_srid, &minx, &miny, &maxx,
+	       &maxy) != RL2_OK)
+	      goto error;
+      }
 
     ext_x = maxx - minx;
     ext_y = maxy - miny;
@@ -6688,37 +6742,8 @@ do_paint_map_from_raster (struct aux_raster_render *args)
     if (rl2_test_layer_group (sqlite, db_prefix, cvg_name))
       {
 	  /* switching the whole task to the Group renderer */
-	  struct aux_group_renderer aux;
-	  fprintf (stderr, "------------ GROUP\n");
-	  aux.sqlite = sqlite;
-	  aux.data = data;
-	  aux.db_prefix = db_prefix;
-	  aux.group_name = cvg_name;
-	  aux.minx = minx;
-	  aux.maxx = maxx;
-	  aux.miny = miny;
-	  aux.maxy = maxy;
-	  aux.width = width;
-	  aux.height = height;
-	  aux.style = style;
-	  aux.format_id = format_id;
-	  aux.bg_red = bg_red;
-	  aux.bg_green = bg_green;
-	  aux.bg_blue = bg_blue;
-	  aux.transparent = transparent;
-	  aux.quality = quality;
-	  if (rl2_aux_group_renderer (&aux, &image, &image_size) == RL2_OK)
-	    {
-		args->output->img = image;
-		args->output->img_size = image_size;
-		return RL2_OK;
-	    }
-	  else
-	    {
-		args->output->img = NULL;
-		args->output->img_size = 0;
-		return RL2_ERROR;
-	    }
+	  fprintf (stderr, "------------ GROUP NOT YET IMPLEMENTED\n");
+	  goto error;
       }
 
 /* attempting to load the Coverage definitions from the DBMS */
@@ -6788,13 +6813,13 @@ do_paint_map_from_raster (struct aux_raster_render *args)
 
 /* validating the style */
     ok_style = 0;
-    if (args->xml_style != NULL)
+    if (xml_style != NULL)
       {
-	  /* attempting to apply a QuickStyle */
-	  char *style2 = malloc (strlen (style) + 1);
-	  strcpy (style2, style);
+	  /* attempting to apply an XmlStyle */
+	  char *style_name2 = malloc (strlen (style_name) + 1);
+	  strcpy (style_name2, style_name);
 	  cvg_stl =
-	      coverage_style_from_xml (style2,
+	      coverage_style_from_xml (style_name2,
 				       (unsigned char *) (args->xml_style));
 	  if (cvg_stl == NULL)
 	      goto error;
@@ -6818,16 +6843,16 @@ do_paint_map_from_raster (struct aux_raster_render *args)
       }
     else
       {
-	  if (style == NULL)
-	      style = "default";
-	  if (strcasecmp (style, "default") == 0)
+	  if (style_name == NULL)
+	      style_name = "default";
+	  if (strcasecmp (style_name, "default") == 0)
 	      ok_style = 1;
 	  else
 	    {
 		/* attempting to get a Coverage Style */
 		cvg_stl =
 		    rl2_create_coverage_style_from_dbms (sqlite, db_prefix,
-							 cvg_name, style);
+							 cvg_name, style_name);
 		if (cvg_stl == NULL)
 		    goto error;
 		symbolizer =
@@ -7050,6 +7075,7 @@ do_paint_map_from_raster (struct aux_raster_render *args)
 
 /* preparing the aux struct for passing rendering arguments */
     aux.sqlite = sqlite;
+    aux.data = data;
     aux.max_threads = max_threads;
     aux.width = width;
     aux.height = height;
@@ -7094,7 +7120,10 @@ do_paint_map_from_raster (struct aux_raster_render *args)
 	aux.is_blob_image = 0;
     aux.image = NULL;
     aux.image_size = 0;
-    aux.graphics_ctx = rl2_get_canvas_ctx (canvas, RL2_CANVAS_BASE_CTX);
+    if (args->is_map_canvas)
+	aux.graphics_ctx = args->graphics_ctx;
+    else
+	aux.graphics_ctx = rl2_get_canvas_ctx (canvas, RL2_CANVAS_BASE_CTX);
 
     if (!do_get_raw_raster_data (&aux, by_section))
       {
@@ -7106,10 +7135,13 @@ do_paint_map_from_raster (struct aux_raster_render *args)
 	goto error;
 
   done:
-    if (args->output != NULL)
+    if (args->is_map_canvas == 0)
       {
-	  args->output->img = aux.image;
-	  args->output->img_size = aux.image_size;
+	  if (args->output != NULL)
+	    {
+		args->output->img = aux.image;
+		args->output->img_size = aux.image_size;
+	    }
       }
     rl2_destroy_coverage (coverage);
     if (palette != NULL)
@@ -7120,7 +7152,8 @@ do_paint_map_from_raster (struct aux_raster_render *args)
 	rl2_destroy_raster_statistics (stats);
     if (aux_symbolizer && symbolizer)
 	rl2_destroy_raster_symbolizer ((rl2PrivRasterSymbolizerPtr) symbolizer);
-    do_set_canvas_ready (canvas, RL2_CANVAS_BASE_CTX);
+    if (args->is_map_canvas == 0)
+	do_set_canvas_ready (canvas, RL2_CANVAS_BASE_CTX);
     return RL2_OK;
 
   error:
@@ -7142,7 +7175,7 @@ do_paint_map_from_raster (struct aux_raster_render *args)
     return RL2_ERROR;
 }
 
-static double
+RL2_PRIVATE double
 do_compute_bbox_aspect_ratio (sqlite3 * sqlite, const unsigned char *blob,
 			      int blob_sz)
 {
@@ -7289,7 +7322,7 @@ RL2_DECLARE int
 rl2_map_image_blob_from_raster (sqlite3 * sqlite, const void *data,
 				const char *db_prefix, const char *cvg_name,
 				const unsigned char *blob, int blob_sz,
-				int width, int height, const char *style,
+				int width, int height, const char *style_name,
 				const char *format, const char *bg_color,
 				int transparent, int quality, int reaspect,
 				unsigned char **img, int *img_size)
@@ -7310,7 +7343,8 @@ rl2_map_image_blob_from_raster (sqlite3 * sqlite, const void *data,
     aux.blob_sz = blob_sz;
     aux.width = width;
     aux.height = height;
-    aux.style = style;
+    aux.style_name = style_name;
+    aux.xml_style = NULL;
     aux.out_pixel = RL2_PIXEL_UNKNOWN;
     aux.output = malloc (sizeof (struct aux_raster_image));
     aux.output->bg_red = 255;
@@ -7322,6 +7356,7 @@ rl2_map_image_blob_from_raster (sqlite3 * sqlite, const void *data,
     aux.output->img = NULL;
     aux.output->img_size = 0;
     aux.xml_style = NULL;
+    aux.is_map_canvas = 0;
 
     if (reaspect == 0)
       {
@@ -7342,7 +7377,7 @@ rl2_map_image_blob_from_raster (sqlite3 * sqlite, const void *data,
       }
 
 /* creating a Canvas */
-    ctx = rl2_graph_create_context (width, height);
+    ctx = rl2_graph_create_context (data, width, height);
     if (ctx == NULL)
 	goto error;
     aux.canvas = rl2_create_raster_canvas (ctx);
@@ -7386,6 +7421,198 @@ rl2_map_image_blob_from_raster (sqlite3 * sqlite, const void *data,
 	rl2_destroy_canvas (aux.canvas);
     if (ctx != NULL)
 	rl2_graph_destroy_context (ctx);
+    return RL2_ERROR;
+}
+
+RL2_DECLARE int
+rl2_styled_map_image_blob_from_raster (sqlite3 * sqlite, const void *data,
+				       const char *db_prefix,
+				       const char *cvg_name,
+				       const unsigned char *blob, int blob_sz,
+				       int width, int height,
+				       const unsigned char *xml_style,
+				       const char *format, const char *bg_color,
+				       int transparent, int quality,
+				       int reaspect, unsigned char **img,
+				       int *img_size)
+{
+/* rendering a Map Image from a Raster Coverage - BLOB */
+    unsigned char bg_red = 0;
+    unsigned char bg_green = 0;
+    unsigned char bg_blue = 0;
+    unsigned char bg_alpha = 0;
+    rl2GraphicsContextPtr ctx = NULL;
+    struct aux_raster_render aux;
+    aux.sqlite = sqlite;
+    aux.data = data;
+    aux.canvas = NULL;
+    aux.db_prefix = db_prefix;
+    aux.cvg_name = cvg_name;
+    aux.blob = blob;
+    aux.blob_sz = blob_sz;
+    aux.width = width;
+    aux.height = height;
+    aux.style_name = "external_style";
+    aux.xml_style = xml_style;
+    aux.out_pixel = RL2_PIXEL_UNKNOWN;
+    aux.output = malloc (sizeof (struct aux_raster_image));
+    aux.output->bg_red = 255;
+    aux.output->bg_green = 255;
+    aux.output->bg_blue = 255;
+    aux.output->transparent = transparent;
+    aux.output->format = format;
+    aux.output->quality = quality;
+    aux.output->img = NULL;
+    aux.output->img_size = 0;
+    aux.is_map_canvas = 0;
+
+    if (reaspect == 0)
+      {
+	  /* testing for consistent aspect ratios */
+	  double aspect_org;
+	  double aspect_dst;
+	  double confidence;
+	  aspect_org = do_compute_bbox_aspect_ratio (sqlite, blob, blob_sz);
+	  if (aspect_org < 0.0)
+	      goto error;
+	  aspect_dst = (double) width / (double) height;
+	  confidence = aspect_org / 100.0;
+	  if (aspect_dst >= (aspect_org - confidence)
+	      && aspect_dst <= (aspect_org + confidence))
+	      ;
+	  else
+	      goto error;
+      }
+
+/* creating a Canvas */
+    ctx = rl2_graph_create_context (data, width, height);
+    if (ctx == NULL)
+	goto error;
+    aux.canvas = rl2_create_raster_canvas (ctx);
+    if (aux.canvas == NULL)
+	goto error;
+    if (!transparent)
+      {
+	  /* parsing the background color */
+	  bg_alpha = 255;
+	  if (rl2_parse_hexrgb (bg_color, &bg_red, &bg_green, &bg_blue) !=
+	      RL2_OK)
+	    {
+		bg_red = 255;
+		bg_green = 255;
+		bg_blue = 255;
+	    }
+      }
+    aux.output->bg_red = bg_red;
+    aux.output->bg_green = bg_green;
+    aux.output->bg_blue = bg_blue;
+
+/* priming the background */
+    rl2_prime_background (ctx, bg_red, bg_green, bg_blue, bg_alpha);
+
+    if (do_paint_map_from_raster (&aux) == RL2_OK)
+      {
+	  *img = aux.output->img;
+	  *img_size = aux.output->img_size;
+	  free (aux.output);
+	  rl2_destroy_canvas (aux.canvas);
+	  rl2_graph_destroy_context (ctx);
+	  return RL2_OK;
+      }
+
+  error:
+    if (aux.output != NULL)
+	free (aux.output);
+    *img = NULL;
+    *img_size = 0;
+    if (aux.canvas != NULL)
+	rl2_destroy_canvas (aux.canvas);
+    if (ctx != NULL)
+	rl2_graph_destroy_context (ctx);
+    return RL2_ERROR;
+}
+
+RL2_DECLARE int
+rl2_paint_raster_on_map_canvas (sqlite3 * sqlite,
+				const void *data,
+				const char *db_prefix,
+				const char *cvg_name, const char *style_name)
+{
+/* rendering a Raster Coverage on the Map Canvas */
+    struct rl2_private_data *cache = (struct rl2_private_data *) data;
+    rl2GraphicsContextPtr ctx;
+    struct aux_raster_render aux;
+
+    if (cache == NULL)
+	return RL2_MAP_CANVAS_NULL_INTERNAL_CACHE;
+    ctx = (rl2GraphicsContextPtr) (cache->map_canvas.ref_ctx);
+    if (ctx == NULL)
+	return RL2_MAP_CANVAS_NOT_IN_USE;
+
+    aux.sqlite = sqlite;
+    aux.data = data;
+    aux.canvas = NULL;
+    aux.db_prefix = db_prefix;
+    aux.cvg_name = cvg_name;
+    aux.blob = NULL;
+    aux.blob_sz = 0;
+    aux.width = cache->map_canvas.width;
+    aux.height = cache->map_canvas.height;
+    aux.style_name = style_name;
+    aux.xml_style = NULL;
+    aux.output = NULL;
+    aux.minx = cache->map_canvas.minx;
+    aux.miny = cache->map_canvas.miny;
+    aux.maxx = cache->map_canvas.maxx;
+    aux.maxy = cache->map_canvas.maxy;
+    aux.srid = cache->map_canvas.srid;
+    aux.graphics_ctx = cache->map_canvas.ref_ctx;
+    aux.is_map_canvas = 1;
+
+    if (do_paint_map_from_raster (&aux) == RL2_OK)
+	return RL2_OK;
+    return RL2_ERROR;
+}
+
+RL2_DECLARE int
+rl2_paint_styled_raster_on_map_canvas (sqlite3 * sqlite,
+				       const void *data,
+				       const char *db_prefix,
+				       const char *cvg_name,
+				       const unsigned char *xml_style)
+{
+/* rendering a Styled Raster Coverage on the Map Canvas */
+    struct rl2_private_data *cache = (struct rl2_private_data *) data;
+    rl2GraphicsContextPtr ctx;
+    struct aux_raster_render aux;
+
+    if (cache == NULL)
+	return RL2_MAP_CANVAS_NULL_INTERNAL_CACHE;
+    ctx = (rl2GraphicsContextPtr) (cache->map_canvas.ref_ctx);
+    if (ctx == NULL)
+	return RL2_MAP_CANVAS_NOT_IN_USE;
+
+    aux.sqlite = sqlite;
+    aux.data = data;
+    aux.canvas = NULL;
+    aux.db_prefix = db_prefix;
+    aux.cvg_name = cvg_name;
+    aux.blob = NULL;
+    aux.blob_sz = 0;
+    aux.width = cache->map_canvas.width;
+    aux.height = cache->map_canvas.height;
+    aux.style_name = NULL;
+    aux.xml_style = xml_style;
+    aux.output = NULL;
+    aux.minx = cache->map_canvas.minx;
+    aux.miny = cache->map_canvas.miny;
+    aux.maxx = cache->map_canvas.maxx;
+    aux.maxy = cache->map_canvas.maxy;
+    aux.srid = cache->map_canvas.srid;
+    aux.is_map_canvas = 1;
+
+    if (do_paint_map_from_raster (&aux) == RL2_OK)
+	return RL2_OK;
     return RL2_ERROR;
 }
 
@@ -7677,7 +7904,8 @@ rl2_map_image_paint_from_raster (sqlite3 * sqlite, const void *data,
 				 rl2CanvasPtr canvas, const char *db_prefix,
 				 const char *cvg_name,
 				 const unsigned char *blob, int blob_sz,
-				 const char *style, unsigned char *xml_style)
+				 const char *style_name,
+				 unsigned char *xml_style)
 {
 /* rendering a Map Image from a Raster Coverage - Graphics Context */
     struct aux_raster_render aux;
@@ -7702,10 +7930,12 @@ rl2_map_image_paint_from_raster (sqlite3 * sqlite, const void *data,
     aux.blob_sz = blob_sz;
     aux.width = width;
     aux.height = height;
-    aux.style = style;
+    aux.style_name = style_name;
     aux.xml_style = xml_style;
     aux.out_pixel = RL2_PIXEL_RGB;
     aux.output = NULL;
+    aux.is_map_canvas = 0;
+
     return do_paint_map_from_raster (&aux);
 }
 
@@ -7726,8 +7956,8 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
     int blob_sz;
     int width;
     int height;
-    const char *style;
-    const unsigned char *quickStyle;
+    const char *style_name;
+    const unsigned char *xml_style;
     const char *format;
     int quality;
     int out_srid;
@@ -7785,8 +8015,8 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
     blob_sz = aux->blob_sz;
     width = aux->width;
     height = aux->height;
-    style = aux->style;
-    quickStyle = aux->quick_style;
+    style_name = aux->style_name;
+    xml_style = aux->xml_style;
     if (aux->output == NULL)
       {
 	  format = NULL;
@@ -7863,14 +8093,14 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
     scale = standard_scale (sqlite, out_srid, width, height, ext_x, ext_y);
 /* validating the style */
     ok_style = 0;
-    if (style == NULL)
-	style = "default";
-    if (strcasecmp (style, "default") == 0)
+    if (style_name == NULL)
+	style_name = "default";
+    if (strcasecmp (style_name, "default") == 0)
 	ok_style = 1;
-    else if (quickStyle != NULL)
+    else if (xml_style != NULL)
       {
-	  /* attempting to validate the QuickStyle */
-	  lyr_stl = rl2_feature_type_style_from_xml (style, quickStyle);
+	  /* attempting to validate the XmlStyle */
+	  lyr_stl = rl2_feature_type_style_from_xml (style_name, xml_style);
 	  if (lyr_stl == NULL)
 	      goto error;
 	  ok_style = 1;
@@ -7880,7 +8110,7 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
 	  /* attempting to get a FeatureType Style */
 	  lyr_stl =
 	      rl2_create_feature_type_style_from_dbms (sqlite, db_prefix,
-						       cvg_name, style);
+						       cvg_name, style_name);
 	  if (lyr_stl == NULL)
 	      goto error;
 	  ok_style = 1;
@@ -8428,7 +8658,6 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
 	    }
 
 	  /* preparing the SQL statement */
-	  fprintf (stderr, "%s\n", sql);
 	  ret = sqlite3_prepare_v2 (sqlite, sql, strlen (sql), &stmt, NULL);
 	  sqlite3_free (sql);
 	  if (ret != SQLITE_OK)
@@ -8720,8 +8949,8 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
 	goto error;
 
     if (!get_payload_from_rgb_rgba_transparent
-	(width, height, rgb, alpha, format_id, quality, &image, &image_size,
-	 1.0, half_transparent))
+	(width, height, priv_data, rgb, alpha, format_id, quality, &image,
+	 &image_size, 1.0, half_transparent))
 	goto error;
     if (rgb != NULL)
 	free (rgb);
@@ -8840,7 +9069,7 @@ RL2_DECLARE int
 rl2_map_image_blob_from_vector (sqlite3 * sqlite, const void *data,
 				const char *db_prefix, const char *cvg_name,
 				const unsigned char *blob, int blob_sz,
-				int width, int height, const char *style,
+				int width, int height, const char *style_name,
 				const char *format, const char *bg_color,
 				int transparent, int quality, int reaspect,
 				unsigned char **img, int *img_size)
@@ -8871,8 +9100,8 @@ rl2_map_image_blob_from_vector (sqlite3 * sqlite, const void *data,
     aux.blob_sz = blob_sz;
     aux.width = width;
     aux.height = height;
-    aux.style = style;
-    aux.quick_style = NULL;
+    aux.style_name = style_name;
+    aux.xml_style = NULL;
     aux.with_nodes = 1;
     aux.with_edges_or_links = 1;
     aux.with_faces = 0;
@@ -8908,28 +9137,28 @@ rl2_map_image_blob_from_vector (sqlite3 * sqlite, const void *data,
       }
 
 /* creating a Canvas */
-    ctx = rl2_graph_create_context (width, height);
+    ctx = rl2_graph_create_context (data, width, height);
     if (ctx == NULL)
 	goto error;
-    ctx_labels = rl2_graph_create_context (width, height);
+    ctx_labels = rl2_graph_create_context (data, width, height);
     if (ctx_labels == NULL)
 	goto error;
     if (is_topogeo)
       {
 	  /* Topology canvas */
-	  ctx_nodes = rl2_graph_create_context (width, height);
+	  ctx_nodes = rl2_graph_create_context (data, width, height);
 	  if (ctx_nodes == NULL)
 	      goto error;
-	  ctx_edges = rl2_graph_create_context (width, height);
+	  ctx_edges = rl2_graph_create_context (data, width, height);
 	  if (ctx_edges == NULL)
 	      goto error;
-	  ctx_edge_seeds = rl2_graph_create_context (width, height);
+	  ctx_edge_seeds = rl2_graph_create_context (data, width, height);
 	  if (ctx_edge_seeds == NULL)
 	      goto error;
-	  ctx_faces = rl2_graph_create_context (width, height);
+	  ctx_faces = rl2_graph_create_context (data, width, height);
 	  if (ctx_faces == NULL)
 	      goto error;
-	  ctx_face_seeds = rl2_graph_create_context (width, height);
+	  ctx_face_seeds = rl2_graph_create_context (data, width, height);
 	  if (ctx_face_seeds == NULL)
 	      goto error;
 	  aux.canvas =
@@ -8940,13 +9169,227 @@ rl2_map_image_blob_from_vector (sqlite3 * sqlite, const void *data,
     else if (is_toponet)
       {
 	  /* Network canvas */
-	  ctx_nodes = rl2_graph_create_context (width, height);
+	  ctx_nodes = rl2_graph_create_context (data, width, height);
 	  if (ctx_nodes == NULL)
 	      goto error;
-	  ctx_links = rl2_graph_create_context (width, height);
+	  ctx_links = rl2_graph_create_context (data, width, height);
 	  if (ctx_links == NULL)
 	      goto error;
-	  ctx_link_seeds = rl2_graph_create_context (width, height);
+	  ctx_link_seeds = rl2_graph_create_context (data, width, height);
+	  if (ctx_link_seeds == NULL)
+	      goto error;
+	  aux.canvas =
+	      rl2_create_network_canvas (ctx, ctx_labels, ctx_nodes, ctx_links,
+					 ctx_link_seeds);
+      }
+    else
+      {
+	  /* generic Vector canvas */
+	  aux.canvas = rl2_create_vector_canvas (ctx, ctx_labels);
+      }
+    if (aux.canvas == NULL)
+	goto error;
+    if (!transparent)
+      {
+	  /* parsing the background color */
+	  bg_alpha = 255;
+	  if (rl2_parse_hexrgb (bg_color, &bg_red, &bg_green, &bg_blue) !=
+	      RL2_OK)
+	    {
+		bg_red = 255;
+		bg_green = 255;
+		bg_blue = 255;
+	    }
+      }
+    aux.output->bg_red = bg_red;
+    aux.output->bg_green = bg_green;
+    aux.output->bg_blue = bg_blue;
+
+/* priming the background */
+    rl2_prime_background (ctx, bg_red, bg_green, bg_blue, bg_alpha);
+    rl2_prime_background (ctx_labels, 0, 0, 0, 0);	/* labels layer: always transparent */
+    if (ctx_nodes != NULL)
+	rl2_prime_background (ctx_nodes, 0, 0, 0, 0);	/* Nodes layer: always transparent */
+    if (ctx_edges != NULL)
+	rl2_prime_background (ctx_edges, 0, 0, 0, 0);	/* Edges layer: always transparent */
+    if (ctx_edge_seeds != NULL)
+	rl2_prime_background (ctx_edge_seeds, 0, 0, 0, 0);	/* EdgeSeeds layer: always transparent */
+    if (ctx_faces != NULL)
+	rl2_prime_background (ctx_faces, 0, 0, 0, 0);	/* Faces layer: always transparent */
+    if (ctx_face_seeds != NULL)
+	rl2_prime_background (ctx_face_seeds, 0, 0, 0, 0);	/* FaceSeeds layer: always transparent */
+    if (ctx_links != NULL)
+	rl2_prime_background (ctx_links, 0, 0, 0, 0);	/* Links layer: always transparent */
+    if (ctx_link_seeds != NULL)
+	rl2_prime_background (ctx_link_seeds, 0, 0, 0, 0);	/* LinkSeeds layer: always transparent */
+
+    if (do_paint_map_from_vector (&aux) == RL2_OK)
+      {
+	  rl2_graph_destroy_context (ctx);
+	  rl2_graph_destroy_context (ctx_labels);
+	  if (ctx_nodes != NULL)
+	      rl2_graph_destroy_context (ctx_nodes);
+	  if (ctx_edges != NULL)
+	      rl2_graph_destroy_context (ctx_edges);
+	  if (ctx_edge_seeds != NULL)
+	      rl2_graph_destroy_context (ctx_edge_seeds);
+	  if (ctx_faces != NULL)
+	      rl2_graph_destroy_context (ctx_faces);
+	  if (ctx_face_seeds != NULL)
+	      rl2_graph_destroy_context (ctx_face_seeds);
+	  if (ctx_links != NULL)
+	      rl2_graph_destroy_context (ctx_links);
+	  if (ctx_link_seeds != NULL)
+	      rl2_graph_destroy_context (ctx_link_seeds);
+	  rl2_destroy_canvas (aux.canvas);
+	  *img = aux.output->img;
+	  *img_size = aux.output->img_size;
+	  free (aux.output);
+	  return RL2_OK;
+      }
+
+  error:
+    if (aux.output != NULL)
+	free (aux.output);
+    if (ctx != NULL)
+	rl2_graph_destroy_context (ctx);
+    if (ctx_labels != NULL)
+	rl2_graph_destroy_context (ctx_labels);
+    if (ctx_nodes != NULL)
+	rl2_graph_destroy_context (ctx_nodes);
+    if (ctx_edges != NULL)
+	rl2_graph_destroy_context (ctx_edges);
+    if (ctx_edge_seeds != NULL)
+	rl2_graph_destroy_context (ctx_edge_seeds);
+    if (ctx_faces != NULL)
+	rl2_graph_destroy_context (ctx_faces);
+    if (ctx_face_seeds != NULL)
+	rl2_graph_destroy_context (ctx_face_seeds);
+    if (ctx_links != NULL)
+	rl2_graph_destroy_context (ctx_links);
+    if (ctx_link_seeds != NULL)
+	rl2_graph_destroy_context (ctx_link_seeds);
+    if (aux.canvas != NULL)
+	rl2_destroy_canvas (aux.canvas);
+    *img = NULL;
+    *img_size = 0;
+    return RL2_ERROR;
+}
+
+RL2_DECLARE int
+rl2_styled_map_image_blob_from_vector (sqlite3 * sqlite, const void *data,
+				       const char *db_prefix,
+				       const char *cvg_name,
+				       const unsigned char *blob, int blob_sz,
+				       int width, int height,
+				       const unsigned char *xml_style,
+				       const char *format, const char *bg_color,
+				       int transparent, int quality,
+				       int reaspect, unsigned char **img,
+				       int *img_size)
+{
+/* rendering a Map Image from a Vector Coverage - BLOB */
+    unsigned char bg_red = 0;
+    unsigned char bg_green = 0;
+    unsigned char bg_blue = 0;
+    unsigned char bg_alpha = 0;
+    int is_topogeo = do_check_topogeo (sqlite, db_prefix, cvg_name);
+    int is_toponet = do_check_toponet (sqlite, db_prefix, cvg_name);
+    rl2GraphicsContextPtr ctx = NULL;
+    rl2GraphicsContextPtr ctx_labels = NULL;
+    rl2GraphicsContextPtr ctx_nodes = NULL;
+    rl2GraphicsContextPtr ctx_edges = NULL;
+    rl2GraphicsContextPtr ctx_edge_seeds = NULL;
+    rl2GraphicsContextPtr ctx_faces = NULL;
+    rl2GraphicsContextPtr ctx_face_seeds = NULL;
+    rl2GraphicsContextPtr ctx_links = NULL;
+    rl2GraphicsContextPtr ctx_link_seeds = NULL;
+    struct aux_vector_render aux;
+    aux.sqlite = sqlite;
+    aux.data = data;
+    aux.canvas = NULL;
+    aux.db_prefix = db_prefix;
+    aux.cvg_name = cvg_name;
+    aux.blob = blob;
+    aux.blob_sz = blob_sz;
+    aux.width = width;
+    aux.height = height;
+    aux.style_name = "external_style";
+    aux.xml_style = xml_style;
+    aux.with_nodes = 1;
+    aux.with_edges_or_links = 1;
+    aux.with_faces = 0;
+    aux.with_edge_or_link_seeds = 1;
+    aux.with_face_seeds = 1;
+    aux.output = malloc (sizeof (struct aux_raster_image));
+    aux.output->bg_red = 255;
+    aux.output->bg_green = 255;
+    aux.output->bg_blue = 255;
+    aux.output->transparent = transparent;
+    aux.output->format = format;
+    aux.output->quality = quality;
+    aux.output->img = NULL;
+    aux.output->img_size = 0;
+
+    if (reaspect == 0)
+      {
+	  /* testing for consistent aspect ratios */
+	  double aspect_org =
+	      do_compute_bbox_aspect_ratio (sqlite, blob, blob_sz);
+	  double aspect_dst = (double) width / (double) height;
+	  double confidence = aspect_org / 100.0;
+	  aspect_org = do_compute_bbox_aspect_ratio (sqlite, blob, blob_sz);
+	  if (aspect_org < 0.0)
+	      goto error;
+	  aspect_dst = (double) width / (double) height;
+	  confidence = aspect_org / 100.0;
+	  if (aspect_dst >= (aspect_org - confidence)
+	      && aspect_dst <= (aspect_org + confidence))
+	      ;
+	  else
+	      goto error;
+      }
+
+/* creating a Canvas */
+    ctx = rl2_graph_create_context (data, width, height);
+    if (ctx == NULL)
+	goto error;
+    ctx_labels = rl2_graph_create_context (data, width, height);
+    if (ctx_labels == NULL)
+	goto error;
+    if (is_topogeo)
+      {
+	  /* Topology canvas */
+	  ctx_nodes = rl2_graph_create_context (data, width, height);
+	  if (ctx_nodes == NULL)
+	      goto error;
+	  ctx_edges = rl2_graph_create_context (data, width, height);
+	  if (ctx_edges == NULL)
+	      goto error;
+	  ctx_edge_seeds = rl2_graph_create_context (data, width, height);
+	  if (ctx_edge_seeds == NULL)
+	      goto error;
+	  ctx_faces = rl2_graph_create_context (data, width, height);
+	  if (ctx_faces == NULL)
+	      goto error;
+	  ctx_face_seeds = rl2_graph_create_context (data, width, height);
+	  if (ctx_face_seeds == NULL)
+	      goto error;
+	  aux.canvas =
+	      rl2_create_topology_canvas (ctx, ctx_labels, ctx_nodes, ctx_edges,
+					  ctx_faces, ctx_edge_seeds,
+					  ctx_face_seeds);
+      }
+    else if (is_toponet)
+      {
+	  /* Network canvas */
+	  ctx_nodes = rl2_graph_create_context (data, width, height);
+	  if (ctx_nodes == NULL)
+	      goto error;
+	  ctx_links = rl2_graph_create_context (data, width, height);
+	  if (ctx_links == NULL)
+	      goto error;
+	  ctx_link_seeds = rl2_graph_create_context (data, width, height);
 	  if (ctx_link_seeds == NULL)
 	      goto error;
 	  aux.canvas =
@@ -9052,8 +9495,8 @@ rl2_map_image_paint_from_vector (sqlite3 * sqlite, const void *data,
 				 rl2CanvasPtr canvas, const char *db_prefix,
 				 const char *cvg_name,
 				 const unsigned char *blob, int blob_sz,
-				 int reaspect, const char *style,
-				 const unsigned char *quick_style)
+				 int reaspect, const char *style_name,
+				 const unsigned char *xml_style)
 {
 /* rendering a Map Image from a Vector Coverage - Graphics Context */
     struct aux_vector_render aux;
@@ -9097,8 +9540,8 @@ rl2_map_image_paint_from_vector (sqlite3 * sqlite, const void *data,
     aux.blob_sz = blob_sz;
     aux.width = width;
     aux.height = height;
-    aux.style = style;
-    aux.quick_style = quick_style;
+    aux.style_name = style_name;
+    aux.xml_style = xml_style;
     aux.output = NULL;
     aux.with_nodes = 1;
     aux.with_edges_or_links = 1;
@@ -9113,8 +9556,8 @@ rl2_map_image_paint_from_vector_ex (sqlite3 * sqlite, const void *data,
 				    rl2CanvasPtr canvas, const char *db_prefix,
 				    const char *cvg_name,
 				    const unsigned char *blob, int blob_sz,
-				    int reaspect, const char *style,
-				    const unsigned char *quick_style,
+				    int reaspect, const char *style_name,
+				    const unsigned char *xml_style,
 				    int with_nodes, int with_edges_or_links,
 				    int with_faces, int with_edge_or_link_seeds,
 				    int with_face_seeds)
@@ -9161,8 +9604,8 @@ rl2_map_image_paint_from_vector_ex (sqlite3 * sqlite, const void *data,
     aux.blob_sz = blob_sz;
     aux.width = width;
     aux.height = height;
-    aux.style = style;
-    aux.quick_style = quick_style;
+    aux.style_name = style_name;
+    aux.xml_style = xml_style;
     aux.output = NULL;
     aux.with_nodes = with_nodes;
     aux.with_edges_or_links = with_edges_or_links;
@@ -9170,4 +9613,105 @@ rl2_map_image_paint_from_vector_ex (sqlite3 * sqlite, const void *data,
     aux.with_edge_or_link_seeds = with_edge_or_link_seeds;
     aux.with_face_seeds = with_face_seeds;
     return do_paint_map_from_vector (&aux);
+}
+
+RL2_DECLARE int
+rl2_paint_vector_on_map_canvas (sqlite3 * sqlite,
+				const void *data,
+				const char *db_prefix,
+				const char *cvg_name, const char *style_name)
+{
+    return RL2_OK;
+}
+
+RL2_DECLARE int
+rl2_paint_styled_vector_on_map_canvas (sqlite3 * sqlite,
+				       const void *data,
+				       const char
+				       *db_prefix,
+				       const char *cvg_name,
+				       const unsigned char *xml_name)
+{
+    return RL2_OK;
+}
+
+RL2_DECLARE int
+rl2_image_blob_from_map_canvas (const void *data,
+				const char *format,
+				int quality, unsigned char **img, int *img_size)
+{
+    int ret;
+    int ok_format;
+    unsigned char *image = NULL;
+    int image_size;
+    unsigned char format_id = RL2_OUTPUT_FORMAT_UNKNOWN;
+    rl2GraphicsContextPtr ctx;
+    struct rl2_private_data *cache = (struct rl2_private_data *) data;
+    unsigned char *rgb = NULL;
+    unsigned char *alpha = NULL;
+    int half_transparent;
+
+    if (cache == NULL)
+	return RL2_MAP_CANVAS_NULL_INTERNAL_CACHE;
+    ctx = (rl2GraphicsContextPtr) (cache->map_canvas.ref_ctx);
+    if (ctx == NULL)
+	return RL2_MAP_CANVAS_NOT_IN_USE;
+
+/* validating the format */
+    ok_format = 0;
+    if (strcmp (format, "image/png") == 0)
+      {
+	  format_id = RL2_OUTPUT_FORMAT_PNG;
+	  ok_format = 1;
+      }
+    if (strcmp (format, "image/jpeg") == 0)
+      {
+	  format_id = RL2_OUTPUT_FORMAT_JPEG;
+	  ok_format = 1;
+      }
+    if (strcmp (format, "image/tiff") == 0)
+      {
+	  format_id = RL2_OUTPUT_FORMAT_TIFF;
+	  ok_format = 1;
+      }
+    if (strcmp (format, "application/x-pdf") == 0)
+      {
+	  format_id = RL2_OUTPUT_FORMAT_PDF;
+	  ok_format = 1;
+      }
+    if (!ok_format)
+	return RL2_MAP_CANVAS_INVALID_IMAGE_FORMAT;
+
+/* preparing the output image */
+    rgb = rl2_graph_get_context_rgb_array (ctx);
+    alpha = rl2_graph_get_context_alpha_array (ctx, &half_transparent);
+    if (rgb == NULL || alpha == NULL)
+      {
+	  ret = RL2_MAP_CANVAS_INVALID_PIXBUF;
+	  goto error;
+      }
+
+    if (!get_payload_from_rgb_rgba_transparent
+	(cache->map_canvas.width, cache->map_canvas.height, data, rgb, alpha,
+	 format_id, quality, &image, &image_size, 1.0, half_transparent))
+      {
+	  ret = RL2_MAP_CANVAS_IMAGE_ERROR;
+	  goto error;
+      }
+    if (rgb != NULL)
+	free (rgb);
+    if (alpha != NULL)
+	free (alpha);
+    *img = image;
+    *img_size = image_size;
+    return RL2_OK;
+
+  error:
+    if (rgb != NULL)
+	free (rgb);
+    if (alpha != NULL)
+	free (alpha);
+    *img = NULL;
+    *img_size = 0;;
+    return ret;
 }

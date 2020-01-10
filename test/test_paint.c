@@ -1212,12 +1212,15 @@ main (int argc, char *argv[])
     int half_transparent;
     unsigned char *rgb;
     unsigned char *alpha;
+    void *priv_data = rl2_alloc_private ();
 
     if (argc > 1 || argv[0] == NULL)
 	argc = 1;		/* silencing stupid compiler warnings */
 
 /* testing the SVG backend */
-    svg = rl2_graph_create_svg_context ("./test_paint.svg", 2048, 2048);
+    svg =
+	rl2_graph_create_svg_context (priv_data, "./test_paint.svg", 2048,
+				      2048);
     if (svg == NULL)
       {
 	  fprintf (stderr, "Unable to create an SVG backend\n");
@@ -1231,8 +1234,8 @@ main (int argc, char *argv[])
 
 /* testing the PDF backend */
     pdf =
-	rl2_graph_create_pdf_context ("./test_paint.pdf", 300, 11.7, 8.3, 0.5,
-				      0.5);
+	rl2_graph_create_pdf_context (priv_data, "./test_paint.pdf", 300, 11.7,
+				      8.3, 0.5, 0.5);
     if (pdf == NULL)
       {
 	  fprintf (stderr, "Unable to create a PDF backend\n");
@@ -1245,7 +1248,7 @@ main (int argc, char *argv[])
     unlink ("./test_paint.pdf");
 
 /* testing an ordinary graphics backend */
-    ctx = rl2_graph_create_context (2048, 2048);
+    ctx = rl2_graph_create_context (priv_data, 2048, 2048);
     if (ctx == NULL)
       {
 	  fprintf (stderr, "Unable to create an ordinary graphics backend\n");
@@ -1293,6 +1296,7 @@ main (int argc, char *argv[])
       }
     rl2_destroy_section (img);
     unlink ("./test_paint.png");
+    rl2_cleanup_private (priv_data);
 
     return 0;
 }

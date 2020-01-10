@@ -1,0 +1,7 @@
+RL2_GetStyledMapImageFromRaster - NULL height
+:memory: #use in-memory database
+SELECT RL2_GetStyledMapImageFromRaster(NULL, 'landsat', BuildMbr(1, 1, 10, 10), 640, NULL, 'xml-style');
+1 # rows (not including the header row)
+1 # columns
+RL2_GetStyledMapImageFromRaster(NULL, 'landsat', BuildMbr(1, 1, 10, 10), 640, NULL, 'xml-style');
+(NULL)

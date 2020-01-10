@@ -8354,6 +8354,7 @@ doRunShadowerThread (void *arg)
     return 0;
 #else
     pthread_exit (NULL);
+    return NULL;
 #endif
 }
 

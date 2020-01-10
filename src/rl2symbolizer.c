@@ -1177,8 +1177,6 @@ coverage_style_from_xml (char *name, unsigned char *xml)
     if (!find_coverage_style (root, style, &loop))
 	goto error;
     xmlFreeDoc (xml_doc);
-    free (xml);
-    xml = NULL;
 
     if (style->name == NULL)
 	goto error;
@@ -1186,8 +1184,6 @@ coverage_style_from_xml (char *name, unsigned char *xml)
     return (rl2CoverageStylePtr) style;
 
   error:
-    if (xml != NULL)
-	free (xml);
     if (xml_doc != NULL)
 	xmlFreeDoc (xml_doc);
     if (style != NULL)
@@ -5999,12 +5995,15 @@ rl2_feature_type_style_from_xml (const char *name, const unsigned char *xml)
     xmlDocPtr xml_doc = NULL;
     xmlNodePtr root;
     int loop = 1;
+    int len;
     xmlGenericErrorFunc silentError = (xmlGenericErrorFunc) dummySilentError;
 
     style = malloc (sizeof (rl2PrivFeatureTypeStyle));
     if (style == NULL)
 	return NULL;
-    style->name = name;
+    len = strlen (name);
+    style->name = malloc (len + 1);
+    strcpy (style->name, name);
     style->first_rule = NULL;
     style->last_rule = NULL;
     style->else_rule = NULL;
@@ -6027,8 +6026,6 @@ rl2_feature_type_style_from_xml (const char *name, const unsigned char *xml)
     if (!find_feature_type_style (root, style, &loop))
 	goto error;
     xmlFreeDoc (xml_doc);
-    free (xml);
-    xml = NULL;
 
     if (style->name == NULL)
 	goto error;
@@ -6037,8 +6034,6 @@ rl2_feature_type_style_from_xml (const char *name, const unsigned char *xml)
     return (rl2FeatureTypeStylePtr) style;
 
   error:
-    if (xml != NULL)
-	free (xml);
     if (xml_doc != NULL)
 	xmlFreeDoc (xml_doc);
     if (style != NULL)
@@ -6370,8 +6365,6 @@ rl2_create_group_renderer (sqlite3 * sqlite, rl2GroupStylePtr group_style)
 	  rl2RasterStatisticsPtr stats = NULL;
 	  const char *db_prefix = rl2_get_group_prefix (group_style, i);
 	  const char *layer_name = rl2_get_group_named_layer (group_style, i);
-	  const char *layer_style_name =
-	      rl2_get_group_named_style (group_style, i);
 	  sqlite3_int64 layer_style_id = -1;
 	  rl2CoveragePtr coverage =
 	      rl2_create_coverage_from_dbms (sqlite, db_prefix, layer_name);

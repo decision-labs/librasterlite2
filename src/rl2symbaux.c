@@ -5521,16 +5521,10 @@ rl2_destroy_group_style (rl2GroupStylePtr style)
     if (stl == NULL)
 	return;
 
-    if (stl->name != NULL)
-	free (stl->name);
     child = stl->first;
     while (child != NULL)
       {
 	  child_n = child->next;
-	  if (child->namedLayer != NULL)
-	      free (child->namedLayer);
-	  if (child->namedStyle != NULL)
-	      free (child->namedStyle);
 	  free (child);
 	  child = child_n;
       }

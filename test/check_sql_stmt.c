@@ -288,6 +288,17 @@ do_one_case (struct db_conn *conn, const struct test_data *data,
 			   &columns, &err_msg);
     if (ret != SQLITE_OK)
       {
+	  if (data->expected_rows == 1 && data->expected_columns == 1)
+	    {
+		/* checking for an expected exception */
+		if (strcmp (err_msg, data->expected_results[1]) == 0)
+		  {
+		      /* we expected this */
+		      sqlite3_free (err_msg);
+		      sqlite3_free_table (results);
+		      return 0;
+		  }
+	    }
 	  fprintf (stderr, "Error: %s\n", err_msg);
 	  sqlite3_free (err_msg);
 	  return -10;

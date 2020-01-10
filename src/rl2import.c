@@ -439,6 +439,7 @@ doRunImportThread (void *arg)
     return 0;
 #else
     pthread_exit (NULL);
+    return NULL;
 #endif
 }
 
@@ -493,16 +494,18 @@ start_tile_thread (rl2AuxImporterTilePtr aux_tile)
 }
 
 static int
-do_import_ascii_grid (sqlite3 * handle, int max_threads, const char *src_path,
-		      rl2CoveragePtr cvg, const char *section, int srid,
-		      unsigned int tile_w, unsigned int tile_h,
-		      int pyramidize, unsigned char sample_type,
-		      unsigned char compression, sqlite3_stmt * stmt_data,
-		      sqlite3_stmt * stmt_tils, sqlite3_stmt * stmt_sect,
-		      sqlite3_stmt * stmt_levl, sqlite3_stmt * stmt_upd_sect,
-		      int verbose, int current, int total)
+do_import_ascii_grid (sqlite3 * handle, const void *priv_data,
+		      const char *src_path, rl2CoveragePtr cvg,
+		      const char *section, int srid, unsigned int tile_w,
+		      unsigned int tile_h, int pyramidize,
+		      unsigned char sample_type, unsigned char compression,
+		      sqlite3_stmt * stmt_data, sqlite3_stmt * stmt_tils,
+		      sqlite3_stmt * stmt_sect, sqlite3_stmt * stmt_levl,
+		      sqlite3_stmt * stmt_upd_sect, int verbose, int current,
+		      int total)
 {
 /* importing an ASCII Data Grid file */
+    struct rl2_private_data *cache = (struct rl2_private_data *) priv_data;
     int ret;
     rl2PrivCoveragePtr coverage = (rl2PrivCoveragePtr) cvg;
     rl2AsciiGridOriginPtr origin = NULL;
@@ -537,6 +540,11 @@ do_import_ascii_grid (sqlite3 * handle, int max_threads, const char *src_path,
     rl2AuxImporterTilePtr aux_tile;
     rl2AuxImporterTilePtr *thread_slots = NULL;
     int thread_count;
+    int max_threads;
+
+    if (cache == NULL)
+	goto error;
+    max_threads = cache->max_threads;
 
     time (&start);
     if (rl2_get_coverage_resolution (cvg, &base_res_x, &base_res_y) != RL2_OK)
@@ -837,7 +845,7 @@ do_import_ascii_grid (sqlite3 * handle, int max_threads, const char *src_path,
 	  if (coverage_name == NULL)
 	      goto error;
 	  if (rl2_build_section_pyramid
-	      (handle, max_threads, coverage_name, section_id, 1,
+	      (handle, priv_data, coverage_name, section_id, 1,
 	       verbose) != RL2_OK)
 	    {
 		fprintf (stderr, "unable to build the Section's Pyramid\n");
@@ -1152,17 +1160,19 @@ write_jgw_worldfile (const char *path, double minx, double maxy, double x_res,
 }
 
 static int
-do_import_jpeg_image (sqlite3 * handle, int max_threads, const char *src_path,
-		      rl2CoveragePtr cvg, const char *section, int srid,
-		      unsigned int tile_w, unsigned int tile_h,
-		      int pyramidize, unsigned char sample_type,
-		      unsigned char num_bands, unsigned char compression,
-		      int quality, sqlite3_stmt * stmt_data,
-		      sqlite3_stmt * stmt_tils, sqlite3_stmt * stmt_sect,
-		      sqlite3_stmt * stmt_levl, sqlite3_stmt * stmt_upd_sect,
-		      int verbose, int current, int total)
+do_import_jpeg_image (sqlite3 * handle, const void *priv_data,
+		      const char *src_path, rl2CoveragePtr cvg,
+		      const char *section, int srid, unsigned int tile_w,
+		      unsigned int tile_h, int pyramidize,
+		      unsigned char sample_type, unsigned char num_bands,
+		      unsigned char compression, int quality,
+		      sqlite3_stmt * stmt_data, sqlite3_stmt * stmt_tils,
+		      sqlite3_stmt * stmt_sect, sqlite3_stmt * stmt_levl,
+		      sqlite3_stmt * stmt_upd_sect, int verbose, int current,
+		      int total)
 {
 /* importing a JPEG image file [with optional WorldFile */
+    struct rl2_private_data *cache = (struct rl2_private_data *) priv_data;
     rl2SectionPtr origin = NULL;
     rl2RasterPtr rst_in;
     rl2PrivRasterPtr raster_in;
@@ -1200,6 +1210,11 @@ do_import_jpeg_image (sqlite3 * handle, int max_threads, const char *src_path,
     rl2AuxImporterTilePtr aux_tile;
     rl2AuxImporterTilePtr *thread_slots = NULL;
     int thread_count;
+    int max_threads;
+
+    if (cache == NULL)
+	goto error;
+    max_threads = cache->max_threads;
 
     if (rl2_get_coverage_resolution (cvg, &base_res_x, &base_res_y) != RL2_OK)
       {
@@ -1513,7 +1528,7 @@ do_import_jpeg_image (sqlite3 * handle, int max_threads, const char *src_path,
 	  if (coverage_name == NULL)
 	      goto error;
 	  if (rl2_build_section_pyramid
-	      (handle, max_threads, coverage_name, section_id, 1,
+	      (handle, priv_data, coverage_name, section_id, 1,
 	       verbose) != RL2_OK)
 	    {
 		fprintf (stderr, "unable to build the Section's Pyramid\n");
@@ -1586,7 +1601,7 @@ read_j2w_worldfile (const char *src_path, double *minx, double *maxy,
 }
 
 static int
-do_import_jpeg2000_image (sqlite3 * handle, int max_threads,
+do_import_jpeg2000_image (sqlite3 * handle, const void *priv_data,
 			  const char *src_path, rl2CoveragePtr cvg,
 			  const char *section, int srid, unsigned int tile_w,
 			  unsigned int tile_h, int pyramidize,
@@ -1598,6 +1613,7 @@ do_import_jpeg2000_image (sqlite3 * handle, int max_threads,
 			  int current, int total)
 {
 /* importing a Jpeg2000 image file [with optional WorldFile */
+    struct rl2_private_data *cache = (struct rl2_private_data *) priv_data;
     rl2PrivCoveragePtr p_coverage = (rl2PrivCoveragePtr) cvg;
     rl2SectionPtr origin = NULL;
     rl2RasterPtr rst_in;
@@ -1642,6 +1658,11 @@ do_import_jpeg2000_image (sqlite3 * handle, int max_threads,
     rl2AuxImporterTilePtr aux_tile;
     rl2AuxImporterTilePtr *thread_slots = NULL;
     int thread_count;
+    int max_threads;
+
+    if (cache == NULL)
+	goto error;
+    max_threads = cache->max_threads;
 
     if (rl2_get_coverage_resolution (cvg, &base_res_x, &base_res_y) != RL2_OK)
       {
@@ -1967,7 +1988,7 @@ do_import_jpeg2000_image (sqlite3 * handle, int max_threads,
 	  if (coverage_name == NULL)
 	      goto error;
 	  if (rl2_build_section_pyramid
-	      (handle, max_threads, coverage_name, section_id, 1,
+	      (handle, priv_data, coverage_name, section_id, 1,
 	       verbose) != RL2_OK)
 	    {
 		fprintf (stderr, "unable to build the Section's Pyramid\n");
@@ -2037,7 +2058,7 @@ is_jpeg2000_image (const char *path)
 #endif /* end OpenJpeg conditional */
 
 static int
-do_import_file (sqlite3 * handle, int max_threads, const char *src_path,
+do_import_file (sqlite3 * handle, const void *priv_data, const char *src_path,
 		rl2CoveragePtr cvg, const char *section, int worldfile,
 		int force_srid, int pyramidize, unsigned char sample_type,
 		unsigned char pixel_type, unsigned char num_bands,
@@ -2049,6 +2070,7 @@ do_import_file (sqlite3 * handle, int max_threads, const char *src_path,
 		int total)
 {
 /* importing a single Source file */
+    struct rl2_private_data *cache = (struct rl2_private_data *) priv_data;
     rl2PrivCoveragePtr coverage = (rl2PrivCoveragePtr) cvg;
     int ret;
     rl2TiffOriginPtr origin = NULL;
@@ -2085,9 +2107,14 @@ do_import_file (sqlite3 * handle, int max_threads, const char *src_path,
     rl2AuxImporterTilePtr aux_tile;
     rl2AuxImporterTilePtr *thread_slots = NULL;
     int thread_count;
+    int max_threads;
+
+    if (cache == NULL)
+	goto error;
+    max_threads = cache->max_threads;
 
     if (is_ascii_grid (src_path))
-	return do_import_ascii_grid (handle, max_threads, src_path, cvg,
+	return do_import_ascii_grid (handle, priv_data, src_path, cvg,
 				     section, force_srid, tile_w, tile_h,
 				     pyramidize, sample_type, compression,
 				     stmt_data, stmt_tils, stmt_sect,
@@ -2095,7 +2122,7 @@ do_import_file (sqlite3 * handle, int max_threads, const char *src_path,
 				     current, total);
 
     if (is_jpeg_image (src_path))
-	return do_import_jpeg_image (handle, max_threads, src_path, cvg,
+	return do_import_jpeg_image (handle, priv_data, src_path, cvg,
 				     section, force_srid, tile_w, tile_h,
 				     pyramidize, sample_type, num_bands,
 				     compression, quality, stmt_data,
@@ -2104,7 +2131,7 @@ do_import_file (sqlite3 * handle, int max_threads, const char *src_path,
 
 #ifndef OMIT_OPENJPEG		/* only if OpenJpeg is enabled */
     if (is_jpeg2000_image (src_path))
-	return do_import_jpeg2000_image (handle, max_threads, src_path, cvg,
+	return do_import_jpeg2000_image (handle, priv_data, src_path, cvg,
 					 section, force_srid, tile_w, tile_h,
 					 pyramidize, sample_type, num_bands,
 					 compression, quality, stmt_data,
@@ -2455,7 +2482,7 @@ do_import_file (sqlite3 * handle, int max_threads, const char *src_path,
 	  if (coverage_name == NULL)
 	      goto error;
 	  if (rl2_build_section_pyramid
-	      (handle, max_threads, coverage_name, section_id, 1,
+	      (handle, priv_data, coverage_name, section_id, 1,
 	       verbose) != RL2_OK)
 	    {
 		fprintf (stderr, "unable to build the Section's Pyramid\n");
@@ -2520,7 +2547,7 @@ check_extension_match (const char *file_name, const char *file_ext)
 }
 
 static int
-do_import_dir (sqlite3 * handle, int max_threads, const char *dir_path,
+do_import_dir (sqlite3 * handle, const void *priv_data, const char *dir_path,
 	       const char *file_ext, rl2CoveragePtr cvg, const char *section,
 	       int worldfile, int force_srid, int pyramidize,
 	       unsigned char sample_type, unsigned char pixel_type,
@@ -2569,7 +2596,7 @@ do_import_dir (sqlite3 * handle, int max_threads, const char *dir_path,
 				sqlite3_mprintf ("%s/%s", dir_path,
 						 c_file.name);
 			    ret =
-				do_import_file (handle, max_threads, path,
+				do_import_file (handle, priv_data, path,
 						cvg, section, worldfile,
 						force_srid, pyramidize,
 						sample_type, pixel_type,
@@ -2623,7 +2650,7 @@ do_import_dir (sqlite3 * handle, int max_threads, const char *dir_path,
 	      continue;
 	  path = sqlite3_mprintf ("%s/%s", dir_path, entry->d_name);
 	  ret =
-	      do_import_file (handle, max_threads, path, cvg, section,
+	      do_import_file (handle, priv_data, path, cvg, section,
 			      worldfile, force_srid, pyramidize, sample_type,
 			      pixel_type, num_bands, tile_w, tile_h,
 			      compression, quality, stmt_data, stmt_tils,
@@ -2641,7 +2668,7 @@ do_import_dir (sqlite3 * handle, int max_threads, const char *dir_path,
 }
 
 static int
-do_import_common (sqlite3 * handle, int max_threads, const char *src_path,
+do_import_common (sqlite3 * handle, const void *priv_data, const char *src_path,
 		  const char *dir_path, const char *file_ext,
 		  rl2CoveragePtr cvg, const char *section, int worldfile,
 		  int force_srid, int pyramidize, int verbose)
@@ -2799,7 +2826,7 @@ do_import_common (sqlite3 * handle, int max_threads, const char *src_path,
       {
 	  /* importing a single Image file */
 	  if (!do_import_file
-	      (handle, max_threads, src_path, cvg, section, worldfile,
+	      (handle, priv_data, src_path, cvg, section, worldfile,
 	       force_srid, pyramidize, sample_type, pixel_type, num_bands,
 	       tile_w, tile_h, compression, quality, stmt_data, stmt_tils,
 	       stmt_sect, stmt_levl, stmt_upd_sect, verbose, -1, -1))
@@ -2809,7 +2836,7 @@ do_import_common (sqlite3 * handle, int max_threads, const char *src_path,
       {
 	  /* importing all Image files from a whole directory */
 	  if (!do_import_dir
-	      (handle, max_threads, dir_path, file_ext, cvg, section,
+	      (handle, priv_data, dir_path, file_ext, cvg, section,
 	       worldfile, force_srid, pyramidize, sample_type, pixel_type,
 	       num_bands, tile_w, tile_h, compression, quality, stmt_data,
 	       stmt_tils, stmt_sect, stmt_levl, stmt_upd_sect, verbose))
@@ -2850,28 +2877,28 @@ do_import_common (sqlite3 * handle, int max_threads, const char *src_path,
 }
 
 RL2_DECLARE int
-rl2_load_raster_into_dbms (sqlite3 * handle, int max_threads,
+rl2_load_raster_into_dbms (sqlite3 * handle, const void *priv_data,
 			   const char *src_path, rl2CoveragePtr coverage,
 			   int worldfile, int force_srid, int pyramidize,
 			   int verbose)
 {
 /* importing a single Raster file */
     if (!do_import_common
-	(handle, max_threads, src_path, NULL, NULL, coverage, NULL, worldfile,
+	(handle, priv_data, src_path, NULL, NULL, coverage, NULL, worldfile,
 	 force_srid, pyramidize, verbose))
 	return RL2_ERROR;
     return RL2_OK;
 }
 
 RL2_DECLARE int
-rl2_load_mrasters_into_dbms (sqlite3 * handle, int max_threads,
+rl2_load_mrasters_into_dbms (sqlite3 * handle, const void *priv_data,
 			     const char *dir_path, const char *file_ext,
 			     rl2CoveragePtr coverage, int worldfile,
 			     int force_srid, int pyramidize, int verbose)
 {
 /* importing multiple Raster files from dir */
     if (!do_import_common
-	(handle, max_threads, NULL, dir_path, file_ext, coverage, NULL,
+	(handle, priv_data, NULL, dir_path, file_ext, coverage, NULL,
 	 worldfile, force_srid, pyramidize, verbose))
 	return RL2_ERROR;
     return RL2_OK;
@@ -5682,11 +5709,12 @@ rl2_export_section_raw_pixels_from_dbms (sqlite3 * handle, int max_threads,
 }
 
 RL2_DECLARE int
-rl2_load_raw_raster_into_dbms (sqlite3 * handle, int max_threads,
+rl2_load_raw_raster_into_dbms (sqlite3 * handle, const void *priv_data,
 			       rl2CoveragePtr cvg, const char *section,
 			       rl2RasterPtr rst, int pyramidize)
 {
 /* main IMPORT Raster function */
+    struct rl2_private_data *cache = (struct rl2_private_data *) priv_data;
     rl2PrivCoveragePtr privcvg = (rl2PrivCoveragePtr) cvg;
     rl2PrivRasterPtr privrst = (rl2PrivRasterPtr) rst;
     int ret;
@@ -5732,6 +5760,11 @@ rl2_load_raw_raster_into_dbms (sqlite3 * handle, int max_threads,
     rl2AuxImporterTilePtr aux_tile;
     rl2AuxImporterTilePtr *thread_slots = NULL;
     int thread_count;
+    int max_threads;
+
+    if (cache == NULL)
+	goto error;
+    max_threads = cache->max_threads;
 
     if (cvg == NULL)
 	goto error;
@@ -6051,7 +6084,7 @@ rl2_load_raw_raster_into_dbms (sqlite3 * handle, int max_threads,
 	  if (coverage_name == NULL)
 	      goto error;
 	  if (rl2_build_section_pyramid
-	      (handle, max_threads, coverage_name, section_id, 1, 0) != RL2_OK)
+	      (handle, priv_data, coverage_name, section_id, 1, 0) != RL2_OK)
 	    {
 		fprintf (stderr, "unable to build the Section's Pyramid\n");
 		goto error;
@@ -6096,7 +6129,7 @@ rl2_load_raw_raster_into_dbms (sqlite3 * handle, int max_threads,
 }
 
 RL2_DECLARE int
-rl2_load_raw_tiles_into_dbms (sqlite3 * handle,
+rl2_load_raw_tiles_into_dbms (sqlite3 * handle, const void *priv_data,
 			      rl2CoveragePtr cvg, const char *section,
 			      unsigned int sctn_width,
 			      unsigned int sctn_height,
@@ -6439,7 +6472,7 @@ rl2_load_raw_tiles_into_dbms (sqlite3 * handle,
 	  if (coverage_name == NULL)
 	      goto error;
 	  if (rl2_build_section_pyramid
-	      (handle, 1, coverage_name, section_id, 1, 0) != RL2_OK)
+	      (handle, priv_data, coverage_name, section_id, 1, 0) != RL2_OK)
 	    {
 		fprintf (stderr, "unable to build the Section's Pyramid\n");
 		goto error;

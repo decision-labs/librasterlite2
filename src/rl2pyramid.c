@@ -1960,11 +1960,11 @@ update_sect_pyramid_multiband (sqlite3 * handle, sqlite3_stmt * stmt_rd,
 }
 
 static int
-update_sect_pyramid (sqlite3 * handle, sqlite3_stmt * stmt_rd,
-		     sqlite3_stmt * stmt_tils, sqlite3_stmt * stmt_data,
-		     SectionPyramid * pyr, unsigned int tileWidth,
-		     unsigned int tileHeight, int id_level,
-		     rl2PalettePtr palette, rl2PixelPtr no_data)
+update_sect_pyramid (sqlite3 * handle, const void *priv_data,
+		     sqlite3_stmt * stmt_rd, sqlite3_stmt * stmt_tils,
+		     sqlite3_stmt * stmt_data, SectionPyramid * pyr,
+		     unsigned int tileWidth, unsigned int tileHeight,
+		     int id_level, rl2PalettePtr palette, rl2PixelPtr no_data)
 {
 /* creating and inserting Pyramid tiles */
     unsigned char *buf_in;
@@ -2006,7 +2006,7 @@ update_sect_pyramid (sqlite3 * handle, sqlite3_stmt * stmt_rd,
     while (tile_out != NULL)
       {
 	  /* creating the output (rescaled) tile */
-	  ctx = rl2_graph_create_context (tileWidth, tileHeight);
+	  ctx = rl2_graph_create_context (priv_data, tileWidth, tileHeight);
 	  if (ctx == NULL)
 	      goto error;
 	  tile_in = tile_out->first;
@@ -2182,7 +2182,7 @@ update_sect_pyramid (sqlite3 * handle, sqlite3_stmt * stmt_rd,
 }
 
 static int
-rescale_monolithic_rgba (int id_level,
+rescale_monolithic_rgba (const void *priv_data, int id_level,
 			 unsigned int tileWidth, unsigned int tileHeight,
 			 int factor, double res_x, double res_y, double minx,
 			 double miny, double maxx, double maxy,
@@ -2211,7 +2211,7 @@ rescale_monolithic_rgba (int id_level,
     int half_transparent;
 
 /* creating a graphics context */
-    ctx = rl2_graph_create_context (tileWidth, tileHeight);
+    ctx = rl2_graph_create_context (priv_data, tileWidth, tileHeight);
     if (ctx == NULL)
 	goto error;
 /* binding the BBOX to be queried */
@@ -4470,12 +4470,12 @@ prepare_section_pyramid_stmts (sqlite3 * handle, const char *coverage,
 }
 
 static int
-do_build_section_pyramid (sqlite3 * handle, const char *coverage,
-			  sqlite3_int64 section_id, unsigned char sample_type,
-			  unsigned char pixel_type, unsigned char num_samples,
-			  unsigned char compression, int mixed_resolutions,
-			  int quality, int srid, unsigned int tileWidth,
-			  unsigned int tileHeight)
+do_build_section_pyramid (sqlite3 * handle, const void *priv_data,
+			  const char *coverage, sqlite3_int64 section_id,
+			  unsigned char sample_type, unsigned char pixel_type,
+			  unsigned char num_samples, unsigned char compression,
+			  int mixed_resolutions, int quality, int srid,
+			  unsigned int tileWidth, unsigned int tileHeight)
 {
 /* attempting to (re)build a section pyramid from scratch */
     char *table_levels;
@@ -4681,8 +4681,8 @@ do_build_section_pyramid (sqlite3 * handle, const char *coverage,
 	    {
 		/* any other Pyramid [not a DataGrid] */
 		if (!update_sect_pyramid
-		    (handle, stmt_rd, stmt_tils, stmt_data, pyr, tileWidth,
-		     tileHeight, id_level, palette, no_data))
+		    (handle, priv_data, stmt_rd, stmt_tils, stmt_data, pyr,
+		     tileWidth, tileHeight, id_level, palette, no_data))
 		    goto error;
 	    }
 	  delete_sect_pyramid (pyr);
@@ -4724,8 +4724,8 @@ do_build_section_pyramid (sqlite3 * handle, const char *coverage,
 	    {
 		/* any other Pyramid [not a DataGrid] */
 		if (!update_sect_pyramid
-		    (handle, stmt_rd, stmt_tils, stmt_data, pyr, tileWidth,
-		     tileHeight, id_level, palette, no_data))
+		    (handle, priv_data, stmt_rd, stmt_tils, stmt_data, pyr,
+		     tileWidth, tileHeight, id_level, palette, no_data))
 		    goto error;
 	    }
 	  delete_sect_pyramid (pyr);
@@ -5923,7 +5923,7 @@ get_background_color (sqlite3 * handle, rl2CoveragePtr coverage,
     rl2PrivPalettePtr plt;
     rl2PalettePtr palette = NULL;
     rl2PrivSamplePtr smp;
-    rl2PrivPixelPtr pxl;
+    rl2PixelPtr pxl;
     rl2PrivCoveragePtr cvg = (rl2PrivCoveragePtr) coverage;
     unsigned char index;
     *bgRed = 255;
@@ -5934,10 +5934,10 @@ get_background_color (sqlite3 * handle, rl2CoveragePtr coverage,
 	return;
     if (cvg->noData == NULL)
 	return;
-    pxl = (rl2PrivPixelPtr) (cvg->noData);
+    pxl = (rl2PixelPtr) (cvg->noData);
     if (rl2_is_pixel_none (pxl) == RL2_TRUE)
 	return;
-    smp = pxl->Samples;
+    smp = cvg->noData->Samples;
     index = smp->uint8;
 
     if (cvg->pixelType == RL2_PIXEL_MONOCHROME)
@@ -6007,11 +6007,12 @@ get_background_color (sqlite3 * handle, rl2CoveragePtr coverage,
 }
 
 RL2_DECLARE int
-rl2_build_section_pyramid (sqlite3 * handle, int max_threads,
+rl2_build_section_pyramid (sqlite3 * handle, const void *priv_data,
 			   const char *coverage, sqlite3_int64 section_id,
 			   int forced_rebuild, int verbose)
 {
 /* (re)building section-level pyramid for a single Section */
+    struct rl2_private_data *cache = (struct rl2_private_data *) priv_data;
     rl2CoveragePtr cvg = NULL;
     rl2PrivCoveragePtr ptrcvg;
     unsigned char sample_type;
@@ -6026,6 +6027,11 @@ rl2_build_section_pyramid (sqlite3 * handle, int max_threads,
     unsigned char bgRed;
     unsigned char bgGreen;
     unsigned char bgBlue;
+    int max_threads;
+
+    if (cache == NULL)
+	goto error;
+    max_threads = cache->max_threads;
 
     cvg = rl2_create_coverage_from_dbms (handle, NULL, coverage);
     if (cvg == NULL)
@@ -6091,9 +6097,10 @@ rl2_build_section_pyramid (sqlite3 * handle, int max_threads,
 	    {
 		/* ordinary RGB, Grayscale, MultiBand or DataGrid Pyramid */
 		if (!do_build_section_pyramid
-		    (handle, coverage, section_id, sample_type, pixel_type,
-		     num_bands, compression, ptrcvg->mixedResolutions,
-		     quality, srid, tileWidth, tileHeight))
+		    (handle, priv_data, coverage, section_id, sample_type,
+		     pixel_type, num_bands, compression,
+		     ptrcvg->mixedResolutions, quality, srid, tileWidth,
+		     tileHeight))
 		    goto error;
 	    }
 	  if (verbose)
@@ -6121,7 +6128,7 @@ rl2_build_section_pyramid (sqlite3 * handle, int max_threads,
 }
 
 RL2_DECLARE int
-rl2_build_all_section_pyramids (sqlite3 * handle, int max_threads,
+rl2_build_all_section_pyramids (sqlite3 * handle, const void *priv_data,
 				const char *coverage, int forced_rebuild,
 				int verbose)
 {
@@ -6150,7 +6157,7 @@ rl2_build_all_section_pyramids (sqlite3 * handle, int max_threads,
 	    {
 		sqlite3_int64 section_id = sqlite3_column_int64 (stmt, 0);
 		if (rl2_build_section_pyramid
-		    (handle, max_threads, coverage, section_id,
+		    (handle, priv_data, coverage, section_id,
 		     forced_rebuild, verbose) != RL2_OK)
 		    goto error;
 	    }
@@ -6189,8 +6196,9 @@ is_full_mask (const unsigned char *mask, int mask_size)
 }
 
 RL2_DECLARE int
-rl2_build_monolithic_pyramid (sqlite3 * handle, const char *coverage,
-			      int virt_levels, int verbose)
+rl2_build_monolithic_pyramid (sqlite3 * handle, const void *priv_data,
+			      const char *coverage, int virt_levels,
+			      int verbose)
 {
 /* (re)building monolithic pyramid for a whole coverage */
     rl2CoveragePtr cvg = NULL;
@@ -6454,7 +6462,7 @@ rl2_build_monolithic_pyramid (sqlite3 * handle, const char *coverage,
 			{
 			    /* RGB, PALETTE or GRAYSCALE datasource (UINT8) */
 			    if (!rescale_monolithic_rgba
-				(id_level, tileWidth, tileHeight,
+				(priv_data, id_level, tileWidth, tileHeight,
 				 resize_factor, res_x, res_y, tile_minx,
 				 tile_miny, tile_maxx, tile_maxy, buffer,
 				 buf_size, mask, &mask_size, palette, no_data,

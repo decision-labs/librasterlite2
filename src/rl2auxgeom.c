@@ -4267,3 +4267,91 @@ rl2_create_updatable_geometry (const unsigned char *blob, int size)
 	rl2_destroy_updatable_geometry (geom);
     return NULL;
 }
+
+RL2_PRIVATE unsigned char *
+do_create_label_mbr (double minx, double miny, double maxx, double maxy,
+		     double x0, double y0, double x1, double y1, double x2,
+		     double y2, double x3, double y3, int *blob_size)
+{
+/* serializing a BLOB Geometry - label BBOX */
+    unsigned char *blob = NULL;
+    unsigned char *ptr;
+    int size = 0;
+    int endian_arch = rl2GeomEndianArch ();
+
+/* computing the size of BLOB */
+    size = 44;			/* header size */
+    size += (8 + ((sizeof (double) * 2) * 5));	/* # rings + # points + [x.y] array - exterior ring */
+    blob = malloc (size);
+    ptr = blob;
+/* building the BLOB */
+    *ptr = GAIA_MARK_START;	/* START signature */
+    *(ptr + 1) = GAIA_LITTLE_ENDIAN;	/* byte ordering */
+    rl2GeomExport32 (ptr + 2, -1, 1, endian_arch);	/* the SRID */
+    rl2GeomExport64 (ptr + 6, minx, 1, endian_arch);	/* MBR - minimum X */
+    rl2GeomExport64 (ptr + 14, miny, 1, endian_arch);	/* MBR - minimum Y */
+    rl2GeomExport64 (ptr + 22, maxx, 1, endian_arch);	/* MBR - maximum X */
+    rl2GeomExport64 (ptr + 30, maxy, 1, endian_arch);	/* MBR - maximum Y */
+    *(ptr + 38) = GAIA_MARK_MBR;	/* MBR signature */
+    rl2GeomExport32 (ptr + 39, GAIA_POLYGON, 1, endian_arch);	/* class POLYGON */
+    rl2GeomExport32 (ptr + 43, 1, 1, endian_arch);	/* # rings */
+    rl2GeomExport32 (ptr + 47, 5, 1, endian_arch);	/* # points - exterior ring */
+    ptr += 51;
+    rl2GeomExport64 (ptr, x0, 1, endian_arch);	/* X0 */
+    rl2GeomExport64 (ptr + 8, y0, 1, endian_arch);	/* Y0 */
+    ptr += 16;
+    rl2GeomExport64 (ptr, x1, 1, endian_arch);	/* X1 */
+    rl2GeomExport64 (ptr + 8, y1, 1, endian_arch);	/* Y1 */
+    ptr += 16;
+    rl2GeomExport64 (ptr, x2, 1, endian_arch);	/* X2 */
+    rl2GeomExport64 (ptr + 8, y2, 1, endian_arch);	/* Y2 */
+    ptr += 16;
+    rl2GeomExport64 (ptr, x3, 1, endian_arch);	/* X3 */
+    rl2GeomExport64 (ptr + 8, y3, 1, endian_arch);	/* Y3 */
+    ptr += 16;
+    rl2GeomExport64 (ptr, x0, 1, endian_arch);	/* X0 */
+    rl2GeomExport64 (ptr + 8, y0, 1, endian_arch);	/* Y0 */
+    ptr += 16;
+    *ptr = GAIA_MARK_END;	/* END signature */
+    *blob_size = size;
+    return blob;
+}
+
+RL2_PRIVATE int
+do_parse_label_mbr (unsigned char *blob, int size, double *minx, double *miny,
+		    double *maxx, double *maxy)
+{
+/* decoding from SpatiaLite BLOB (label BBOX) */
+    int type;
+    int little_endian;
+    int endian_arch = rl2GeomEndianArch ();
+
+    *minx = 0.0;
+    *miny = 0.0;
+    *maxx = 0.0;
+    *maxy = 0.0;
+    if (size != 132)
+	return 0;		/* cannot be a BLOB WKB label MBR geometry */
+    if (*(blob + 0) != GAIA_MARK_START)
+	return 0;		/* failed to recognize START signature */
+    if (*(blob + (size - 1)) != GAIA_MARK_END)
+	return 0;		/* failed to recognize END signature */
+    if (*(blob + 38) != GAIA_MARK_MBR)
+	return 0;		/* failed to recognize MBR signature */
+    if (*(blob + 1) == GAIA_LITTLE_ENDIAN)
+	little_endian = 1;
+    else if (*(blob + 1) == GAIA_BIG_ENDIAN)
+	little_endian = 0;
+    else
+	return 0;		/* unknown encoding; nor little-endian neither big-endian */
+    type = rl2GeomImport32 (blob + 39, little_endian, endian_arch);
+    if (type != GAIA_POLYGON)
+	return 0;
+
+/* retrieving min-max X and Y */
+    *minx = rl2GeomImport64 (blob + 6, little_endian, endian_arch);
+    *miny = rl2GeomImport64 (blob + 14, little_endian, endian_arch);
+    *maxx = rl2GeomImport64 (blob + 22, little_endian, endian_arch);
+    *maxy = rl2GeomImport64 (blob + 30, little_endian, endian_arch);
+    return 1;
+}

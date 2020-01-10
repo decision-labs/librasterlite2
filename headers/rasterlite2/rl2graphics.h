@@ -113,6 +113,8 @@ extern "C"
 /**
  Creates a generic Graphics Context 
 
+ \param priv_data pointer to the opaque internal connection object 
+ returned by a previous call to rl2_alloc_private() 
  \param width canvas width (in pixels)
  \param height canvas height (in pixels)
 
@@ -126,12 +128,16 @@ extern "C"
  \note you are responsible to destroy (before or after) any Graphics Context
  returned by rl2_graph_create_context() by invoking rl2_graph_destroy_context().
  */
-    RL2_DECLARE rl2GraphicsContextPtr rl2_graph_create_context (int width,
+    RL2_DECLARE rl2GraphicsContextPtr rl2_graph_create_context (const void
+								*priv_data,
+								int width,
 								int height);
 
 /**
  Creates a generic Graphics Context initialized from an RGBA image
 
+ \param priv_data pointer to the opaque internal connection object 
+ returned by a previous call to rl2_alloc_private() 
  \param width canvas width (in pixels)
  \param height canvas height (in pixels)
  \param rgbaArray pointer to an array of RGBA pixels representing the bitmap
@@ -145,7 +151,9 @@ extern "C"
  \note you are responsible to destroy (before or after) any Graphics Context
  returned by rl2_graph_create_context() by invoking rl2_graph_destroy_context().
  */
-    RL2_DECLARE rl2GraphicsContextPtr rl2_graph_create_context_rgba (int width,
+    RL2_DECLARE rl2GraphicsContextPtr rl2_graph_create_context_rgba (const void
+								     *priv_data,
+								     int width,
 								     int height,
 								     unsigned
 								     char
@@ -164,6 +172,8 @@ extern "C"
 /**
  Creates an SVG Graphics Context 
 
+ \param priv_data pointer to the opaque internal connection object 
+ returned by a previous call to rl2_alloc_private() 
  \param path pathname of the target SVG output file
  \param width canvas width (in pixels)
  \param height canvas height (in pixels)
@@ -176,7 +186,9 @@ extern "C"
  \note you are responsible to destroy (before or after) any SVG Graphics Context
  returned by rl2_graph_create_svg_context() by invoking rl2_graph_destroy_context().
  */
-    RL2_DECLARE rl2GraphicsContextPtr rl2_graph_create_svg_context (const char
+    RL2_DECLARE rl2GraphicsContextPtr rl2_graph_create_svg_context (const void
+								    *priv_data,
+								    const char
 								    *path,
 								    int width,
 								    int height);
@@ -184,6 +196,8 @@ extern "C"
 /**
  Creates a PDF Graphics Context 
 
+ \param priv_data pointer to the opaque internal connection object 
+ returned by a previous call to rl2_alloc_private() 
  \param path pathname of the target PDF output file
  \param dpi the PDF printing resolution measured in DPI 
  \param page_width total page width (in inches) including any margin
@@ -199,7 +213,9 @@ extern "C"
  \note you are responsible to destroy (before or after) any PDF Graphics Context
  returned by rl2_graph_create_pdf_context() by invoking rl2_graph_destroy_context().
  */
-    RL2_DECLARE rl2GraphicsContextPtr rl2_graph_create_pdf_context (const char
+    RL2_DECLARE rl2GraphicsContextPtr rl2_graph_create_pdf_context (const void
+								    *priv_data,
+								    const char
 								    *path,
 								    int dpi,
 								    double
@@ -214,6 +230,8 @@ extern "C"
 /**
  Creates an in-memory PDF Graphics Context 
 
+ \param priv_data pointer to the opaque internal connection object 
+ returned by a previous call to rl2_alloc_private()
  \param mem handle to an in-memory PDF target create by rl2_create_mem_pdf_target()
  \param dpi the PDF printing resolution measured in DPI 
  \param page_width total page width (in inches) including any margin
@@ -230,7 +248,8 @@ extern "C"
  returned by rl2_graph_create_mem_pdf_context() by invoking rl2_graph_destroy_context().
  */
     RL2_DECLARE rl2GraphicsContextPtr
-	rl2_graph_create_mem_pdf_context (rl2MemPdfPtr pdf, int dpi,
+	rl2_graph_create_mem_pdf_context (const void *priv_data,
+					  rl2MemPdfPtr pdf, int dpi,
 					  double page_width, double page_height,
 					  double margin_width,
 					  double margin_height);

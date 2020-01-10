@@ -50,6 +50,7 @@ the terms of any one of the MPL, the GPL or the LGPL.
 #endif
 
 #include "rasterlite2/rasterlite2.h"
+#include "rasterlite2/rl2graphics.h"
 #include "rasterlite2_private.h"
 
 #ifdef __ANDROID__		/* Android specific */
@@ -65,12 +66,14 @@ rl2_alloc_private (void)
     int i;
     FT_Error error;
     FT_Library library;
+    struct rl2_advanced_labeling *labeling;
     struct rl2_private_data *priv_data =
 	malloc (sizeof (struct rl2_private_data));
     if (priv_data == NULL)
 	return NULL;
     priv_data->max_threads = 1;
     priv_data->tmp_atm_table = NULL;
+    struct rl2_private_map_canvas *canvas;
 
 /* initializing FreeType */
     error = FT_Init_FreeType (&library);
@@ -92,6 +95,27 @@ rl2_alloc_private (void)
 	  ptr->raster = NULL;
       }
     priv_data->draping_message = NULL;
+
+/* initializing an empty Map Canvas */
+    canvas = &(priv_data->map_canvas);
+    canvas->width = 0;
+    canvas->height = 0;
+    canvas->ref_ctx = NULL;
+    canvas->srid = -1;
+    canvas->minx = 0.0;
+    canvas->miny = 0.0;
+    canvas->maxx = 0.0;
+    canvas->maxy = 0.0;
+    canvas->transparent = 1;
+
+/* initializing the advanced labeling struct */
+    labeling = &(priv_data->labeling);
+    labeling->sqlite = NULL;
+    labeling->no_colliding_labels = 0;
+    labeling->polygon_labels_multiline = 0;
+    labeling->polygon_labels_autorotate = 0;
+    labeling->first_rect = NULL;
+    labeling->last_rect = NULL;
     return priv_data;
 }
 
@@ -122,14 +146,34 @@ rl2_init_tmp_atm_table (void *data)
     return priv_data->tmp_atm_table;
 }
 
+RL2_PRIVATE void
+do_cleanup_advanced_labeling (struct rl2_advanced_labeling *ptr)
+{
+/* cleaning up Advanced Labeling data */
+    struct rl2_label_rect *pLR;
+    struct rl2_label_rect *pLRn;
+    pLR = ptr->first_rect;
+    while (pLR)
+      {
+	  pLRn = pLR->next;
+	  free (pLR);
+	  pLR = pLRn;
+      }
+    ptr->first_rect = NULL;
+    ptr->last_rect = NULL;
+}
+
+
 RL2_DECLARE void
 rl2_cleanup_private (const void *ptr)
 {
 /* destroying private connection data */
     struct rl2_private_tt_font *pF;
     struct rl2_private_tt_font *pFn;
+    struct rl2_advanced_labeling *labeling;
     int i;
     struct rl2_private_data *priv_data = (struct rl2_private_data *) ptr;
+    struct rl2_private_map_canvas *canvas;
     if (priv_data == NULL)
 	return;
 
@@ -158,8 +202,16 @@ rl2_cleanup_private (const void *ptr)
 	      rl2_destroy_raster ((rl2RasterPtr) (ptr->raster));
       }
     free (priv_data->raster_cache);
+
+/* cleaning advanced labeling data */
+    labeling = &(priv_data->labeling);
+    do_cleanup_advanced_labeling (labeling);
+
     if (priv_data->draping_message != NULL)
 	free (priv_data->draping_message);
+    canvas = &(priv_data->map_canvas);
+    if (canvas->ref_ctx != NULL)
+	rl2_graph_destroy_context (canvas->ref_ctx);
     free (priv_data);
 }
 

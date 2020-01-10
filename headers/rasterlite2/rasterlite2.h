@@ -297,6 +297,31 @@ extern "C"
 /** Rasterlite2 constants: LabelPlacement: LinePlacement */
 #define RL2_LABEL_PLACEMENT_LINE	0x55
 
+/** Internal Map Canvas error: invalid BBOX */
+#define RL2_MAP_CANVAS_INVALID_BBOX					-1
+/** Internal Map Canvas error: NULL Internal Cache */
+#define RL2_MAP_CANVAS_NULL_INTERNAL_CACHE			-2
+/** Internal Map Canvas error: Already in use */
+#define RL2_MAP_CANVAS_ALREADY_IN_USE				-3
+/** Internal Map Canvas error: Unable to create a graphics context */
+#define RL2_MAP_CANVAS_ERROR_GRAPHICS_CONTEXT		-4
+/** Internal Map Canvas error: Not in use*/
+#define RL2_MAP_CANVAS_NOT_IN_USE					-5
+/** Internal Map Canvas error: inconstistent ascpect ratio */
+#define RL2_MAP_CANVAS_INCONSISTENT_ASPECT_RATIO	-6
+/** Internal Map Canvas error: invalid bgcolor */
+#define RL2_MAP_CANVAS_INVALID_BGCOLOR				-7
+/** Internal Map Canvas error: Invalid Image Format */
+#define RL2_MAP_CANVAS_INVALID_IMAGE_FORMAT			-8
+/** Internal Map Canvas error: Invalid Pixel Buffer */
+#define RL2_MAP_CANVAS_INVALID_PIXBUF				-9
+/** Internal Map Canvas error: Error while exporting Image */
+#define RL2_MAP_CANVAS_IMAGE_ERROR					-10
+/** Internal Map Canvas error: Not existing Coverage */
+#define RL2_MAP_CANVAS_MISSING_COVERAGE				-11
+/** Internal Map Canvas error: Raster Transform */
+#define RL2_MAP_CANVAS_RASTER_TRANSFORM				-12
+
 /**
  Typedef for RL2 Pixel object (opaque, hidden)
 
@@ -3880,13 +3905,14 @@ extern "C"
 				      unsigned char *scale);
 
     RL2_DECLARE int rl2_load_raw_raster_into_dbms (sqlite3 * sqlite,
-						   int max_threads,
+						   const void *priv_data,
 						   rl2CoveragePtr cvg,
 						   const char *sctn_name,
 						   rl2RasterPtr rst,
 						   int pyramidize);
 
     RL2_DECLARE int rl2_load_raw_tiles_into_dbms (sqlite3 * sqlite,
+						  const void *priv_data,
 						  rl2CoveragePtr cvg,
 						  const char *sctn_name,
 						  unsigned int sctn_width,
@@ -4343,13 +4369,13 @@ extern "C"
 						      unsigned int tile_height);
 
     RL2_DECLARE int
-	rl2_load_raster_into_dbms (sqlite3 * handle, int max_threads,
+	rl2_load_raster_into_dbms (sqlite3 * handle, const void *priv_data,
 				   const char *src_path,
 				   rl2CoveragePtr coverage, int worldfile,
 				   int force_srid, int pyramidize, int verbose);
 
     RL2_DECLARE int
-	rl2_load_mrasters_into_dbms (sqlite3 * handle, int max_threads,
+	rl2_load_mrasters_into_dbms (sqlite3 * handle, const void *priv_data,
 				     const char *dir_path, const char *file_ext,
 				     rl2CoveragePtr coverage, int worldfile,
 				     int force_srid, int pyramidize,
@@ -4754,17 +4780,18 @@ extern "C"
 						 int *blob_size);
 
     RL2_DECLARE int
-	rl2_build_section_pyramid (sqlite3 * handle, int max_threads,
+	rl2_build_section_pyramid (sqlite3 * handle, const void *priv_data,
 				   const char *coverage,
 				   sqlite3_int64 section_id, int forced_rebuild,
 				   int verbose);
 
     RL2_DECLARE int
-	rl2_build_monolithic_pyramid (sqlite3 * handle, const char *coverage,
-				      int virtual_levels, int verbose);
+	rl2_build_monolithic_pyramid (sqlite3 * handle, const void *priv_data,
+				      const char *coverage, int virtual_levels,
+				      int verbose);
 
     RL2_DECLARE int
-	rl2_build_all_section_pyramids (sqlite3 * handle, int max_threads,
+	rl2_build_all_section_pyramids (sqlite3 * handle, const void *priv_data,
 					const char *coverage,
 					int forced_rebuild, int verbose);
 
@@ -5019,6 +5046,8 @@ extern "C"
 /**
  Exports an RGBA buffer as an in-memory stored PDF document
 
+ \param priv_data pointer to the opaque internal connection object 
+ returned by a previous call to rl2_alloc_private() 
  \param width the PDF image width.
  \param height the PDF image height.
  \param rgba pointer to the RGBA buffer.
@@ -5035,13 +5064,15 @@ extern "C"
  internal PDF writer.
  */
     RL2_DECLARE int
-	rl2_rgba_to_pdf (unsigned int width, unsigned int height,
-			 unsigned char *rgba, unsigned char **pdf,
-			 int *pdf_size);
+	rl2_rgba_to_pdf (const void *priv_data, unsigned int width,
+			 unsigned int height, unsigned char *rgba,
+			 unsigned char **pdf, int *pdf_size);
 
 /**
  Exports an all-Gray PDF document
 
+ \param priv_data pointer to the opaque internal connection object 
+ returned by a previous call to rl2_alloc_private() 
  \param width the PDF image width.
  \param height the PDF image height.
  \param pdf on completion will point to the memory block storing the created PDF document.
@@ -5053,8 +5084,8 @@ extern "C"
  \sa rl2_rl2_rgba_to_pdf
  */
     RL2_DECLARE int
-	rl2_gray_pdf (unsigned int width, unsigned int height,
-		      unsigned char **pdf, int *pdf_size);
+	rl2_gray_pdf (const void *priv_data, unsigned int width,
+		      unsigned int height, unsigned char **pdf, int *pdf_size);
 
 /**
  Encodes a Font into the corresponding BLOB serialized format
@@ -6141,6 +6172,25 @@ extern "C"
 						    unsigned char **img,
 						    int *img_size);
 
+    RL2_DECLARE int rl2_styled_map_image_blob_from_raster (sqlite3 * sqlite,
+							   const void *data,
+							   const char
+							   *db_prefix,
+							   const char *cvg_name,
+							   const unsigned char
+							   *blob, int blob_sz,
+							   int width,
+							   int height,
+							   const unsigned char
+							   *xml_style,
+							   const char *format,
+							   const char *bg_color,
+							   int transparent,
+							   int quality,
+							   int reaspect,
+							   unsigned char **img,
+							   int *img_size);
+
     RL2_DECLARE int rl2_map_image_paint_from_raster (sqlite3 * sqlite,
 						     const void *data,
 						     rl2CanvasPtr canvas,
@@ -6148,7 +6198,7 @@ extern "C"
 						     const char *cvg_name,
 						     const unsigned char *blob,
 						     int blob_sz,
-						     const char *style,
+						     const char *style_name,
 						     unsigned char *xml_style);
 
     RL2_DECLARE int rl2_map_image_blob_from_vector (sqlite3 * sqlite,
@@ -6158,13 +6208,32 @@ extern "C"
 						    const unsigned char *blob,
 						    int blob_sz, int width,
 						    int height,
-						    const char *style,
+						    const char *style_name,
 						    const char *format,
 						    const char *bg_color,
 						    int transparent,
 						    int quality, int reaspect,
 						    unsigned char **img,
 						    int *img_size);
+
+    RL2_DECLARE int rl2_styled_map_image_blob_from_vector (sqlite3 * sqlite,
+							   const void *data,
+							   const char
+							   *db_prefix,
+							   const char *cvg_name,
+							   const unsigned char
+							   *blob, int blob_sz,
+							   int width,
+							   int height,
+							   const unsigned char
+							   *xml_style,
+							   const char *format,
+							   const char *bg_color,
+							   int transparent,
+							   int quality,
+							   int reaspect,
+							   unsigned char **img,
+							   int *img_size);
 
     RL2_DECLARE int rl2_map_image_paint_from_vector (sqlite3 * sqlite,
 						     const void *data,
@@ -6174,9 +6243,9 @@ extern "C"
 						     const unsigned char *blob,
 						     int blob_sz,
 						     int reaspect,
-						     const char *style,
+						     const char *style_name,
 						     const unsigned char
-						     *quick_style);
+						     *xml_style);
 
     RL2_DECLARE int rl2_map_image_paint_from_vector_ex (sqlite3 * sqlite,
 							const void *data,
@@ -6186,9 +6255,9 @@ extern "C"
 							const unsigned char
 							*blob, int blob_sz,
 							int reaspect,
-							const char *style,
+							const char *style_name,
 							const unsigned char
-							*quick_style,
+							*xml_style,
 							int with_nodes,
 							int with_edges_or_links,
 							int with_faces,
@@ -6208,6 +6277,50 @@ extern "C"
 						       int transparent,
 						       const char *bg_color,
 						       int *image_size);
+
+    RL2_DECLARE int rl2_initialize_map_canvas (sqlite3 * sqlite,
+					       const void *cache, int width,
+					       int height,
+					       const unsigned char *blob,
+					       int blob_size,
+					       const char *bg_color,
+					       int transparent, int reaspect);
+
+    RL2_DECLARE int rl2_finalize_map_canvas (const void *cache);
+
+    RL2_DECLARE int rl2_paint_raster_on_map_canvas (sqlite3 * sqlite,
+						    const void *data,
+						    const char *db_prefix,
+						    const char *cvg_name,
+						    const char *style_name);
+
+    RL2_DECLARE int rl2_paint_styled_raster_on_map_canvas (sqlite3 * sqlite,
+							   const void *data,
+							   const char
+							   *db_prefix,
+							   const char *cvg_name,
+							   const unsigned char
+							   *xml_name);
+
+    RL2_DECLARE int rl2_paint_vector_on_map_canvas (sqlite3 * sqlite,
+						    const void *data,
+						    const char *db_prefix,
+						    const char *cvg_name,
+						    const char *style_name);
+
+    RL2_DECLARE int rl2_paint_styled_vector_on_map_canvas (sqlite3 * sqlite,
+							   const void *data,
+							   const char
+							   *db_prefix,
+							   const char *cvg_name,
+							   const unsigned char
+							   *xml_name);
+
+    RL2_DECLARE int rl2_image_blob_from_map_canvas (const void *data,
+						    const char *format,
+						    int transparent,
+						    unsigned char **img,
+						    int *img_size);
 
     RL2_DECLARE rl2FeatureTypeStylePtr rl2_feature_type_style_from_xml (const
 									char

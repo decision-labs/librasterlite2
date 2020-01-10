@@ -509,7 +509,7 @@ default_nodata (unsigned char sample, unsigned char pixel,
 }
 
 static int
-test_uint8_gray (sqlite3 * handle)
+test_uint8_gray (sqlite3 * handle, const void *priv_data)
 {
 /* testing UINT8 GRAYSCALE */
     struct tile_info info;
@@ -543,8 +543,8 @@ test_uint8_gray (sqlite3 * handle)
       }
 
     if (rl2_load_raw_tiles_into_dbms
-	(handle, cvg, "Alpha", 3600, 1800, info.srid, -180, -90, 180, 90,
-	 tile_callback, &info, 1) != RL2_OK)
+	(handle, priv_data, cvg, "Alpha", 3600, 1800, info.srid, -180, -90, 180,
+	 90, tile_callback, &info, 1) != RL2_OK)
       {
 	  fprintf (stderr, "Unable to populate Tiles on Coverage \"%s\"\n",
 		   info.coverage);
@@ -557,7 +557,7 @@ test_uint8_gray (sqlite3 * handle)
 }
 
 static int
-test_uint8_palette (sqlite3 * handle)
+test_uint8_palette (sqlite3 * handle, const void *priv_data)
 {
 /* testing UINT8 PALETTE */
     struct tile_info info;
@@ -601,8 +601,8 @@ test_uint8_palette (sqlite3 * handle)
       }
 
     if (rl2_load_raw_tiles_into_dbms
-	(handle, cvg, "Alpha", 3600, 1800, info.srid, -180, -90, 180, 90,
-	 tile_callback, &info, 1) != RL2_OK)
+	(handle, priv_data, cvg, "Alpha", 3600, 1800, info.srid, -180, -90, 180,
+	 90, tile_callback, &info, 1) != RL2_OK)
       {
 	  fprintf (stderr, "Unable to populate Tiles on Coverage \"%s\"\n",
 		   info.coverage);
@@ -616,7 +616,7 @@ test_uint8_palette (sqlite3 * handle)
 }
 
 static int
-test_4bit_palette (sqlite3 * handle)
+test_4bit_palette (sqlite3 * handle, const void *priv_data)
 {
 /* testing 4-BIT PALETTE */
     struct tile_info info;
@@ -660,8 +660,8 @@ test_4bit_palette (sqlite3 * handle)
       }
 
     if (rl2_load_raw_tiles_into_dbms
-	(handle, cvg, "Alpha", 3600, 1800, info.srid, -180, -90, 180, 90,
-	 tile_callback, &info, 1) != RL2_OK)
+	(handle, priv_data, cvg, "Alpha", 3600, 1800, info.srid, -180, -90, 180,
+	 90, tile_callback, &info, 1) != RL2_OK)
       {
 	  fprintf (stderr, "Unable to populate Tiles on Coverage \"%s\"\n",
 		   info.coverage);
@@ -675,7 +675,7 @@ test_4bit_palette (sqlite3 * handle)
 }
 
 static int
-test_2bit_palette (sqlite3 * handle)
+test_2bit_palette (sqlite3 * handle, const void *priv_data)
 {
 /* testing 2-BIT PALETTE */
     struct tile_info info;
@@ -714,8 +714,8 @@ test_2bit_palette (sqlite3 * handle)
       }
 
     if (rl2_load_raw_tiles_into_dbms
-	(handle, cvg, "Alpha", 3600, 1800, info.srid, -180, -90, 180, 90,
-	 tile_callback, &info, 1) != RL2_OK)
+	(handle, priv_data, cvg, "Alpha", 3600, 1800, info.srid, -180, -90, 180,
+	 90, tile_callback, &info, 1) != RL2_OK)
       {
 	  fprintf (stderr, "Unable to populate Tiles on Coverage \"%s\"\n",
 		   info.coverage);
@@ -729,7 +729,7 @@ test_2bit_palette (sqlite3 * handle)
 }
 
 static int
-test_1bit_palette (sqlite3 * handle)
+test_1bit_palette (sqlite3 * handle, const void *priv_data)
 {
 /* testing 1-BIT PALETTE */
     struct tile_info info;
@@ -766,8 +766,8 @@ test_1bit_palette (sqlite3 * handle)
       }
 
     if (rl2_load_raw_tiles_into_dbms
-	(handle, cvg, "Alpha", 3600, 1800, info.srid, -180, -90, 180, 90,
-	 tile_callback, &info, 1) != RL2_OK)
+	(handle, priv_data, cvg, "Alpha", 3600, 1800, info.srid, -180, -90, 180,
+	 90, tile_callback, &info, 1) != RL2_OK)
       {
 	  fprintf (stderr, "Unable to populate Tiles on Coverage \"%s\"\n",
 		   info.coverage);
@@ -781,7 +781,7 @@ test_1bit_palette (sqlite3 * handle)
 }
 
 static int
-test_uint8_rgb (sqlite3 * handle)
+test_uint8_rgb (sqlite3 * handle, const void *priv_data)
 {
 /* testing UINT8 RGB */
     struct tile_info info;
@@ -815,8 +815,8 @@ test_uint8_rgb (sqlite3 * handle)
       }
 
     if (rl2_load_raw_tiles_into_dbms
-	(handle, cvg, "Alpha", 3600, 1800, info.srid, -180, -90, 180, 90,
-	 tile_callback, &info, 1) != RL2_OK)
+	(handle, priv_data, cvg, "Alpha", 3600, 1800, info.srid, -180, -90, 180,
+	 90, tile_callback, &info, 1) != RL2_OK)
       {
 	  fprintf (stderr, "Unable to populate Tiles on Coverage \"%s\"\n",
 		   info.coverage);
@@ -829,7 +829,7 @@ test_uint8_rgb (sqlite3 * handle)
 }
 
 static int
-test_int16_grid (sqlite3 * handle)
+test_int16_grid (sqlite3 * handle, const void *priv_data)
 {
 /* testing INT8 DATAGRID */
     struct tile_info info;
@@ -863,8 +863,8 @@ test_int16_grid (sqlite3 * handle)
       }
 
     if (rl2_load_raw_tiles_into_dbms
-	(handle, cvg, "Alpha", 3600, 1800, info.srid, -180, -90, 180, 90,
-	 tile_callback, &info, 1) != RL2_OK)
+	(handle, priv_data, cvg, "Alpha", 3600, 1800, info.srid, -180, -90, 180,
+	 90, tile_callback, &info, 1) != RL2_OK)
       {
 	  fprintf (stderr, "Unable to populate Tiles on Coverage \"%s\"\n",
 		   info.coverage);
@@ -877,7 +877,7 @@ test_int16_grid (sqlite3 * handle)
 }
 
 static int
-test_double_grid (sqlite3 * handle)
+test_double_grid (sqlite3 * handle, const void *priv_data)
 {
 /* testing DOUBLE DATAGRID */
     struct tile_info info;
@@ -911,8 +911,8 @@ test_double_grid (sqlite3 * handle)
       }
 
     if (rl2_load_raw_tiles_into_dbms
-	(handle, cvg, "Alpha", 3600, 1800, info.srid, -180, -90, 180, 90,
-	 tile_callback, &info, 1) != RL2_OK)
+	(handle, priv_data, cvg, "Alpha", 3600, 1800, info.srid, -180, -90, 180,
+	 90, tile_callback, &info, 1) != RL2_OK)
       {
 	  fprintf (stderr, "Unable to populate Tiles on Coverage \"%s\"\n",
 		   info.coverage);
@@ -925,7 +925,7 @@ test_double_grid (sqlite3 * handle)
 }
 
 static int
-test_monochrome (sqlite3 * handle)
+test_monochrome (sqlite3 * handle, const void *priv_data)
 {
 /* testing MONOCHROME */
     struct tile_info info;
@@ -959,8 +959,8 @@ test_monochrome (sqlite3 * handle)
       }
 
     if (rl2_load_raw_tiles_into_dbms
-	(handle, cvg, "Alpha", 3600, 1800, info.srid, -180, -90, 180, 90,
-	 tile_callback, &info, 1) != RL2_OK)
+	(handle, priv_data, cvg, "Alpha", 3600, 1800, info.srid, -180, -90, 180,
+	 90, tile_callback, &info, 1) != RL2_OK)
       {
 	  fprintf (stderr, "Unable to populate Tiles on Coverage \"%s\"\n",
 		   info.coverage);
@@ -1024,31 +1024,31 @@ main (int argc, char *argv[])
 	  return -4;
       }
 
-    if (!test_uint8_gray (handle))
+    if (!test_uint8_gray (handle, priv_data))
 	return -5;
 
-    if (!test_uint8_rgb (handle))
+    if (!test_uint8_rgb (handle, priv_data))
 	return -6;
 
-    if (!test_int16_grid (handle))
+    if (!test_int16_grid (handle, priv_data))
 	return -7;
 
-    if (!test_double_grid (handle))
+    if (!test_double_grid (handle, priv_data))
 	return -8;
 
-    if (!test_monochrome (handle))
+    if (!test_monochrome (handle, priv_data))
 	return -9;
 
-    if (!test_uint8_palette (handle))
+    if (!test_uint8_palette (handle, priv_data))
 	return -10;
 
-    if (!test_4bit_palette (handle))
+    if (!test_4bit_palette (handle, priv_data))
 	return -11;
 
-    if (!test_2bit_palette (handle))
+    if (!test_2bit_palette (handle, priv_data))
 	return -12;
 
-    if (!test_1bit_palette (handle))
+    if (!test_1bit_palette (handle, priv_data))
 	return -13;
 
 /* committing the SQL Transaction */

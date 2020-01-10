@@ -377,6 +377,42 @@ extern "C"
 	rl2PrivRasterPtr raster;
     };
 
+    struct rl2_private_map_canvas
+    {
+	int width;
+	int height;
+	void *ref_ctx;
+	int srid;
+	double minx;
+	double miny;
+	double maxx;
+	double maxy;
+	int transparent;
+    };
+
+    struct rl2_label_point
+    {
+	double x;
+	double y;
+    };
+
+    struct rl2_label_rect
+    {
+	unsigned char *blob;
+	int blob_size;
+	struct rl2_label_rect *next;
+    };
+
+    struct rl2_advanced_labeling
+    {
+	sqlite3 *sqlite;
+	int no_colliding_labels;
+	int polygon_labels_multiline;
+	int polygon_labels_autorotate;
+	struct rl2_label_rect *first_rect;
+	struct rl2_label_rect *last_rect;
+    };
+
     struct rl2_private_data
     {
 	int max_threads;
@@ -385,8 +421,10 @@ extern "C"
 	struct rl2_private_tt_font *first_font;
 	struct rl2_private_tt_font *last_font;
 	struct rl2_cached_raster *raster_cache;
+	struct rl2_private_map_canvas map_canvas;
 	int raster_cache_items;
 	char *draping_message;
+	struct rl2_advanced_labeling labeling;
     };
 
     typedef struct rl2_priv_tile
@@ -1223,9 +1261,10 @@ extern "C"
 	void *graphics_ctx;
     };
 
+/*
     struct aux_group_renderer
     {
-	/* helper struct for passing arguments to aux_group_renderer */
+	/ helper struct for passing arguments to aux_group_renderer /
 	sqlite3 *sqlite;
 	const void *data;
 	const char *db_prefix;
@@ -1236,7 +1275,8 @@ extern "C"
 	double maxy;
 	int width;
 	int height;
-	const char *style;
+	const char *style_name;
+	const unsigned char *xml_style;
 	unsigned char format_id;
 	unsigned char bg_red;
 	unsigned char bg_green;
@@ -1244,6 +1284,7 @@ extern "C"
 	int transparent;
 	int quality;
     };
+*/
 
     typedef struct rl2_point
     {
@@ -1872,6 +1913,7 @@ extern "C"
     RL2_PRIVATE int get_payload_from_monochrome_opaque (unsigned int width,
 							unsigned int height,
 							sqlite3 * handle,
+							const void *priv_data,
 							double minx,
 							double miny,
 							double maxx,
@@ -1899,6 +1941,7 @@ extern "C"
     RL2_PRIVATE int get_payload_from_palette_opaque (unsigned int width,
 						     unsigned int height,
 						     sqlite3 * handle,
+						     const void *priv_data,
 						     double minx, double miny,
 						     double maxx, double maxy,
 						     int srid,
@@ -1931,10 +1974,10 @@ extern "C"
     RL2_PRIVATE int get_payload_from_grayscale_opaque (unsigned int width,
 						       unsigned int height,
 						       sqlite3 * handle,
-						       double minx,
-						       double miny,
-						       double maxx,
-						       double maxy, int srid,
+						       const void *priv_data,
+						       double minx, double miny,
+						       double maxx, double maxy,
+						       int srid,
 						       unsigned char *pixels,
 						       unsigned char format,
 						       int quality,
@@ -1960,6 +2003,7 @@ extern "C"
     RL2_PRIVATE int get_payload_from_rgb_opaque (unsigned int width,
 						 unsigned int height,
 						 sqlite3 * handle,
+						 const void *priv_data,
 						 double minx, double miny,
 						 double maxx, double maxy,
 						 int srid,
@@ -2116,10 +2160,10 @@ extern "C"
     RL2_PRIVATE int get_payload_from_gray_rgba_opaque (unsigned int width,
 						       unsigned int height,
 						       sqlite3 * handle,
-						       double minx,
-						       double miny,
-						       double maxx,
-						       double maxy, int srid,
+						       const void *priv_data,
+						       double minx, double miny,
+						       double maxx, double maxy,
+						       int srid,
 						       unsigned char *rgb,
 						       unsigned char format,
 						       int quality,
@@ -2145,10 +2189,10 @@ extern "C"
     RL2_PRIVATE int get_payload_from_rgb_rgba_opaque (unsigned int width,
 						      unsigned int height,
 						      sqlite3 * handle,
-						      double minx,
-						      double miny,
-						      double maxx,
-						      double maxy, int srid,
+						      const void *priv_data,
+						      double minx, double miny,
+						      double maxx, double maxy,
+						      int srid,
 						      unsigned char *rgb,
 						      unsigned char format,
 						      int quality,
@@ -2158,11 +2202,11 @@ extern "C"
     RL2_PRIVATE int get_payload_from_rgb_rgba_transparent (unsigned int width,
 							   unsigned int
 							   height,
+							   const void
+							   *priv_data,
 							   unsigned char *rgb,
-							   unsigned char
-							   *alpha,
-							   unsigned char
-							   format,
+							   unsigned char *alpha,
+							   unsigned char format,
 							   int quality,
 							   unsigned char
 							   **image,
@@ -2436,9 +2480,11 @@ extern "C"
 					   unsigned char **ximage,
 					   int *ximage_size);
 
+/*
     RL2_PRIVATE int rl2_aux_group_renderer (struct aux_group_renderer *auxgrp,
 					    unsigned char **blob,
 					    int *blob_size);
+*/
 
     RL2_PRIVATE double rl2_get_shaded_relief_scale_factor (sqlite3 * handle,
 							   const char
@@ -2820,6 +2866,28 @@ extern "C"
 
     RL2_PRIVATE void rl2_set_coord_seq_value (double value, rl2CoordSeqPtr pCS,
 					      int iv, char dim);
+
+    RL2_PRIVATE double do_compute_bbox_aspect_ratio (sqlite3 * sqlite,
+						     const unsigned char *blob,
+						     int blob_sz);
+
+    RL2_PRIVATE void do_cleanup_advanced_labeling (struct rl2_advanced_labeling
+						   *ptr);
+
+    RL2_PRIVATE unsigned char *do_create_label_mbr (double minx, double miny,
+						    double maxx, double maxy,
+						    double x0, double y0,
+						    double x1, double y1,
+						    double x2, double y2,
+						    double x3, double y3,
+						    int *blob_size);
+
+    RL2_PRIVATE int do_parse_label_mbr (unsigned char *blob, int blob_size,
+					double *minx, double *miny,
+					double *maxx, double *maxy);
+
+    RL2_PRIVATE struct rl2_advanced_labeling *rl2_get_labeling_ref (const void
+								    *ctx);
 
 #ifdef __cplusplus
 }

@@ -146,6 +146,7 @@ typedef struct rl2_graphics_context
     double halo_green;
     double halo_blue;
     double halo_alpha;
+    struct rl2_advanced_labeling *labeling;
 } RL2GraphContext;
 typedef RL2GraphContext *RL2GraphContextPtr;
 
@@ -289,9 +290,10 @@ do_initialize_context (RL2GraphContextPtr ctx)
 }
 
 RL2_DECLARE rl2GraphicsContextPtr
-rl2_graph_create_context (int width, int height)
+rl2_graph_create_context (const void *priv_data, int width, int height)
 {
 /* creating a generic Graphics Context */
+    struct rl2_private_data *cache = (struct rl2_private_data *) priv_data;
     RL2GraphContextPtr ctx;
 
     ctx = malloc (sizeof (RL2GraphContext));
@@ -312,6 +314,9 @@ rl2_graph_create_context (int width, int height)
 	goto error2;
 
     do_initialize_context (ctx);
+    ctx->labeling = &(cache->labeling);
+    if (ctx->labeling != NULL)
+	do_cleanup_advanced_labeling (ctx->labeling);
 
 /* priming a transparent background */
     cairo_rectangle (ctx->cairo, 0, 0, width, height);
@@ -384,9 +389,11 @@ adjust_for_endianness (unsigned char *rgbaArray, int width, int height)
 }
 
 RL2_DECLARE rl2GraphicsContextPtr
-rl2_graph_create_context_rgba (int width, int height, unsigned char *rgbaArray)
+rl2_graph_create_context_rgba (const void *priv_data, int width, int height,
+			       unsigned char *rgbaArray)
 {
 /* creating a generic Graphics Context */
+    struct rl2_private_data *cache = (struct rl2_private_data *) priv_data;
     RL2GraphContextPtr ctx;
 
     if (rgbaArray == NULL)
@@ -413,6 +420,7 @@ rl2_graph_create_context_rgba (int width, int height, unsigned char *rgbaArray)
 	goto error2;
 
     do_initialize_context (ctx);
+    ctx->labeling = &(cache->labeling);
     return (rl2GraphicsContextPtr) ctx;
   error2:
     cairo_destroy (ctx->cairo);
@@ -482,9 +490,11 @@ rl2_graph_destroy_context (rl2GraphicsContextPtr context)
 }
 
 RL2_DECLARE rl2GraphicsContextPtr
-rl2_graph_create_svg_context (const char *path, int width, int height)
+rl2_graph_create_svg_context (const void *priv_data, const char *path,
+			      int width, int height)
 {
 /* creating an SVG Graphics Context */
+    struct rl2_private_data *cache = (struct rl2_private_data *) priv_data;
     RL2GraphContextPtr ctx;
 
     ctx = malloc (sizeof (RL2GraphContext));
@@ -547,6 +557,7 @@ rl2_graph_create_svg_context (const char *path, int width, int height)
     ctx->halo_green = 1.0;
     ctx->halo_blue = 1.0;
     ctx->halo_alpha = 1.0;
+    ctx->labeling = &(cache->labeling);
     return (rl2GraphicsContextPtr) ctx;
   error2:
     cairo_destroy (ctx->cairo);
@@ -558,11 +569,12 @@ rl2_graph_create_svg_context (const char *path, int width, int height)
 }
 
 RL2_DECLARE rl2GraphicsContextPtr
-rl2_graph_create_pdf_context (const char *path, int dpi, double page_width,
-			      double page_height, double margin_width,
-			      double margin_height)
+rl2_graph_create_pdf_context (const void *priv_data, const char *path, int dpi,
+			      double page_width, double page_height,
+			      double margin_width, double margin_height)
 {
 /* creating a PDF Graphics Context */
+    struct rl2_private_data *cache = (struct rl2_private_data *) priv_data;
     RL2GraphContextPtr ctx;
     double scale = 72.0 / (double) dpi;
     double page2_width = page_width * 72.0;
@@ -646,6 +658,7 @@ rl2_graph_create_pdf_context (const char *path, int dpi, double page_width,
     ctx->halo_green = 1.0;
     ctx->halo_blue = 1.0;
     ctx->halo_alpha = 1.0;
+    ctx->labeling = &(cache->labeling);
     return (rl2GraphicsContextPtr) ctx;
   error4:
     cairo_destroy (ctx->clip_cairo);
@@ -700,11 +713,13 @@ pdf_write_func (void *ptr, const unsigned char *data, unsigned int length)
 }
 
 RL2_DECLARE rl2GraphicsContextPtr
-rl2_graph_create_mem_pdf_context (rl2MemPdfPtr mem_pdf, int dpi,
-				  double page_width, double page_height,
-				  double margin_width, double margin_height)
+rl2_graph_create_mem_pdf_context (const void *priv_data, rl2MemPdfPtr mem_pdf,
+				  int dpi, double page_width,
+				  double page_height, double margin_width,
+				  double margin_height)
 {
 /* creating an in-memory PDF Graphics Context */
+    struct rl2_private_data *cache = (struct rl2_private_data *) priv_data;
     RL2GraphContextPtr ctx;
     double scale = 72.0 / (double) dpi;
     double page2_width = page_width * 72.0;
@@ -790,6 +805,7 @@ rl2_graph_create_mem_pdf_context (rl2MemPdfPtr mem_pdf, int dpi,
     ctx->halo_green = 1.0;
     ctx->halo_blue = 1.0;
     ctx->halo_alpha = 1.0;
+    ctx->labeling = &(cache->labeling);
     return (rl2GraphicsContextPtr) ctx;
   error4:
     cairo_destroy (ctx->clip_cairo);
@@ -2591,6 +2607,214 @@ rl2_graph_get_text_extent (rl2GraphicsContextPtr context, const char *text,
     return 1;
 }
 
+static int
+do_eval_mbrs_intersection (struct rl2_label_rect *r1, struct rl2_label_rect *r2)
+{
+/* evaluating if the two MBRs do actually intersects */
+    double r1_minx;
+    double r1_miny;
+    double r1_maxx;
+    double r1_maxy;
+    double r2_minx;
+    double r2_miny;
+    double r2_maxx;
+    double r2_maxy;
+
+    if (!do_parse_label_mbr
+	(r1->blob, r1->blob_size, &r1_minx, &r1_miny, &r1_maxx, &r1_maxy))
+	return 0;
+    if (!do_parse_label_mbr
+	(r2->blob, r2->blob_size, &r2_minx, &r2_miny, &r2_maxx, &r2_maxy))
+	return 0;
+
+    if (r1_minx > r2_maxx)
+	return 0;
+    if (r1_miny > r2_maxy)
+	return 0;
+    if (r1_maxx < r2_minx)
+	return 0;
+    if (r1_maxy < r2_miny)
+	return 0;
+    if (r2_minx > r1_maxx)
+	return 0;
+    if (r2_miny > r1_maxy)
+	return 0;
+    if (r2_maxx < r1_minx)
+	return 0;
+    if (r2_maxy < r1_miny)
+	return 0;
+    return 1;
+}
+
+static int
+do_eval_collision (struct rl2_advanced_labeling *labeling, sqlite3_stmt * stmt,
+		   struct rl2_label_rect *bbox)
+{
+/* querying the anti-collision list */
+    int ret;
+    struct rl2_label_rect *ptr = labeling->first_rect;
+    while (ptr != NULL)
+      {
+	  if (do_eval_mbrs_intersection (ptr, bbox))
+	    {
+		sqlite3_reset (stmt);
+		sqlite3_clear_bindings (stmt);
+		sqlite3_bind_blob (stmt, 1, bbox->blob, bbox->blob_size,
+				   SQLITE_STATIC);
+		sqlite3_bind_blob (stmt, 2, ptr->blob, ptr->blob_size,
+				   SQLITE_STATIC);
+		while (1)
+		  {
+		      /* scrolling the result set rows */
+		      ret = sqlite3_step (stmt);
+		      if (ret == SQLITE_DONE)
+			  break;	/* end of result set */
+		      if (ret == SQLITE_ROW)
+			{
+			    if (sqlite3_column_type (stmt, 0) == SQLITE_INTEGER)
+				if (sqlite3_column_int (stmt, 0) == 1)
+				    return 1;
+			}
+		  }
+	    }
+	  ptr = ptr->next;
+      }
+    return 0;
+}
+
+static int
+do_check_collision (struct rl2_advanced_labeling *labeling, sqlite3_stmt * stmt,
+		    double x, double y, double angle, double anchor_point_x,
+		    double anchor_point_y, double pre_x, double pre_y,
+		    double width, double height, double post_x, double post_y)
+{
+/* checking for an eventual collision between labels */
+    int ret;
+    double rad = angle * 0.0174532925199432958;
+    double cosine = cos (rad);
+    double sine = sin (rad);
+    double shift_x;
+    double shift_y;
+    double adj_y;
+    double px0;
+    double py0;
+    double px1;
+    double py1;
+    double px2;
+    double py2;
+    double px3;
+    double py3;
+    double x0;
+    double y0;
+    double x1;
+    double y1;
+    double x2;
+    double y2;
+    double x3;
+    double y3;
+    double minx;
+    double miny;
+    double maxx;
+    double maxy;
+    struct rl2_label_rect bbox;
+    struct rl2_label_rect *ptr;
+    int blob_size;
+
+    if (post_y < 0.0)
+	fprintf (stderr,
+		 "Ouch ... AntiLabelCollision found an unexpected NEGATIVE post_y !!!\n");
+
+/* repositioning the label Anchor Point */
+    shift_x = width * anchor_point_x;
+    shift_y = height * anchor_point_y;
+    adj_y = 0.0;
+    if (pre_y < 0.0)
+	adj_y = height + pre_y;
+
+/* determining the corners of the label BBOX (before rotation) */
+    px0 = 0.0 - shift_x - 2.0;
+    if (pre_x < 0.0)
+	px0 -= pre_x;
+    if (post_x < 0.0)
+	px1 = px0 + post_x;
+    else
+	px1 = px0 + width;
+    if (pre_x < 0.0)
+	px1 -= pre_x;
+    px1 += 4.0;
+    px2 = px1;
+    px3 = px0;
+    py0 = 0.0 - shift_y - adj_y - 2.0;
+    py2 = py0 + height;
+    py2 += 4.0;
+    py1 = py0;
+    py3 = py2;
+
+/* rotating the label BBOX */
+    x0 = x + ((px0 * cosine) + (py0 * sine));
+    y0 = y - ((py0 * cosine) - (px0 * sine));
+    x1 = x + ((px1 * cosine) + (py1 * sine));
+    y1 = y - ((py1 * cosine) - (px1 * sine));
+    x2 = x + ((px2 * cosine) + (py2 * sine));
+    y2 = y - ((py2 * cosine) - (px2 * sine));
+    x3 = x + ((px3 * cosine) + (py3 * sine));
+    y3 = y - ((py3 * cosine) - (px3 * sine));
+/* computing min-max X and Y */
+    minx = x0;
+    miny = y0;
+    maxx = x0;
+    maxy = y0;
+    if (x1 < minx)
+	minx = x1;
+    if (y1 < miny)
+	miny = y1;
+    if (x1 > maxx)
+	maxx = x1;
+    if (y1 > maxy)
+	maxy = y1;
+    if (x2 < minx)
+	minx = x2;
+    if (y2 < miny)
+	miny = y2;
+    if (x2 > maxx)
+	maxx = x2;
+    if (y2 > maxy)
+	maxy = y2;
+    if (x3 < minx)
+	minx = x3;
+    if (y3 < miny)
+	miny = y3;
+    if (x3 > maxx)
+	maxx = x3;
+    if (y3 > maxy)
+	maxy = y3;
+/* building the BLOB geometry */
+    bbox.blob =
+	do_create_label_mbr (minx, miny, maxx, maxy, x0, y0, x1, y1, x2, y2, x3,
+			     y3, &blob_size);
+    bbox.blob_size = blob_size;
+
+/* handling the anti-collision list */
+    ret = do_eval_collision (labeling, stmt, &bbox);
+    if (ret)
+      {
+	  free (bbox.blob);
+	  return 1;		/* collision detected */
+      }
+
+/* updating the list of obstacles */
+    ptr = malloc (sizeof (struct rl2_label_rect));
+    ptr->blob = bbox.blob;
+    ptr->blob_size = bbox.blob_size;
+    ptr->next = NULL;
+    if (labeling->first_rect == NULL)
+	labeling->first_rect = ptr;
+    if (labeling->last_rect != NULL)
+	labeling->last_rect->next = ptr;
+    labeling->last_rect = ptr;
+    return 0;
+}
+
 RL2_DECLARE int
 rl2_graph_draw_text (rl2GraphicsContextPtr context, const char *text,
 		     double x, double y, double angle, double anchor_point_x,
@@ -2609,10 +2833,14 @@ rl2_graph_draw_text (rl2GraphicsContextPtr context, const char *text,
     double cx;
     double cy;
     cairo_t *cairo;
+    int anti_collision = 0;
     RL2GraphContextPtr ctx = (RL2GraphContextPtr) context;
 
     if (ctx == NULL)
 	return 0;
+    if (ctx->labeling == NULL)
+	return 0;
+    anti_collision = ctx->labeling->no_colliding_labels;
     if (text == NULL)
 	return 0;
     if (ctx->type == RL2_SURFACE_PDF)
@@ -2620,9 +2848,28 @@ rl2_graph_draw_text (rl2GraphicsContextPtr context, const char *text,
     else
 	cairo = ctx->cairo;
 
-/* setting the Anchor Point */
     rl2_graph_get_text_extent (ctx, text, &pre_x, &pre_y, &width, &height,
 			       &post_x, &post_y);
+    if (anti_collision)
+      {
+	  int ret;
+	  int real_intersection;
+	  sqlite3_stmt *stmt;
+	  sqlite3 *sqlite = ctx->labeling->sqlite;
+	  const char *sql = "SELECT ST_Intersects(?, ?)";
+	  ret = sqlite3_prepare_v2 (sqlite, sql, strlen (sql), &stmt, NULL);
+	  if (ret != SQLITE_OK)
+	      return 0;
+	  real_intersection =
+	      do_check_collision (ctx->labeling, stmt, x, y, angle,
+				  anchor_point_x, anchor_point_y, pre_x, pre_y,
+				  width, height, post_x, post_y);
+	  sqlite3_finalize (stmt);
+	  if (real_intersection)
+	      return 1;
+      }
+
+/* setting the Anchor Point */
     if (anchor_point_x < 0.0 || anchor_point_x > 1.0 || anchor_point_x == 0.5)
 	center_x = width / 2.0;
     else
@@ -3371,6 +3618,7 @@ doRunTransformThread (void *arg)
     return 0;
 #else
     pthread_exit (NULL);
+    return NULL;
 #endif
 }
 
@@ -4311,7 +4559,7 @@ rl2_graph_get_context_alpha_array (rl2GraphicsContextPtr context,
 }
 
 RL2_DECLARE int
-rl2_rgba_to_pdf (unsigned int width, unsigned int height,
+rl2_rgba_to_pdf (const void *priv_data, unsigned int width, unsigned int height,
 		 unsigned char *rgba, unsigned char **pdf, int *pdf_size)
 {
 /* attempting to create an RGB PDF map */
@@ -4376,8 +4624,8 @@ rl2_rgba_to_pdf (unsigned int width, unsigned int height,
 	goto error;
 
     ctx =
-	rl2_graph_create_mem_pdf_context (mem, dpi, page_width, page_height,
-					  1.0, 1.0);
+	rl2_graph_create_mem_pdf_context (priv_data, mem, dpi, page_width,
+					  page_height, 1.0, 1.0);
     if (ctx == NULL)
 	goto error;
     bmp = rl2_graph_create_bitmap (rgba, width, height);
@@ -4407,8 +4655,8 @@ rl2_rgba_to_pdf (unsigned int width, unsigned int height,
 }
 
 RL2_DECLARE int
-rl2_gray_pdf (unsigned int width, unsigned int height, unsigned char **pdf,
-	      int *pdf_size)
+rl2_gray_pdf (const void *priv_data, unsigned int width, unsigned int height,
+	      unsigned char **pdf, int *pdf_size)
 {
 /* attempting to create an all-Gray PDF */
     rl2MemPdfPtr mem = NULL;
@@ -4471,8 +4719,8 @@ rl2_gray_pdf (unsigned int width, unsigned int height, unsigned char **pdf,
 	goto error;
 
     ctx =
-	rl2_graph_create_mem_pdf_context (mem, dpi, page_width, page_height,
-					  1.0, 1.0);
+	rl2_graph_create_mem_pdf_context (priv_data, mem, dpi, page_width,
+					  page_height, 1.0, 1.0);
     if (ctx == NULL)
 	goto error;
     rl2_graph_set_solid_pen (ctx, 255, 0, 0, 255, 2.0, RL2_PEN_CAP_BUTT,
@@ -4870,6 +5118,8 @@ rl2_get_canvas_ctx (rl2CanvasPtr ptr, int which)
     return NULL;
 }
 
+
+
 RL2_DECLARE void
 rl2_prime_background (void *pctx, unsigned char red, unsigned char green,
 		      unsigned char blue, unsigned char alpha)
@@ -4885,6 +5135,120 @@ rl2_prime_background (void *pctx, unsigned char red, unsigned char green,
     cairo_rectangle (ctx->cairo, 0, 0, width, height);
     cairo_set_source_rgba (ctx->cairo, r, g, b, a);
     cairo_fill (ctx->cairo);
+}
+
+RL2_DECLARE int
+rl2_initialize_map_canvas (sqlite3 * sqlite, const void *priv_data, int width,
+			   int height, const unsigned char *blob, int blob_sz,
+			   const char *bg_color, int transparent, int reaspect)
+{
+/* attempting to initialize the internal Map Canvas */
+    int srid;
+    double minx;
+    double miny;
+    double maxx;
+    double maxy;
+    unsigned char bg_red = 255;
+    unsigned char bg_green = 255;
+    unsigned char bg_blue = 255;
+    unsigned char bg_alpha = 0;
+    rl2GraphicsContextPtr ctx = NULL;
+    struct rl2_private_data *cache = (struct rl2_private_data *) priv_data;
+    struct rl2_private_map_canvas *canvas;
+
+    if (cache == NULL)
+	return RL2_MAP_CANVAS_NULL_INTERNAL_CACHE;
+
+    if (reaspect == 0)
+      {
+	  /* testing for consistent aspect ratios */
+	  double aspect_org =
+	      do_compute_bbox_aspect_ratio (sqlite, blob, blob_sz);
+	  double aspect_dst = (double) width / (double) height;
+	  double confidence = aspect_org / 100.0;
+	  if (aspect_org < 0.0)
+	      return RL2_MAP_CANVAS_INVALID_BBOX;
+	  aspect_org = do_compute_bbox_aspect_ratio (sqlite, blob, blob_sz);
+	  if (aspect_org < 0.0)
+	      return RL2_MAP_CANVAS_INVALID_BBOX;
+	  aspect_dst = (double) width / (double) height;
+	  confidence = aspect_org / 100.0;
+	  if (aspect_dst >= (aspect_org - confidence)
+	      && aspect_dst <= (aspect_org + confidence))
+	      ;
+	  else
+	      return RL2_MAP_CANVAS_INCONSISTENT_ASPECT_RATIO;
+      }
+    if (rl2_parse_bbox_srid
+	(sqlite, blob, blob_sz, &srid, &minx, &miny, &maxx, &maxy) != RL2_OK)
+	return RL2_MAP_CANVAS_INVALID_BBOX;
+
+    canvas = &(cache->map_canvas);
+    if (canvas->ref_ctx != NULL)
+	return RL2_MAP_CANVAS_ALREADY_IN_USE;
+
+    if (rl2_parse_hexrgb (bg_color, &bg_red, &bg_green, &bg_blue) != RL2_OK)
+	return RL2_MAP_CANVAS_INVALID_BGCOLOR;
+
+    ctx = rl2_graph_create_context (priv_data, width, height);
+    if (ctx == NULL)
+	return RL2_MAP_CANVAS_ERROR_GRAPHICS_CONTEXT;
+
+    canvas->width = width;
+    canvas->height = height;
+    canvas->ref_ctx = ctx;
+    canvas->srid = srid;
+    canvas->minx = minx;
+    canvas->miny = miny;
+    canvas->maxx = maxx;
+    canvas->maxy = maxy;
+    canvas->transparent = transparent;
+    if (transparent)
+	bg_alpha = 0;
+    else
+	bg_alpha = 255;
+    /* priming the Map Canvas background */
+    rl2_prime_background (ctx, bg_red, bg_green, bg_blue, bg_alpha);
+    return RL2_OK;
+}
+
+RL2_DECLARE int
+rl2_finalize_map_canvas (const void *priv_data)
+{
+/* finalizing the Internal Map Canvas */
+    struct rl2_private_map_canvas *canvas;
+    struct rl2_private_data *cache = (struct rl2_private_data *) priv_data;
+    rl2GraphicsContextPtr context;
+
+    if (cache == NULL)
+	return RL2_MAP_CANVAS_NULL_INTERNAL_CACHE;
+
+    canvas = &(cache->map_canvas);
+    if (canvas->ref_ctx == NULL)
+	return RL2_MAP_CANVAS_NOT_IN_USE;
+
+    context = (rl2GraphicsContextPtr) (canvas->ref_ctx);
+    rl2_graph_destroy_context (context);
+    canvas->width = 0;
+    canvas->height = 0;
+    canvas->ref_ctx = NULL;
+    canvas->srid = -1;
+    canvas->minx = 0.0;
+    canvas->miny = 0.0;
+    canvas->maxx = 0.0;
+    canvas->maxy = 0.0;
+    canvas->transparent = 1;
+    return RL2_OK;
+}
+
+RL2_PRIVATE struct rl2_advanced_labeling *
+rl2_get_labeling_ref (const void *context)
+{
+/* returning the internal pointer to AdvancedLabeling */
+    RL2GraphContextPtr ctx = (RL2GraphContextPtr) context;
+    if (ctx == NULL)
+	return NULL;
+    return ctx->labeling;
 }
 
 RL2_DECLARE const char *

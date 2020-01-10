@@ -3620,6 +3620,7 @@ doRunDecoderThread (void *arg)
     return 0;
 #else
     pthread_exit (NULL);
+    return NULL;
 #endif
 }
 
@@ -3638,6 +3639,7 @@ doRunMaskDecoderThread (void *arg)
     return 0;
 #else
     pthread_exit (NULL);
+    return NULL;
 #endif
 }
 
@@ -5697,7 +5699,6 @@ RL2_PRIVATE int
 rl2_has_styled_rgb_colors (rl2RasterSymbolizerPtr style)
 {
 /* testing for a RasterSymbolizer requiring RGB colors */
-    rl2PrivColorMapPointPtr color;
     rl2PrivRasterSymbolizerPtr stl = (rl2PrivRasterSymbolizerPtr) style;
     if (stl == NULL)
 	return 0;
@@ -8598,6 +8599,7 @@ rl2_create_coverage_style_from_dbms (sqlite3 * handle, const char *db_prefix,
 	  goto error;
       }
     stl = coverage_style_from_xml (name, xml);
+    free (xml);
     if (stl == NULL)
 	goto error;
     return stl;

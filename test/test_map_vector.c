@@ -210,24 +210,24 @@ test_capi_base (sqlite3 * sqlite, const char *coverage, const char *style,
 
     if (toponet)
       {
-	  ctx = rl2_graph_create_context (1024, 1024);
-	  ctx_labels = rl2_graph_create_context (1024, 1024);
-	  ctx_nodes = rl2_graph_create_context (1024, 1024);
-	  ctx_links = rl2_graph_create_context (1024, 1024);
-	  ctx_link_seeds = rl2_graph_create_context (1024, 1024);
+	  ctx = rl2_graph_create_context (data, 1024, 1024);
+	  ctx_labels = rl2_graph_create_context (data, 1024, 1024);
+	  ctx_nodes = rl2_graph_create_context (data, 1024, 1024);
+	  ctx_links = rl2_graph_create_context (data, 1024, 1024);
+	  ctx_link_seeds = rl2_graph_create_context (data, 1024, 1024);
 	  canvas =
 	      rl2_create_network_canvas (ctx, ctx_labels, ctx_nodes, ctx_links,
 					 ctx_link_seeds);
       }
     if (topogeo)
       {
-	  ctx = rl2_graph_create_context (1024, 1024);
-	  ctx_labels = rl2_graph_create_context (1024, 1024);
-	  ctx_nodes = rl2_graph_create_context (1024, 1024);
-	  ctx_edges = rl2_graph_create_context (1024, 1024);
-	  ctx_faces = rl2_graph_create_context (1024, 1024);
-	  ctx_edge_seeds = rl2_graph_create_context (1024, 1024);
-	  ctx_face_seeds = rl2_graph_create_context (1024, 1024);
+	  ctx = rl2_graph_create_context (data, 1024, 1024);
+	  ctx_labels = rl2_graph_create_context (data, 1024, 1024);
+	  ctx_nodes = rl2_graph_create_context (data, 1024, 1024);
+	  ctx_edges = rl2_graph_create_context (data, 1024, 1024);
+	  ctx_faces = rl2_graph_create_context (data, 1024, 1024);
+	  ctx_edge_seeds = rl2_graph_create_context (data, 1024, 1024);
+	  ctx_face_seeds = rl2_graph_create_context (data, 1024, 1024);
 	  canvas =
 	      rl2_create_topology_canvas (ctx, ctx_labels, ctx_nodes, ctx_edges,
 					  ctx_faces, ctx_edge_seeds,

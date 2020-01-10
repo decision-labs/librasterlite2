@@ -279,6 +279,29 @@ EXTRA_DIST = getmaxthreads1.testcase \
 	getmapimage21.testcase \
 	getmapimage22.testcase \
 	getmapimage23.testcase \
+	getstyledmapimage1.testcase \
+	getstyledmapimage2.testcase \
+	getstyledmapimage3.testcase \
+	getstyledmapimage4.testcase \
+	getstyledmapimage5.testcase \
+	getstyledmapimage6.testcase \
+	getstyledmapimage7.testcase \
+	getstyledmapimage8.testcase \
+	getstyledmapimage9.testcase \
+	getstyledmapimage10.testcase \
+	getstyledmapimage11.testcase \
+	getstyledmapimage12.testcase \
+	getstyledmapimage13.testcase \
+	getstyledmapimage14.testcase \
+	getstyledmapimage15.testcase \
+	getstyledmapimage16.testcase \
+	getstyledmapimage17.testcase \
+	getstyledmapimage18.testcase \
+	getstyledmapimage19.testcase \
+	getstyledmapimage20.testcase \
+	getstyledmapimage21.testcase \
+	getstyledmapimage22.testcase \
+	getstyledmapimage23.testcase \
 	getvectorimage1.testcase \
 	getvectorimage2.testcase \
 	getvectorimage3.testcase \
@@ -689,6 +712,8 @@ EXTRA_DIST = getmaxthreads1.testcase \
 	version_cairo.testcase \
 	version_curl.testcase \
 	version_zlib.testcase \
+	version_lz4.testcase \
+	version_zstd.testcase \
 	version_lzma.testcase \
 	version_png.testcase \
 	version_jpeg.testcase \
