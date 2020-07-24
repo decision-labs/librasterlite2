@@ -2184,7 +2184,7 @@ check_wms_request (struct wms_list *list, struct wms_args *args)
 		int srid;
 		const char *layer;
 		const char *layer_name;
-		unsigned char layer_type;
+		unsigned char layer_type = 0;
 		int swap_xy = 0;
 		double minx;
 		double miny;
@@ -3922,10 +3922,9 @@ do_start_http (const char *ip_addr, int port_no, struct neutral_socket *srv_skt,
 }
 
 static void
-complete_layer_config (sqlite3 * handle, struct wms_list *list)
+complete_layer_config (struct wms_list *list)
 {
 /* completing the configuration for every WMS layer */
-    struct wms_group *grp;
     struct wms_layer *lyr;
 
 /* first level layers */
@@ -3934,155 +3933,6 @@ complete_layer_config (sqlite3 * handle, struct wms_list *list)
       {
 	  fprintf (stderr, "Publishing layer \"%s\"\n", lyr->layer_name);
 	  lyr = lyr->next;
-      }
-
-    grp = list->first_group;
-    while (grp != NULL)
-      {
-	  /* validating layer groups */
-	  int valid;
-	  int count;
-	  int srid;
-	  struct wms_style *style;
-	  struct wms_layer_ref *ref;
-	  ref = grp->first_child;
-	  valid = 1;
-	  count = 0;
-	  if (ref != NULL)
-	      srid = ref->layer_ref->srid;
-	  while (ref != NULL)
-	    {
-		/* preliminary check */
-		if (ref->layer_ref->valid == 0)
-		    valid = 0;
-		if (ref->layer_ref->srid != srid)
-		    valid = 0;
-		count++;
-		ref = ref->next;
-	    }
-	  if (count < 1 || valid == 0)
-	    {
-		/* reporting an error condition */
-		fprintf (stderr,
-			 "ERROR: layer group \"%s\" has mismatching SRIDs !!!\n"
-			 "\t... will not be published\n", grp->group_name);
-		grp->valid = 0;
-	    }
-	  else
-	    {
-		/* final refinement pass */
-		double minx = DBL_MAX;
-		double maxx = 0.0 - DBL_MAX;
-		double miny = DBL_MAX;
-		double maxy = 0.0 - DBL_MAX;
-		double geo_minx = DBL_MAX;
-		double geo_maxx = 0.0 - DBL_MAX;
-		double geo_miny = DBL_MAX;
-		double geo_maxy = 0.0 - DBL_MAX;
-		ref = grp->first_child;
-		while (ref != NULL)
-		  {
-		      struct wms_layer *l = ref->layer_ref;
-		      if (ref == grp->first_child)
-			{
-			    grp->srid = l->srid;
-			    grp->has_flipped_axes = l->has_flipped_axes;
-			    if (l->minx < minx)
-				minx = l->minx;
-			    if (l->maxx > maxx)
-				maxx = l->maxx;
-			    if (l->miny < miny)
-				miny = l->miny;
-			    if (l->maxy > maxy)
-				maxy = l->maxy;
-			    if (l->geo_minx < geo_minx)
-				geo_minx = l->geo_minx;
-			    if (l->geo_maxx > geo_maxx)
-				geo_maxx = l->geo_maxx;
-			    if (l->geo_miny < geo_miny)
-				geo_miny = l->geo_miny;
-			    if (l->geo_maxy > geo_maxy)
-				geo_maxy = l->geo_maxy;
-			}
-		      ref = ref->next;
-		  }
-		grp->minx = minx;
-		grp->maxx = maxx;
-		grp->miny = miny;
-		grp->maxy = maxy;
-		grp->geo_minx = geo_minx;
-		grp->geo_maxx = geo_maxx;
-		grp->geo_miny = geo_miny;
-		grp->geo_maxy = geo_maxy;
-
-		/* validating Group Styles */
-		style = grp->first_style;
-		while (style != NULL)
-		  {
-		      int valid;
-		      rl2GroupStylePtr stl;
-		      if (strcmp (style->name, "default") == 0)
-			{
-			    /* ignoring default styles */
-			    style->valid = 0;
-			    style = style->next;
-			    continue;
-			}
-		      stl = rl2_create_group_style_from_dbms (handle, NULL,
-							      grp->group_name,
-							      style->name);
-		      if (stl == NULL)
-			{
-			    /* reporting an error condition */
-			    fprintf (stderr,
-				     "ERROR: layer group \"%s\" NULL style !!!\n"
-				     "\t... will be ignored\n",
-				     grp->group_name);
-			    style->valid = 0;
-			    style = style->next;
-			    continue;
-			}
-		      rl2_is_valid_group_style (stl, &valid);
-		      if (!valid)
-			{
-			    /* reporting an error condition */
-			    int count;
-			    int idx;
-			    fprintf (stderr,
-				     "ERROR: layer group \"%s\" invalid style \"%s\" !!!\n"
-				     "\t... will be ignored\n", grp->group_name,
-				     rl2_get_group_style_name (stl));
-			    rl2_get_group_style_count (stl, &count);
-			    for (idx = 0; idx < count; idx++)
-			      {
-				  rl2_is_valid_group_named_layer (stl, idx,
-								  &valid);
-				  if (!valid)
-				      fprintf (stderr,
-					       "\t%d/%d\tNamedLayer \"%s\" does not exists !!!\n",
-					       idx, count,
-					       rl2_get_group_named_layer (stl,
-									  idx));
-				  rl2_is_valid_group_named_style (stl, idx,
-								  &valid);
-				  if (!valid)
-				      fprintf (stderr,
-					       "\t\tNamedStyle \"%s\" does not exists !!!\n",
-					       rl2_get_group_named_style (stl,
-									  idx));
-			      }
-			    style->valid = 0;
-			    style = style->next;
-			    continue;
-			}
-		      rl2_destroy_group_style (stl);
-		      style = style->next;
-		  }
-		if (grp->valid)
-		    fprintf (stderr, "Publishing Layer Group \"%s\"\n",
-			     grp->group_name);
-		grp = grp->next;
-	    }
       }
 }
 
@@ -5117,7 +4967,7 @@ main (int argc, char *argv[])
     get_raster_keywords (handle, list);
     get_vector_keywords (handle, list);
     glob.list = list;
-    complete_layer_config (handle, list);
+    complete_layer_config (list);
     build_get_capabilities (list, &cached_capabilities,
 			    &cached_capabilities_len, ip_addr, port_no);
     glob.cached_capabilities = cached_capabilities;

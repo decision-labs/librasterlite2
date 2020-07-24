@@ -963,7 +963,7 @@ rl2_create_vector_layer (const char *db_prefix, const char *f_table_name,
 	  vector->view_rowid = malloc (len + 1);
 	  strcpy (vector->view_rowid, view_rowid);
       }
-    vector->geometry_type = geometry_type;
+    vector->geometry_type = geometry_type; 
     vector->srid = srid;
     vector->spatial_index = spatial_index;
     vector->visible = 1;

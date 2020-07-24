@@ -230,11 +230,6 @@ extern "C"
 /** RasterLite2 constant: contrast enhancement GAMMA-VALUE */
 #define RL2_CONTRAST_ENHANCEMENT_GAMMA		0x93
 
-/** RasterLite2 constant: GroupRenderer - RasterLayer */
-#define RL2_GROUP_RENDERER_RASTER_LAYER	0xba
-/** ResterLite2 constant: GroupRenderer - VectorLayer */
-#define RL2_GROUP_RENDERER_VECTOR_LAYER	0xbb
-
 /** RasterLite2 constants: unknown Symbolizer type */
 #define RL2_UNKNOWN_SYMBOLIZER	0xa0
 /** RasterLite2 constants: Point Symbolizer type */
@@ -583,32 +578,6 @@ extern "C"
     typedef rl2TextSymbolizer *rl2TextSymbolizerPtr;
 
 /**
- Typedef for RL2 GroupStyle object (opaque, hidden)
-
- \sa rl2GroupStylePtr
- */
-    typedef struct rl2_group_style rl2GroupStyle;
-/**
- Typedef for RL2 GroupStyle object pointer (opaque, hidden)
-
- \sa rl2GroupStyle
- */
-    typedef rl2GroupStyle *rl2GroupStylePtr;
-
-/**
- Typedef for RL2 GroupRender object (opaque, hidden)
-
- \sa rl2GroupRendererPtr
- */
-    typedef struct rl2_group_renderer rl2GroupRenderer;
-/**
- Typedef for RL2 GroupRenderer object pointer (opaque, hidden)
-
- \sa rl2GroupRenderer
- */
-    typedef rl2GroupRenderer *rl2GroupRendererPtr;
-
-/**
  Typedef for RL2 TIFF Origin object (opaque, hidden)
 
  \sa rl2TiffOriginPtr
@@ -702,6 +671,20 @@ extern "C"
  \sa rl2MemPdf
  */
     typedef rl2MemPdf *rl2MemPdfPtr;
+
+/**
+ Typedef for RL2 MapConfig object
+
+ \sa rl2MapConfigPtr
+ */
+    typedef struct rl2_map_config rl2MapConfig;
+
+/**
+ Typedef for RL2 MapConfig object
+
+ \sa rl2MapConfig
+ */
+    typedef rl2MapConfig *rl2MapConfigPtr;
 
 /**
  Releases (frees) dynamic memory allocated by RasterLite2
@@ -6065,44 +6048,6 @@ extern "C"
 	*rl2_text_symbolizer_get_col_fill_opacity (rl2TextSymbolizerPtr
 						   symbolizer);
 
-    RL2_DECLARE rl2GroupStylePtr
-	rl2_create_group_style_from_dbms (sqlite3 * handle,
-					  const char *db_prefix,
-					  const char *group, const char *style);
-
-    RL2_DECLARE void rl2_destroy_group_style (rl2GroupStylePtr style);
-
-    RL2_DECLARE const char *rl2_get_group_style_prefix (rl2GroupStylePtr style);
-
-    RL2_DECLARE const char *rl2_get_group_style_name (rl2GroupStylePtr style);
-
-    RL2_DECLARE int rl2_is_valid_group_style (rl2GroupStylePtr style,
-					      int *valid);
-
-    RL2_DECLARE int rl2_get_group_style_count (rl2GroupStylePtr style,
-					       int *count);
-
-    RL2_DECLARE const char *rl2_get_group_prefix (rl2GroupStylePtr style,
-						  int index);
-
-    RL2_DECLARE const char *rl2_get_group_named_layer (rl2GroupStylePtr style,
-						       int index);
-
-    RL2_DECLARE const char *rl2_get_group_named_style (rl2GroupStylePtr style,
-						       int index);
-
-    RL2_DECLARE int rl2_is_valid_group_named_layer (rl2GroupStylePtr style,
-						    int index, int *valid);
-
-    RL2_DECLARE int rl2_is_valid_group_named_style (rl2GroupStylePtr style,
-						    int index, int *valid);
-
-    RL2_DECLARE rl2GroupRendererPtr rl2_create_group_renderer (sqlite3 * sqlite,
-							       rl2GroupStylePtr
-							       style);
-
-    RL2_DECLARE void rl2_destroy_group_renderer (rl2GroupRendererPtr group);
-
     RL2_DECLARE char *rl2_build_worldfile_path (const char *path,
 						const char *suffix);
 
@@ -6341,6 +6286,8 @@ extern "C"
 					  double no_data_value,
 					  double densify_dist,
 					  double z_simplify_dist, int update_m);
+	
+	RL2_DECLARE int rl2_serialize_map_config (rl2MapConfigPtr map_config_obj, unsigned char **blob, int *blob_sz);
 
 #ifdef __cplusplus
 }

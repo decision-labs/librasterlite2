@@ -1,0 +1,493 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RL2MapConfig version="1.0" xmlns="http://www.gaia-gis.it/RL2MapConfig" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.gaia-gis.it/RL2MapConfig http://www.gaia-gis.it/RL2MapConfig_1_0.xsd" >
+	<Name>map_config</Name>
+	<Description>
+		<Title>MapConfig Test</Title>
+		<Abstract>a complete test case for MapConfig</Abstract>
+	</Description>
+	<MapOptions>
+		<MultiThreading Enabled="true" MaxThreads="8" />
+		<MapCrs Crs="EPSG:3003" AutoTransformEnabled="true" />
+		<GeographicCoords DMS="false" />
+		<MapBackground Color="#ffffff" Transparent="true" />
+	</MapOptions>
+	<MapAttachedDatabases>
+		<MapAttachedDB DbPrefix="a" Path="./test.sqlite" />
+		<MapAttachedDB DbPrefix="b" Path="./test2.sqlite" />
+	</MapAttachedDatabases>
+	<MapLayer Type="wms" DbPrefix="main" Name="wms_layer_1" Visible="true">
+		<WmsLayerStyle>
+			<GetMap URL="http://www.something.com" />
+			<GetFeatureInfo URL="http://www.sample.com" />
+			<WmsProtocol Version="1.3.0" />
+			<ReferenceSystem Crs="EPSG:3003" />
+			<ImageFormat MimeType="image/jpeg" Opaque="false" />
+		</WmsLayerStyle>
+	</MapLayer>
+	<MapLayer Type="wms" DbPrefix="main" Name="wms_layer_2" Visible="true">
+		<WmsLayerStyle>
+			<Rule>
+				<MinScaleDenominator>50000.00</MinScaleDenominator>
+				<MaxScaleDenominator>100000.00</MaxScaleDenominator>
+			</Rule>
+			<GetMap URL="http://www.something.com" />
+			<GetFeatureInfo URL="http://www.sample.com" />
+			<WmsProtocol Version="1.3.0" />
+			<ReferenceSystem Crs="EPSG:4326" SwapXY="true" />
+			<Style>wms_style</Style>
+			<ImageFormat MimeType="image/jpeg" Opaque="true" />
+			<BgColor>#ffff00</BgColor>
+			<TileSize Width="511" Height="513" />
+		</WmsLayerStyle>
+	</MapLayer>
+	<MapLayer Type="raster" DbPrefix="a" Name="raster_1" Visible="true">
+		<RasterLayerInternalStyle name="raster_style_1" />
+	</MapLayer>
+	<MapLayer Type="vector_view" DbPrefix="main" Name="vector_1" Visible="true">
+		<VectorLayerInternalStyle name="vector_style_1" />
+	</MapLayer>
+	<MapLayer Type="vector_virtual" DbPrefix="main" Name="vector_2" Visible="true">
+		<VectorLayerInternalStyle name="vector_style_2" />
+	</MapLayer>
+	<MapLayer Type="vector" DbPrefix="main" Name="vector_3" Visible="true">
+		<VectorLayerInternalStyle name="vector_style_3" />
+	</MapLayer>
+	<MapLayer Type="topology" DbPrefix="main" Name="topology_1" Visible="true">
+		<TopologyLayerInternalStyle name="topology_style_1" ShowFaces="true" ShowEdges="true" ShowNodes="true" ShowFaceSeeds="true" ShowEdgeSeeds="true" />
+	</MapLayer>
+	<MapLayer Type="network" DbPrefix="main" Name="network_1" Visible="true">
+		<NetworkLayerInternalStyle name="network_style_1" ShowLinks="true" ShowNodes="true" ShowLinkSeeds="true" />
+	</MapLayer>
+	<MapLayer Type="raster" DbPrefix="main" Name="raster_2" Visible="true">
+		<RasterLayerStyle>
+			<RasterSymbolizer>
+				<Opacity>0.73</Opacity>
+				<ColorMap name="srtm" />
+				<ShadedRelief>
+					<ReliefFactor>23.14</ReliefFactor>
+				</ShadedRelief>
+			</RasterSymbolizer>
+		</RasterLayerStyle>
+	</MapLayer>
+	<MapLayer Type="raster" DbPrefix="a" Name="raster_3" Visible="true">
+		<RasterLayerStyle>
+			<RasterSymbolizer>
+				<Opacity>1.00</Opacity>
+				<ColorMap name="terrain" />
+				<ShadedRelief>
+					<ReliefFactor>25.00</ReliefFactor>
+				</ShadedRelief>
+			</RasterSymbolizer>
+		</RasterLayerStyle>
+	</MapLayer>
+	<MapLayer Type="raster" DbPrefix="a" Name="raster_4" Visible="true">
+		<RasterLayerStyle>
+			<RasterSymbolizer>
+				<Opacity>1.00</Opacity>
+				<ColorRamp MinValue="-5.38527298" MinColor="#1020ff" MaxValue="2053.62207031" MaxColor="#ff080e" />
+			</RasterSymbolizer>
+		</RasterLayerStyle>
+	</MapLayer>
+	<MapLayer Type="raster" DbPrefix="main" Name="raster_5" Visible="true">
+		<RasterLayerStyle>
+			<RasterSymbolizer>
+				<Opacity>1.00</Opacity>
+				<ContrastEnhancement>
+					<Normalize />
+				</ContrastEnhancement>
+			</RasterSymbolizer>
+		</RasterLayerStyle>
+	</MapLayer>
+	<MapLayer Type="raster" DbPrefix="main" Name="raster_6" Visible="true">
+		<RasterLayerStyle>
+			<RasterSymbolizer>
+				<Opacity>1.00</Opacity>
+				<ContrastEnhancement>
+					<Histogram />
+				</ContrastEnhancement>
+			</RasterSymbolizer>
+		</RasterLayerStyle>
+	</MapLayer>
+	<MapLayer Type="raster" DbPrefix="main" Name="raster_7" Visible="true">
+		<RasterLayerStyle>
+			<RasterSymbolizer>
+				<Opacity>1.00</Opacity>
+				<ContrastEnhancement>
+					<Gamma>1.57</Gamma>
+				</ContrastEnhancement>
+			</RasterSymbolizer>
+		</RasterLayerStyle>
+	</MapLayer>
+	<MapLayer Type="raster" DbPrefix="main" Name="raster_8" Visible="true">
+		<RasterLayerStyle>
+			<Rule>
+				<MinScaleDenominator>50000.00</MinScaleDenominator>
+				<MaxScaleDenominator>100000.00</MaxScaleDenominator>
+			</Rule>
+			<RasterSymbolizer>
+				<Opacity>1.00</Opacity>
+				<ChannelSelection>
+					<RedChannel>
+						<SourceChannelName>4</SourceChannelName>
+					</RedChannel>
+					<GreenChannel>
+						<SourceChannelName>1</SourceChannelName>
+					</GreenChannel>
+					<BlueChannel>
+						<SourceChannelName>3</SourceChannelName>
+					</BlueChannel>
+				</ChannelSelection>
+			</RasterSymbolizer>
+		</RasterLayerStyle>
+	</MapLayer>
+	<MapLayer Type="raster" DbPrefix="main" Name="raster_9" Visible="true">
+		<RasterLayerStyle>
+			<RasterSymbolizer>
+				<Opacity>1.00</Opacity>
+				<ChannelSelection>
+					<GrayChannel>
+						<SourceChannelName>4</SourceChannelName>
+					</GrayChannel>
+				</ChannelSelection>
+			</RasterSymbolizer>
+		</RasterLayerStyle>
+	</MapLayer>
+	<MapLayer Type="vector_view" DbPrefix="main" Name="vector_4" Visible="true">
+		<VectorLayerStyle>
+			<PolygonSymbolizer>
+				<Fill>
+					<GraphicFill>
+						<Graphic>
+							<ExternalGraphic>
+								<OnlineResource>http://www.utopia.gov/stdbrush_crossdiag.png</OnlineResource>
+								<Format>image/png</Format>
+								<ColorReplacement>
+									<Recode fallbackValue="#000000">
+										<LookupValue>ExternalGraphics</LookupValue>
+										<MapItem>
+											<Data>1</Data>
+											<Value>#fbe346</Value>
+										</MapItem>
+									</Recode>
+								</ColorReplacement>
+							</ExternalGraphic>
+						</Graphic>
+					</GraphicFill>
+				</Fill>
+				<Stroke>
+					<SvgParameter name="stroke">#1231fa</SvgParameter>
+					<SvgParameter name="stroke-opacity">0.8</SvgParameter>
+					<SvgParameter name="stroke-width">1.84</SvgParameter>
+					<SvgParameter name="stroke-linejoin">round</SvgParameter>
+					<SvgParameter name="stroke-linecap">round</SvgParameter>
+					<SvgParameter name="stroke-dasharray">5.0, 10.0</SvgParameter>
+				</Stroke>
+				<Displacement>
+					<DisplacementX>5.3</DisplacementX>
+					<DisplacementY>15.6</DisplacementY>
+				</Displacement>
+				<PerpendicularOffset>10.25</PerpendicularOffset>
+			</PolygonSymbolizer>
+			<TextSymbolizer TextSymbolizerAlone="true">
+				<Label>@name@</Label>
+				<Font>
+					<SvgParameter name="font-family">sans serif</SvgParameter>
+					<SvgParameter name="font-style">normal</SvgParameter>
+					<SvgParameter name="font-weight">normal</SvgParameter>
+					<SvgParameter name="font-size">18.00</SvgParameter>
+				</Font>
+				<LabelPlacement>
+					<PointPlacement>
+							<Rotation>45.0</Rotation>
+					</PointPlacement>
+				</LabelPlacement>
+				<Fill>
+					<SvgParameter name="fill">#000000</SvgParameter>
+					<SvgParameter name="fill-opacity">1.00</SvgParameter>
+				</Fill>
+			</TextSymbolizer>
+		</VectorLayerStyle>
+	</MapLayer>
+	<MapLayer Type="vector_view" DbPrefix="main" Name="vector_5" Visible="true">
+		<VectorLayerStyle>
+			<LineSymbolizer>
+				<Stroke>
+					<SvgParameter name="stroke">#ffa51d</SvgParameter>
+					<SvgParameter name="stroke-opacity">0.66</SvgParameter>
+					<SvgParameter name="stroke-width">8.52</SvgParameter>
+					<SvgParameter name="stroke-linejoin">round</SvgParameter>
+					<SvgParameter name="stroke-dasharray">20.0, 10.0, 5.0, 10.0</SvgParameter>
+				</Stroke>
+				<PerpendicularOffset>12.5</PerpendicularOffset>
+			</LineSymbolizer>
+			<LineSymbolizer>
+				<Stroke>
+					<SvgParameter name="stroke">#ff0000</SvgParameter>
+					<SvgParameter name="stroke-opacity">1.00</SvgParameter>
+					<SvgParameter name="stroke-width">5.00</SvgParameter>
+					<SvgParameter name="stroke-linejoin">round</SvgParameter>
+					<SvgParameter name="stroke-linecap">round</SvgParameter>
+					<SvgParameter name="stroke-dasharray">20.0, 20.0</SvgParameter>
+				</Stroke>
+			</LineSymbolizer>
+		</VectorLayerStyle>
+	</MapLayer>
+	<MapLayer Type="vector_view" DbPrefix="main" Name="vector_6" Visible="true">
+		<VectorLayerStyle>
+			<Rule>
+				<MaxScaleDenominator>100000.00</MaxScaleDenominator>
+			</Rule>
+			<PointSymbolizer>
+				<Graphic>
+					<Mark>
+						<WellKnownName>square</WellKnownName>
+						<Fill>
+							<SvgParameter name="fill">#ff0105</SvgParameter>
+						</Fill>
+						<Stroke>
+							<SvgParameter name="stroke">#0603fa</SvgParameter>
+							<SvgParameter name="stroke-width">1.12</SvgParameter>
+							<SvgParameter name="stroke-linejoin">round</SvgParameter>
+							<SvgParameter name="stroke-linecap">round</SvgParameter>
+						</Stroke>
+					</Mark>
+					<Opacity>0.75</Opacity>
+					<Size>8.05</Size>
+					<Rotation>45.1</Rotation>
+					<AnchorPoint>
+						<AnchorPointX>5.2</AnchorPointX>
+						<AnchorPointY>7.5</AnchorPointY>
+					</AnchorPoint>
+					<Displacement>
+						<DisplacementX>12.3</DisplacementX>
+						<DisplacementY>13.5</DisplacementY>
+					</Displacement>
+				</Graphic>
+			</PointSymbolizer>
+			<TextSymbolizer>
+				<Label>@den_uff@</Label>
+				<Font>
+					<SvgParameter name="font-family">serif</SvgParameter>
+					<SvgParameter name="font-style">italic</SvgParameter>
+					<SvgParameter name="font-weight">bold</SvgParameter>
+					<SvgParameter name="font-size">12.53</SvgParameter>
+				</Font>
+				<LabelPlacement>
+					<PointPlacement>
+						<AnchorPoint>
+							<AnchorPointX>0.3000</AnchorPointX>
+							<AnchorPointY>2.5000</AnchorPointY>
+						</AnchorPoint>
+						<Displacement>
+							<DisplacementX>10.1000</DisplacementX>
+							<DisplacementY>0.3200</DisplacementY>
+						</Displacement>
+						<Rotation>45.2</Rotation>
+					</PointPlacement>
+				</LabelPlacement>
+				<Halo>
+					<Radius>0.75</Radius>
+					<Fill>
+						<SvgParameter name="fill">#fafbfc</SvgParameter>
+						<SvgParameter name="fill-opacity">0.33</SvgParameter>
+					</Fill>
+				</Halo>
+				<Fill>
+					<SvgParameter name="fill">#0a0b0c</SvgParameter>
+					<SvgParameter name="fill-opacity">0.80</SvgParameter>
+				</Fill>
+			</TextSymbolizer>
+		</VectorLayerStyle>
+	</MapLayer>
+	<MapLayer Type="topology" DbPrefix="main" Name="topology_2" Visible="true">
+		<TopologyLayerStyle ShowFaces="true" ShowEdges="true" ShowNodes="true" ShowFaceSeeds="true" ShowEdgeSeeds="true">
+			<Rule>
+				<MinScaleDenominator>50000.00</MinScaleDenominator>
+				<MaxScaleDenominator>100000.00</MaxScaleDenominator>
+			</Rule>
+			<FacesStyle>
+				<PolygonSymbolizer>
+					<Fill>
+						<SvgParameter name="fill">#fc673e</SvgParameter>
+						<SvgParameter name="fill-opacity">1.00</SvgParameter>
+					</Fill>
+					<Stroke>
+						<SvgParameter name="stroke">#017e97</SvgParameter>
+						<SvgParameter name="stroke-opacity">1.00</SvgParameter>
+						<SvgParameter name="stroke-width">1.00</SvgParameter>
+						<SvgParameter name="stroke-linejoin">round</SvgParameter>
+						<SvgParameter name="stroke-linecap">round</SvgParameter>
+					</Stroke>
+				</PolygonSymbolizer>
+			</FacesStyle>
+			<EdgesStyle>
+				<LineSymbolizer>
+					<Stroke>
+						<SvgParameter name="stroke">#a141e1</SvgParameter>
+						<SvgParameter name="stroke-opacity">1.00</SvgParameter>
+						<SvgParameter name="stroke-width">1.00</SvgParameter>
+						<SvgParameter name="stroke-linejoin">round</SvgParameter>
+						<SvgParameter name="stroke-linecap">round</SvgParameter>
+					</Stroke>
+				</LineSymbolizer>
+			</EdgesStyle>
+			<NodesStyle>
+				<PointSymbolizer>
+					<Graphic>
+						<Mark>
+							<WellKnownName>star</WellKnownName>
+							<Fill>
+								<SvgParameter name="fill">#3ddc87</SvgParameter>
+							</Fill>
+							<Stroke>
+								<SvgParameter name="stroke">#70e93e</SvgParameter>
+								<SvgParameter name="stroke-width">1.00</SvgParameter>
+								<SvgParameter name="stroke-linejoin">round</SvgParameter>
+								<SvgParameter name="stroke-linecap">round</SvgParameter>
+							</Stroke>
+						</Mark>
+						<Size>16.00</Size>
+					</Graphic>
+				</PointSymbolizer>
+			</NodesStyle>
+			<EdgeSeedsStyle>
+				<PointSymbolizer>
+					<Graphic>
+						<Mark>
+							<WellKnownName>triangle</WellKnownName>
+							<Fill>
+								<SvgParameter name="fill">#dc6b96</SvgParameter>
+							</Fill>
+							<Stroke>
+								<SvgParameter name="stroke">#8f385c</SvgParameter>
+								<SvgParameter name="stroke-width">1.00</SvgParameter>
+								<SvgParameter name="stroke-linejoin">round</SvgParameter>
+								<SvgParameter name="stroke-linecap">round</SvgParameter>
+							</Stroke>
+						</Mark>
+						<Size>16.00</Size>
+					</Graphic>
+				</PointSymbolizer>
+			</EdgeSeedsStyle>
+			<FaceSeedsStyle>
+				<PointSymbolizer>
+					<Graphic>
+						<Mark>
+							<WellKnownName>cross</WellKnownName>
+							<Fill>
+								<SvgParameter name="fill">#ecb03b</SvgParameter>
+							</Fill>
+							<Stroke>
+								<SvgParameter name="stroke">#fb32af</SvgParameter>
+								<SvgParameter name="stroke-width">1.00</SvgParameter>
+								<SvgParameter name="stroke-linejoin">round</SvgParameter>
+								<SvgParameter name="stroke-linecap">round</SvgParameter>
+							</Stroke>
+						</Mark>
+						<Size>16.00</Size>
+					</Graphic>
+				</PointSymbolizer>
+			</FaceSeedsStyle>
+		</TopologyLayerStyle>
+	</MapLayer>
+	<MapLayer Type="network" DbPrefix="main" Name="network_2" Visible="true">
+		<NetworkLayerStyle ShowLinks="true" ShowNodes="true" ShowLinkSeeds="true">
+			<Rule>
+				<MinScaleDenominator>50000.00</MinScaleDenominator>
+				<MaxScaleDenominator>100000.00</MaxScaleDenominator>
+			</Rule>
+			<LinksStyle>
+				<LineSymbolizer>
+					<Stroke>
+						<SvgParameter name="stroke">#ec29cd</SvgParameter>
+						<SvgParameter name="stroke-opacity">1.00</SvgParameter>
+						<SvgParameter name="stroke-width">1.00</SvgParameter>
+						<SvgParameter name="stroke-linejoin">round</SvgParameter>
+						<SvgParameter name="stroke-linecap">round</SvgParameter>
+					</Stroke>
+				</LineSymbolizer>
+			</LinksStyle>
+			<NodesStyle>
+				<PointSymbolizer>
+					<Graphic>
+						<Mark>
+							<WellKnownName>x</WellKnownName>
+							<Fill>
+								<SvgParameter name="fill">#c66973</SvgParameter>
+							</Fill>
+							<Stroke>
+								<SvgParameter name="stroke">#51ff4a</SvgParameter>
+								<SvgParameter name="stroke-width">1.00</SvgParameter>
+								<SvgParameter name="stroke-linejoin">round</SvgParameter>
+								<SvgParameter name="stroke-linecap">round</SvgParameter>
+							</Stroke>
+						</Mark>
+						<Size>16.00</Size>
+					</Graphic>
+				</PointSymbolizer>
+			</NodesStyle>
+			<LinkSeedsStyle>
+				<PointSymbolizer>
+					<Graphic>
+						<Mark>
+							<WellKnownName>circle</WellKnownName>
+							<Fill>
+								<SvgParameter name="fill">#c254f8</SvgParameter>
+							</Fill>
+							<Stroke>
+								<SvgParameter name="stroke">#1be8e7</SvgParameter>
+								<SvgParameter name="stroke-width">1.00</SvgParameter>
+								<SvgParameter name="stroke-linejoin">round</SvgParameter>
+								<SvgParameter name="stroke-linecap">round</SvgParameter>
+							</Stroke>
+						</Mark>
+						<Size>16.00</Size>
+					</Graphic>
+				</PointSymbolizer>
+			</LinkSeedsStyle>
+		</NetworkLayerStyle>
+	</MapLayer>
+	<MapLayer Type="vector_virtual" DbPrefix="main" Name="line_label_1" Visible="true">
+		<VectorLayerStyle>
+			<LineSymbolizer>
+				<Stroke>
+					<SvgParameter name="stroke">#ec29cd</SvgParameter>
+					<SvgParameter name="stroke-opacity">1.00</SvgParameter>
+					<SvgParameter name="stroke-width">1.00</SvgParameter>
+					<SvgParameter name="stroke-linejoin">round</SvgParameter>
+					<SvgParameter name="stroke-linecap">round</SvgParameter>
+				</Stroke>
+			</LineSymbolizer>
+			<TextSymbolizer>
+				<Label>@cod_reg@</Label>
+				<Font>
+					<SvgParameter name="font-family">serif</SvgParameter>
+					<SvgParameter name="font-style">normal</SvgParameter>
+					<SvgParameter name="font-weight">bold</SvgParameter>
+					<SvgParameter name="font-size">16.00</SvgParameter>
+				</Font>
+				<LabelPlacement>
+					<LinePlacement>
+						<PerpendicularOffset>1.3200</PerpendicularOffset>
+						<IsRepeated>true</IsRepeated>
+						<InitialGap>5.2500</InitialGap>
+						<Gap>10.5000</Gap>
+						<IsAligned>true</IsAligned>
+						<GeneralizeLine>true</GeneralizeLine>
+					</LinePlacement>
+				</LabelPlacement>
+				<Halo>
+					<Radius>0.20</Radius>
+					<Fill>
+						<SvgParameter name="fill">#ffff00</SvgParameter>
+						<SvgParameter name="fill-opacity">1.00</SvgParameter>
+					</Fill>
+				</Halo>
+				<Fill>
+					<SvgParameter name="fill">#ff0000</SvgParameter>
+					<SvgParameter name="fill-opacity">1.00</SvgParameter>
+				</Fill>
+			</TextSymbolizer>
+		</VectorLayerStyle>
+	</MapLayer>
+</RL2MapConfig>

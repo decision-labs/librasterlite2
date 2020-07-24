@@ -1038,7 +1038,7 @@ test_grid (sqlite3 * sqlite, unsigned char sample, int *retcode)
     if (ret != SQLITE_OK)
       {
 	  fprintf (stderr, "CreateRasterCoverage \"%s\" error: %s\n", coverage,
-		   err_msg);
+		   sqlite3_errmsg (sqlite));
 	  sqlite3_free (err_msg);
 	  *retcode += -1;
 	  return 0;

@@ -119,7 +119,7 @@ check_PROGRAMS = test_coverage$(EXEEXT) test_palette$(EXEEXT) \
 	test_text_symbolizer_col$(EXEEXT) test_vectors$(EXEEXT) \
 	test_font$(EXEEXT) test_copy_rastercov$(EXEEXT) \
 	test_tile_callback$(EXEEXT) test_map_vector$(EXEEXT) \
-	test_col_symbolizers$(EXEEXT)
+	test_col_symbolizers$(EXEEXT) test_map_config$(EXEEXT)
 subdir = test
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
@@ -227,6 +227,9 @@ test_load_wms_LDADD = $(LDADD)
 test_map_ascii_SOURCES = test_map_ascii.c
 test_map_ascii_OBJECTS = test_map_ascii.$(OBJEXT)
 test_map_ascii_LDADD = $(LDADD)
+test_map_config_SOURCES = test_map_config.c
+test_map_config_OBJECTS = test_map_config.$(OBJEXT)
+test_map_config_LDADD = $(LDADD)
 test_map_gray_SOURCES = test_map_gray.c
 test_map_gray_OBJECTS = test_map_gray.$(OBJEXT)
 test_map_gray_LDADD = $(LDADD)
@@ -380,7 +383,8 @@ am__depfiles_remade = ./$(DEPDIR)/check_sql_stmt.Po \
 	./$(DEPDIR)/test_gif.Po ./$(DEPDIR)/test_line_symbolizer.Po \
 	./$(DEPDIR)/test_line_symbolizer_col.Po \
 	./$(DEPDIR)/test_load_wms.Po ./$(DEPDIR)/test_map_ascii.Po \
-	./$(DEPDIR)/test_map_gray.Po ./$(DEPDIR)/test_map_indiana.Po \
+	./$(DEPDIR)/test_map_config.Po ./$(DEPDIR)/test_map_gray.Po \
+	./$(DEPDIR)/test_map_indiana.Po \
 	./$(DEPDIR)/test_map_infrared.Po ./$(DEPDIR)/test_map_mono.Po \
 	./$(DEPDIR)/test_map_nile_32.Po ./$(DEPDIR)/test_map_nile_8.Po \
 	./$(DEPDIR)/test_map_nile_dbl.Po \
@@ -431,40 +435,40 @@ SOURCES = check_sql_stmt.c test1.c test10.c test11.c test12.c test13.c \
 	test9.c test_col_symbolizers.c test_copy_rastercov.c \
 	test_coverage.c test_font.c test_gif.c test_line_symbolizer.c \
 	test_line_symbolizer_col.c test_load_wms.c test_map_ascii.c \
-	test_map_gray.c test_map_indiana.c test_map_infrared.c \
-	test_map_mono.c test_map_nile_32.c test_map_nile_8.c \
-	test_map_nile_dbl.c test_map_nile_flt.c test_map_nile_u16.c \
-	test_map_nile_u32.c test_map_nile_u8.c test_map_noref.c \
-	test_map_orbetello.c test_map_rgb.c test_map_srtm.c \
-	test_map_trento.c test_map_trieste.c test_map_vector.c \
-	test_mask.c test_openjpeg.c test_paint.c test_palette.c \
-	test_point_symbolizer.c test_point_symbolizer_col.c \
-	test_polygon_symbolizer.c test_polygon_symbolizer_col.c \
-	test_raster.c test_raster_symbolizer.c test_raw.c \
-	test_section.c test_svg.c test_text_symbolizer.c \
-	test_text_symbolizer_col.c test_tifin.c test_tile_callback.c \
-	test_vectors.c test_webp.c test_wms1.c test_wms2.c \
-	test_wr_tiff.c
+	test_map_config.c test_map_gray.c test_map_indiana.c \
+	test_map_infrared.c test_map_mono.c test_map_nile_32.c \
+	test_map_nile_8.c test_map_nile_dbl.c test_map_nile_flt.c \
+	test_map_nile_u16.c test_map_nile_u32.c test_map_nile_u8.c \
+	test_map_noref.c test_map_orbetello.c test_map_rgb.c \
+	test_map_srtm.c test_map_trento.c test_map_trieste.c \
+	test_map_vector.c test_mask.c test_openjpeg.c test_paint.c \
+	test_palette.c test_point_symbolizer.c \
+	test_point_symbolizer_col.c test_polygon_symbolizer.c \
+	test_polygon_symbolizer_col.c test_raster.c \
+	test_raster_symbolizer.c test_raw.c test_section.c test_svg.c \
+	test_text_symbolizer.c test_text_symbolizer_col.c test_tifin.c \
+	test_tile_callback.c test_vectors.c test_webp.c test_wms1.c \
+	test_wms2.c test_wr_tiff.c
 DIST_SOURCES = check_sql_stmt.c test1.c test10.c test11.c test12.c \
 	test13.c test14.c test15.c test16.c test17.c test18.c test19.c \
 	test2.c test20.c test3.c test4.c test5.c test6.c test7.c \
 	test8.c test9.c test_col_symbolizers.c test_copy_rastercov.c \
 	test_coverage.c test_font.c test_gif.c test_line_symbolizer.c \
 	test_line_symbolizer_col.c test_load_wms.c test_map_ascii.c \
-	test_map_gray.c test_map_indiana.c test_map_infrared.c \
-	test_map_mono.c test_map_nile_32.c test_map_nile_8.c \
-	test_map_nile_dbl.c test_map_nile_flt.c test_map_nile_u16.c \
-	test_map_nile_u32.c test_map_nile_u8.c test_map_noref.c \
-	test_map_orbetello.c test_map_rgb.c test_map_srtm.c \
-	test_map_trento.c test_map_trieste.c test_map_vector.c \
-	test_mask.c test_openjpeg.c test_paint.c test_palette.c \
-	test_point_symbolizer.c test_point_symbolizer_col.c \
-	test_polygon_symbolizer.c test_polygon_symbolizer_col.c \
-	test_raster.c test_raster_symbolizer.c test_raw.c \
-	test_section.c test_svg.c test_text_symbolizer.c \
-	test_text_symbolizer_col.c test_tifin.c test_tile_callback.c \
-	test_vectors.c test_webp.c test_wms1.c test_wms2.c \
-	test_wr_tiff.c
+	test_map_config.c test_map_gray.c test_map_indiana.c \
+	test_map_infrared.c test_map_mono.c test_map_nile_32.c \
+	test_map_nile_8.c test_map_nile_dbl.c test_map_nile_flt.c \
+	test_map_nile_u16.c test_map_nile_u32.c test_map_nile_u8.c \
+	test_map_noref.c test_map_orbetello.c test_map_rgb.c \
+	test_map_srtm.c test_map_trento.c test_map_trieste.c \
+	test_map_vector.c test_mask.c test_openjpeg.c test_paint.c \
+	test_palette.c test_point_symbolizer.c \
+	test_point_symbolizer_col.c test_polygon_symbolizer.c \
+	test_polygon_symbolizer_col.c test_raster.c \
+	test_raster_symbolizer.c test_raw.c test_section.c test_svg.c \
+	test_text_symbolizer.c test_text_symbolizer_col.c test_tifin.c \
+	test_tile_callback.c test_vectors.c test_webp.c test_wms1.c \
+	test_wms2.c test_wr_tiff.c
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
 	ctags-recursive dvi-recursive html-recursive info-recursive \
 	install-data-recursive install-dvi-recursive \
@@ -1135,6 +1139,10 @@ test_map_ascii$(EXEEXT): $(test_map_ascii_OBJECTS) $(test_map_ascii_DEPENDENCIES
 	@rm -f test_map_ascii$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(test_map_ascii_OBJECTS) $(test_map_ascii_LDADD) $(LIBS)
 
+test_map_config$(EXEEXT): $(test_map_config_OBJECTS) $(test_map_config_DEPENDENCIES) $(EXTRA_test_map_config_DEPENDENCIES) 
+	@rm -f test_map_config$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(test_map_config_OBJECTS) $(test_map_config_LDADD) $(LIBS)
+
 test_map_gray$(EXEEXT): $(test_map_gray_OBJECTS) $(test_map_gray_DEPENDENCIES) $(EXTRA_test_map_gray_DEPENDENCIES) 
 	@rm -f test_map_gray$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(test_map_gray_OBJECTS) $(test_map_gray_LDADD) $(LIBS)
@@ -1331,6 +1339,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_line_symbolizer_col.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_load_wms.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_map_ascii.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_map_config.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_map_gray.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_map_indiana.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_map_infrared.Po@am__quote@ # am--include-marker
@@ -2135,6 +2144,13 @@ test_col_symbolizers.log: test_col_symbolizers$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+test_map_config.log: test_map_config$(EXEEXT)
+	@p='test_map_config$(EXEEXT)'; \
+	b='test_map_config'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 .test.log:
 	@p='$<'; \
 	$(am__set_b); \
@@ -2285,6 +2301,7 @@ distclean: distclean-recursive
 	-rm -f ./$(DEPDIR)/test_line_symbolizer_col.Po
 	-rm -f ./$(DEPDIR)/test_load_wms.Po
 	-rm -f ./$(DEPDIR)/test_map_ascii.Po
+	-rm -f ./$(DEPDIR)/test_map_config.Po
 	-rm -f ./$(DEPDIR)/test_map_gray.Po
 	-rm -f ./$(DEPDIR)/test_map_indiana.Po
 	-rm -f ./$(DEPDIR)/test_map_infrared.Po
@@ -2400,6 +2417,7 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f ./$(DEPDIR)/test_line_symbolizer_col.Po
 	-rm -f ./$(DEPDIR)/test_load_wms.Po
 	-rm -f ./$(DEPDIR)/test_map_ascii.Po
+	-rm -f ./$(DEPDIR)/test_map_config.Po
 	-rm -f ./$(DEPDIR)/test_map_gray.Po
 	-rm -f ./$(DEPDIR)/test_map_indiana.Po
 	-rm -f ./$(DEPDIR)/test_map_infrared.Po

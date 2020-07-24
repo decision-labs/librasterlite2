@@ -25,7 +25,7 @@ check_PROGRAMS = test_coverage test_palette \
 	test_text_symbolizer test_text_symbolizer_col \
 	test_vectors test_font test_copy_rastercov \
 	test_tile_callback test_map_vector \
-	test_col_symbolizers
+	test_col_symbolizers test_map_config
 
 AM_CPPFLAGS = -I@srcdir@/../headers @LIBXML2_CFLAGS@
 AM_LDFLAGS = -L../src -lrasterlite2 @LIBPNG_LIBS@ @LIBWEBP_LIBS@ \
@@ -111,7 +111,7 @@ EXTRA_DIST = jpeg1.jpg jpeg2.jpg png1.png mask1.png \
 	Roundel_of_the_Syrian_Air_Force.svg \
 	Royal_Coat_of_Arms_of_the_United_Kingdom.svg \
 	supermarket.svg tobacco.svg Cevennes2.jp2 Karla-BoldItalic.ttf \
-	NE.sqlite wms.sqlite
+	NE.sqlite wms.sqlite map_config.xml
 
 SUBDIRS = sql_stmt_security_tests sql_stmt_tests 
 

@@ -204,7 +204,7 @@ test_capi_base (sqlite3 * sqlite, const char *coverage, const char *style,
     rl2GraphicsContextPtr ctx_edge_seeds = NULL;
     rl2GraphicsContextPtr ctx_link_seeds = NULL;
     rl2GraphicsContextPtr ctx_face_seeds = NULL;
-    rl2CanvasPtr canvas;
+    rl2CanvasPtr canvas = NULL;
 
     gaiaToSpatiaLiteBlobWkb (geom, &blob, &blob_sz);
 

@@ -2194,10 +2194,10 @@ do_update_mbr (rl2GeometryPtr geom)
     rl2RingPtr rng;
     int iv;
     int ib;
-    double x;
-    double y;
-    double z;
-    double m;
+    double x = 0.0;
+    double y = 0.0;
+    double z = 0.0;
+    double m = 0.0;
 
     geom->minx = DBL_MAX;
     geom->miny = DBL_MAX;

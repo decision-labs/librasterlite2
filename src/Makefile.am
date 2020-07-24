@@ -18,7 +18,7 @@ librasterlite2_la_SOURCES = rasterlite2.c rl2raw.c rl2codec.c \
 	rl2svgaux.c rl2symbolizer.c rl2symbaux.c rl2rastersym.c \
 	rl2version.c rl2md5.c md5.c rl2charls.c rl2openjpeg.c \
 	rl2auxgeom.c rl2auxfont.c rl2symclone.c \
-	rl2_internal_data.c rl2draping.c
+	rl2_internal_data.c rl2draping.c rl2map_config.c
 
 librasterlite2_la_LIBADD = @LIBPNG_LIBS@ @LIBWEBP_LIBS@ @LIBLZMA_LIBS@ \
 	@LIBLZ4_LIBS@ @LIBZSTD_LIBS@ @LIBOPENJP2_LIBS@ \
@@ -41,7 +41,7 @@ mod_rasterlite2_la_SOURCES = rasterlite2.c rl2raw.c rl2codec.c \
 	rl2svgaux.c rl2symbolizer.c rl2symbaux.c rl2rastersym.c \
 	rl2version.c rl2md5.c md5.c rl2charls.c rl2openjpeg.c \
 	rl2auxgeom.c rl2auxfont.c rl2symclone.c \
-	rl2_internal_data.c rl2draping.c
+	rl2_internal_data.c rl2draping.c rl2map_config.c
 
 mod_rasterlite2_la_LIBADD = @LIBPNG_LIBS@ @LIBWEBP_LIBS@ @LIBLZMA_LIBS@ \
 	@LIBLZ4_LIBS@ @LIBZSTD_LIBS@ @LIBOPENJP2_LIBS@ \

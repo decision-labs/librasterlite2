@@ -278,6 +278,8 @@ PKG_CHECK_MODULES([LIBXML2], [libxml-2.0], , AC_MSG_ERROR(['libxml2' is required
 AC_SUBST(LIBXML2_CFLAGS)
 AC_SUBST(LIBXML2_LIBS)
 
+AC_SEARCH_LIBS(unzLocateFile, minizip,,AC_MSG_ERROR(['libminizip' is required but it doesn't seem to be installed on this system.]))
+
 PKG_CHECK_MODULES([LIBFREETYPE2], [freetype2], , AC_MSG_ERROR(['freetype2' is required but it doesn't seem to be installed on this system.]))
 AC_SUBST(LIBFREETYPE2_CFLAGS)
 AC_SUBST(LIBFREETYPE2_LIBS)

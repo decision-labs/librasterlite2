@@ -2394,7 +2394,6 @@ do_import_file (sqlite3 * handle, const void *priv_data, const char *src_path,
 			    pthread_join (*pOpaque, NULL);
 			}
 #endif
-
 		      /* all children threads have now finished: resuming the main thread */
 		      for (thread_count = 0; thread_count < max_threads;
 			   thread_count++)

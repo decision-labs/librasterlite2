@@ -264,6 +264,21 @@ extern "C"
 #define RL2_ORIGIN_RAW			0x4e
 #define RL2_ORIGIN_TIFF			0x4f
 
+/* internal Map Layer types */
+#define RL2_MAP_LAYER_UNKNOWN			0
+#define RL2_MAP_LAYER_RASTER			1
+#define RL2_MAP_LAYER_WMS				2
+#define RL2_MAP_LAYER_VECTOR			3
+#define RL2_MAP_LAYER_VECTOR_VIEW		4
+#define RL2_MAP_LAYER_VECTOR_VIRTUAL	5
+#define RL2_MAP_LAYER_TOPOLOGY			6
+#define RL2_MAP_LAYER_NETWORK			7
+
+/* BLOB serialized Map Config markers */
+#define MAP_CONFIG_START	0xe5;
+#define MAP_CONFIG_END		0x5e;
+#define MAP_CONFIG_OPTIONS	0x42;
+
     struct Control_Points
     {
 	int count;
@@ -1024,34 +1039,6 @@ extern "C"
     } rl2PrivChildStyle;
     typedef rl2PrivChildStyle *rl2PrivChildStylePtr;
 
-    typedef struct rl2_priv_group_style
-    {
-	const char *dbPrefix;
-	const char *name;
-	rl2PrivChildStylePtr first;
-	rl2PrivChildStylePtr last;
-	int valid;
-    } rl2PrivGroupStyle;
-    typedef rl2PrivGroupStyle *rl2PrivGroupStylePtr;
-
-    typedef struct rl2_priv_group_renderer_layer
-    {
-	int layer_type;
-	char *layer_name;
-	rl2CoveragePtr coverage;
-	sqlite3_int64 raster_style_id;
-	rl2PrivRasterSymbolizerPtr raster_symbolizer;
-	rl2PrivRasterStatisticsPtr raster_stats;
-    } rl2PrivGroupRendererLayer;
-    typedef rl2PrivGroupRendererLayer *rl2PrivGroupRendererLayerPtr;
-
-    typedef struct rl2_priv_group_renderer
-    {
-	int count;
-	rl2PrivGroupRendererLayerPtr layers;
-    } rl2PrivGroupRenderer;
-    typedef rl2PrivGroupRenderer *rl2PrivGroupRendererPtr;
-
     typedef struct wms_retry_item
     {
 	int done;
@@ -1260,31 +1247,6 @@ extern "C"
 	int image_size;
 	void *graphics_ctx;
     };
-
-/*
-    struct aux_group_renderer
-    {
-	/ helper struct for passing arguments to aux_group_renderer /
-	sqlite3 *sqlite;
-	const void *data;
-	const char *db_prefix;
-	const char *group_name;
-	double minx;
-	double maxx;
-	double miny;
-	double maxy;
-	int width;
-	int height;
-	const char *style_name;
-	const unsigned char *xml_style;
-	unsigned char format_id;
-	unsigned char bg_red;
-	unsigned char bg_green;
-	unsigned char bg_blue;
-	int transparent;
-	int quality;
-    };
-*/
 
     typedef struct rl2_point
     {
@@ -1603,6 +1565,143 @@ extern "C"
 	int ctx_face_seeds_ready;
     } rl2PrivCanvas;
     typedef rl2PrivCanvas *rl2PrivCanvasPtr;
+    
+    /*
+    typedef struct rl2_priv_map_attached_db
+    {
+		char *prefix;
+		char *path;
+		struct rl2_priv_map_attached_db *next;
+	} rl2PrivMapAttachedDb;
+	typedef rl2PrivMapAttachedDb *rl2PrivMapAttachedDbPtr;
+	
+	typedef struct rl2_priv_cfg_color
+	{
+		unsigned char red;
+		unsigned char green;
+		unsigned char blue;
+	} rl2PrivCfgColor;
+	typedef rl2PrivCfgColor *rl2PrivCfgColorPtr;
+	
+	typedef struct rl2_priv_cfg_graphic_fill
+	{
+		char *resource;
+		char *format;
+		rl2PrivCfgColorPtr color;
+	} rl2PrivCfgGraphicFill;
+	typedef rl2PrivCfgGraphicFill *rl2PrivCfgGraphicFillPtr;
+	
+	typedef struct rl2_priv_cfg_fill
+	{
+		rl2PrivCfgGraphicFillPtr graphic;
+		unsigned char red;
+		unsigned char green;
+		unsigned char blue;
+		double opacity;
+	} rl2PrivCfgFill;
+	typedef rl2PrivCfgFill *rl2PrivCfgFillPtr;
+	
+	typedef struct rl2_priv_cfg_stroke
+	{
+		unsigned char red;
+		unsigned char green;
+		unsigned char blue;
+		double opacity;
+		double width;
+		int linejoin;
+		int linecap;
+		int dash_count;
+		double *dash_list;
+		double dash_offset;
+	} rl2PrivCfgStroke;
+	typedef rl2PrivCfgStroke *rl2PrivCfgStrokePtr;
+	
+	typedef struct rl2_priv_cfg_polygon_symbolizer
+	{
+		rl2PrivCfgFillPtr fill;
+		rl2PrivCfgStrokePtr stroke;
+		double displacement_x;
+		double displacement_y;
+		double perpendicular_offset;
+	} rl2PrivCfgPolygonSymbolizer;
+	typedef rl2PrivCfgPolygonSymbolizer *rl2PrivCfgPolygonSymbolizerPtr;
+	
+	typedef struct rl2_priv_cfg_font
+	{
+		char *family;
+		int style;
+		int weight;
+		double size;
+	} rl2PrivCfgFont;
+	typedef rl2PrivCfgFont *rl2PrivCfgFontPtr;
+	
+	typedef struct rl2_priv_cfg_point_placement
+	{
+		double anchor_x;
+		double anchor_y;
+		double displacement_x;
+		double displacement_y;
+		double rotation;
+	} rl2PrivCfgPointPlacement;
+	typedef rl2PrivCfgPointPlacement *rl2PrivCfgPointPlacementPtr;
+	
+	typedef struct rl2_priv_cfg_placement
+	{
+		rl2PrivCfgPointPlacementPtr point;
+	} rl2PrivCfgPlacement;
+	typedef rl2PrivCfgPlacement *rl2PrivCfgPlacementPtr;
+	
+	typedef struct rl2_priv_cfg_halo
+	{
+		double radius;
+		rl2PrivCfgFillPtr fill;
+	} rl2PrivCfgHalo;
+	typedef rl2PrivCfgHalo *rl2PrivCfgHaloPtr;
+	
+	typedef struct rl2_priv_cfg_text_symbolizer
+	{
+		char *label;
+		rl2PrivCfgFontPtr font;
+		rl2PrivCfgPlacementPtr placement;
+		rl2PrivCfgHaloPtr halo;
+		rl2PrivCfgFillPtr fill;
+		int alone;
+	} rl2PrivCfgTextSymbolizer;
+	typedef rl2PrivCfgTextSymbolizer *rl2PrivCfgTextSymbolizerPtr;
+	
+	typedef struct rl2_priv_map_layer
+	{
+		int type;
+		char *prefix;
+		char *name;
+		int visible;
+		rl2PrivCfgPolygonSymbolizerPtr polygon_sym;
+		rl2PrivCfgTextSymbolizerPtr text_sym;
+		struct rl2_priv_map_layer *next;
+	} rl2PrivMapLayer;
+	typedef rl2PrivMapLayer *rl2PrivMapLayerPtr;
+	    
+    typedef struct rl2_priv_map_config
+    {
+		char *name;
+		char *title;
+		char *abstract;
+		int multithread_enabled;
+		int max_threads;
+		int srid;
+		int autotransform_enabled;
+		int dms;
+		unsigned char map_background_red;
+		unsigned char map_background_green;
+		unsigned char map_background_blue;
+		int map_background_transparent;
+		rl2PrivMapAttachedDbPtr first_db;
+		rl2PrivMapAttachedDbPtr last_db;
+		rl2PrivMapLayerPtr first_lyr;
+		rl2PrivMapLayerPtr last_lyr;
+	} rl2PrivMapConfig;
+	typedef rl2PrivMapConfig *rl2PrivMapConfigPtr;
+	*/
 
     RL2_PRIVATE int
 	rl2_blob_from_file (const char *path, unsigned char **blob,
@@ -2257,11 +2356,6 @@ extern "C"
 							     unsigned char
 							     *xml);
 
-    RL2_PRIVATE rl2GroupStylePtr group_style_from_sld_xml (const char
-							   *db_prefix,
-							   const char *name,
-							   unsigned char *xml);
-
     RL2_PRIVATE rl2PrivCoverageStylePtr
 	rl2_create_default_coverage_style (void);
 
@@ -2458,10 +2552,6 @@ extern "C"
 					    const char *copyright,
 					    const char *license);
 
-    RL2_PRIVATE int rl2_test_layer_group (sqlite3 * handle,
-					  const char *db_prefix,
-					  const char *group_name);
-
     RL2_PRIVATE int rl2_rgba_raster_data (sqlite3 * handle,
 					  const char *coverage_name,
 					  void *ctx, int level, double minx,
@@ -2479,12 +2569,6 @@ extern "C"
 					   int transparent, int quality,
 					   unsigned char **ximage,
 					   int *ximage_size);
-
-/*
-    RL2_PRIVATE int rl2_aux_group_renderer (struct aux_group_renderer *auxgrp,
-					    unsigned char **blob,
-					    int *blob_size);
-*/
 
     RL2_PRIVATE double rl2_get_shaded_relief_scale_factor (sqlite3 * handle,
 							   const char
@@ -2888,7 +2972,7 @@ extern "C"
 
     RL2_PRIVATE struct rl2_advanced_labeling *rl2_get_labeling_ref (const void
 								    *ctx);
-
+				
 #ifdef __cplusplus
 }
 #endif

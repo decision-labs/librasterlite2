@@ -12,6 +12,7 @@ all: ./static_bin/rl2sniff.exe ./static_bin/rl2tool.exe \
 	$(GG) ./tools/rl2sniff.o -o ./static_bin/rl2sniff.exe \
 	/mingw32/local/lib/librasterlite2.a \
 	/mingw32/local/lib/libspatialite.a \
+	/mingw32/local/lib/libminizip.a \
 	/mingw32/local/lib/libsqlite3.a \
 	/mingw32/local/lib/librttopo.a \
 	/mingw32/local/lib/libproj.a \
@@ -47,6 +48,7 @@ all: ./static_bin/rl2sniff.exe ./static_bin/rl2tool.exe \
 	$(GG) ./tools/rl2tool.o -o ./static_bin/rl2tool.exe \
 	/mingw32/local/lib/librasterlite2.a \
 	/mingw32/local/lib/libspatialite.a \
+	/mingw32/local/lib/libminizip.a \
 	/mingw32/local/lib/libsqlite3.a \
 	/mingw32/local/lib/librttopo.a \
 	/mingw32/local/lib/libproj.a \
@@ -82,6 +84,7 @@ all: ./static_bin/rl2sniff.exe ./static_bin/rl2tool.exe \
 	$(GG) ./tools/wmslite.o -o ./static_bin/wmslite.exe \
 	/mingw32/local/lib/librasterlite2.a \
 	/mingw32/local/lib/libspatialite.a \
+	/mingw32/local/lib/libminizip.a \
 	/mingw32/local/lib/libsqlite3.a \
 	/mingw32/local/lib/librttopo.a \
 	/mingw32/local/lib/libproj.a \

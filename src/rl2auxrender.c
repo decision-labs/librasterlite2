@@ -9,7 +9,7 @@
  -----------------------------------------------------------------------------
  
  Version: MPL 1.1/GPL 2.0/LGPL 2.1
- 
+  
  The contents of this file are subject to the Mozilla Public License Version
  1.1 (the "License"); you may not use this file except in compliance with
  the License. You may obtain a copy of the License at
@@ -3724,12 +3724,12 @@ create_line_array_from_ring (sqlite3 * handle, rl2RingPtr ring,
 			     int height, double minx, double miny, double x_res,
 			     double y_res)
 {
-/* creating the X and Y arrays required by rl2_graph_draw_warped_text() */
+/* creating the X and Y arrays required by rl2_graph_draw_warped_text() */  
     rl2GeometryPtr geom = NULL;
     rl2GeometryPtr geom2 = NULL;
-    rl2PolygonPtr pg;
-    rl2RingPtr aux_ring;
-    rl2RingPtr in_ring;
+    rl2PolygonPtr pg = NULL;
+    rl2RingPtr aux_ring = NULL;
+    rl2RingPtr in_ring = NULL;
     double *xx = NULL;
     double *yy = NULL;
     int iv;

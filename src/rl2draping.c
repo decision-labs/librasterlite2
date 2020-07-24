@@ -391,7 +391,7 @@ check_spatial_table (sqlite3 * sqlite, const char *spatial_table,
     int ret;
     int count = 0;
     int srid;
-    int geom_type;
+    int geom_type = 0;
     int ok_old = 0;
     int ok_new = 0;
     int ok_table = 0;
@@ -670,10 +670,10 @@ densify_geometry (rl2GeometryPtr g1, double densify_dist,
     rl2DynLinePtr dyn;
     int iv;
     int ib;
-    double x;
-    double y;
-    double z;
-    double m;
+    double x = 0.0;
+    double y = 0.0;
+    double z = 0.0;
+    double m = 0.0;
     double dist;
     rl2GeometryPtr g2 = rl2CreateGeometry (g1->dims, g1->type);
     g2->srid = g1->srid;
@@ -932,10 +932,10 @@ copy_densify_geometry (sqlite3_stmt * stmt,
     rl2RingPtr rng;
     int iv;
     int ib;
-    double x;
-    double y;
-    double z;
-    double m;
+    double x = 0.0;
+    double y = 0.0;
+    double z = 0.0;
+    double m = 0.0;
     unsigned char *blob;
     int blob_size;
     int ret;
@@ -2042,11 +2042,11 @@ do_drape_geometries (sqlite3 * sqlite, const char *db_prefix,
 	  if (ret == SQLITE_ROW)
 	    {
 		const unsigned char *geom_blob = NULL;
-		int geom_sz;
+		int geom_sz = 0;
 		const unsigned char *odd_blob = NULL;
-		int odd_sz;
+		int odd_sz = 0;
 		const unsigned char *even_blob = NULL;
-		int even_sz;
+		int even_sz = 0;
 		sqlite3_int64 tile_id = sqlite3_column_int64 (stmt_tile, 0);
 		if (sqlite3_column_type (stmt_tile, 1) == SQLITE_BLOB)
 		  {
@@ -2464,8 +2464,8 @@ simplify_geometry (sqlite3_stmt * stmt_dist, sqlite3_stmt * stmt,
     double y_in;
     double x_out;
     double y_out;
-    double z;
-    double m;
+    double z = 0.0;
+    double m = 0.0;
     int start;
     rl2DynLinePtr dyn = NULL;
     rl2DouglasPeuckerSeqPtr dps = NULL;

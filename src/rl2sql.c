@@ -8463,8 +8463,8 @@ fnct_DrapeGeometries (sqlite3_context * context, int argc,
     const char *raster_coverage = NULL;
     const char *coverage_list_table = NULL;
     const char *spatial_table = NULL;
-    const char *old_geom;
-    const char *new_geom;
+    const char *old_geom = NULL;
+    const char *new_geom = NULL;
     double no_data_value = 0.0;
     double densify_dist = 0.0;
     double z_simplify_dist = 0.0;
@@ -8655,8 +8655,8 @@ fnct_GetPixelFromRasterByPoint (sqlite3_context * context, int argc,
     const char *db_prefix = NULL;
     const char *cvg_name;
     int pyramid_level;
-    double x_res;
-    double y_res;
+    double x_res = 0.0;
+    double y_res = 0.0;
     int by_res;
     const unsigned char *blob;
     int blob_sz;
@@ -12803,6 +12803,9 @@ register_rl2_sql_functions (void *p_db, const void *p_data)
 				   fnct_WriteSectionNdviAsciiGrid, 0, 0);
 	  sqlite3_create_function (db, "WriteSectionNdviAsciiGrid", 12,
 				   SQLITE_UTF8, 0,
+				   fnct_WriteSectionNdviAsciiGrid, 0, 0);
+	  sqlite3_create_function (db, "RL2_WriteSectionNdviAsciiGrid", 12,
+				   SQLITE_UTF8, priv_data,
 				   fnct_WriteSectionNdviAsciiGrid, 0, 0);
 	  sqlite3_create_function (db, "RL2_WriteSectionNdviAsciiGrid", 12,
 				   SQLITE_UTF8, priv_data,

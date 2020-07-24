@@ -10,7 +10,7 @@
  
  Version: MPL 1.1/GPL 2.0/LGPL 2.1
  
- The contents of this file are subject to the Mozilla Public License Version
+ The contents of this file are subject to the Mozilla Public License Version 
  1.1 (the "License"); you may not use this file except in compliance with
  the License. You may obtain a copy of the License at
  http://www.mozilla.org/MPL/
@@ -1485,11 +1485,11 @@ rl2_find_best_resolution_level (sqlite3 * handle, const char *db_prefix,
 /* attempting to identify the optimal resolution level */
     int ret;
     int found = 0;
-    int z_level;
-    int z_scale;
-    int z_real;
-    double z_x_res;
-    double z_y_res;
+    int z_level = 0;
+    int z_scale = 0;
+    int z_real = 0;
+    double z_x_res = 0.0;
+    double z_y_res = 0.0;
     char *xcoverage;
     char *xxcoverage;
     char *sql;
@@ -6594,15 +6594,15 @@ do_paint_map_from_raster (struct aux_raster_render *args)
     rl2CanvasPtr canvas;
     const char *db_prefix;
     const char *cvg_name;
-    const unsigned char *blob;
-    int blob_sz;
+    const unsigned char *blob = NULL;
+    int blob_sz = 0;
     int width;
     int height;
     const char *style_name;
     const unsigned char *xml_style;
     const char *format;
     int transparent;
-    int quality;
+    int quality = 0;
     rl2CoveragePtr coverage = NULL;
     rl2PrivCoveragePtr cvg;
     int out_srid;
