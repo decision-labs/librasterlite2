@@ -29,7 +29,6 @@ all: ./static_bin/rl2sniff.exe ./static_bin/rl2tool.exe \
 	/mingw64/local/lib/libtiff.a \
 	/mingw64/local/lib/libwebp.a \
 	/mingw64/local/lib/libpng.a \
-	/mingw64/local/lib/libCharLS.a \
 	/mingw64/local/lib/libopenjp2.a \
 	/mingw64/local/lib/libcurl.a \
 	/mingw64/local/lib/libssl.a \
@@ -65,7 +64,6 @@ all: ./static_bin/rl2sniff.exe ./static_bin/rl2tool.exe \
 	/mingw64/local/lib/libtiff.a \
 	/mingw64/local/lib/libwebp.a \
 	/mingw64/local/lib/libpng.a \
-	/mingw64/local/lib/libCharLS.a \
 	/mingw64/local/lib/libopenjp2.a \
 	/mingw64/local/lib/libcurl.a \
 	/mingw64/local/lib/libssl.a \
@@ -101,7 +99,6 @@ all: ./static_bin/rl2sniff.exe ./static_bin/rl2tool.exe \
 	/mingw64/local/lib/libtiff.a \
 	/mingw64/local/lib/libwebp.a \
 	/mingw64/local/lib/libpng.a \
-	/mingw64/local/lib/libCharLS.a \
 	/mingw64/local/lib/libopenjp2.a \
 	/mingw64/local/lib/libcurl.a \
 	/mingw64/local/lib/libssl.a \

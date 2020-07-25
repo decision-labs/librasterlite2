@@ -1602,8 +1602,6 @@ exec_catalog (sqlite3 * handle)
 		    printf ("          Compression: WEBP, lossless\n");
 		else if (strcmp (compression, "FAX4") == 0)
 		    printf ("          Compression: CCITT-FAX4 lossless\n");
-		else if (strcmp (compression, "CHARLS") == 0)
-		    printf ("          Compression: CHARLS, lossless\n");
 		else if (strcmp (compression, "JP2") == 0)
 		    printf ("          Compression: Jpeg2000 (lossy)\n");
 		else if (strcmp (compression, "LL_JP2") == 0)
@@ -3039,11 +3037,6 @@ check_create_args (const char *db_path, const char *coverage, int sample,
 			 "*** ERROR *** librasterlite2 was built by disabling ZSTD support\n");
 		err = 1;
 		break;
-	    case RL2_COMPRESSION_CHARLS:
-		fprintf (stderr,
-			 "*** ERROR *** librasterlite2 was built by disabling CharLS support\n");
-		err = 1;
-		break;
 	    case RL2_COMPRESSION_LOSSY_WEBP:
 	    case RL2_COMPRESSION_LOSSLESS_WEBP:
 		fprintf (stderr,
@@ -3136,10 +3129,6 @@ check_create_args (const char *db_path, const char *coverage, int sample,
 	  break;
       case RL2_COMPRESSION_CCITTFAX4:
 	  printf ("          Compression: CCITT FAX4, lossless\n");
-	  *quality = 100;
-	  break;
-      case RL2_COMPRESSION_CHARLS:
-	  printf ("          Compression: CHARLS, lossless\n");
 	  *quality = 100;
 	  break;
       case RL2_COMPRESSION_LOSSY_JP2:
@@ -4433,7 +4422,6 @@ do_version ()
     fprintf (stderr, "TIFF ...........: %s\n", rl2_tiff_version ());
     fprintf (stderr, "GeoTIFF ........: %s\n", rl2_geotiff_version ());
     fprintf (stderr, "WEBP ...........: %s\n", rl2_webp_version ());
-    fprintf (stderr, "CharLS .........: %s\n", rl2_charLS_version ());
     fprintf (stderr, "JPEG2000 .......: %s\n", rl2_openJPEG_version ());
     fprintf (stderr, "\n");
 }
@@ -4494,7 +4482,7 @@ do_help (int mode)
 	  fprintf (stderr, "Compression Keywords:\n");
 	  fprintf (stderr, "----------------------------------\n");
 	  fprintf (stderr,
-		   "NONE DEFLATE DEFLATE_NO LZMA LZMA_NO LZ4 LZ4_NO ZSTD ZSTD_NO PNG JPEG WEBP LL_WEBP FAX4 CHARLS JP2 LL_JP2\n\n");
+		   "NONE DEFLATE DEFLATE_NO LZMA LZMA_NO LZ4 LZ4_NO ZSTD ZSTD_NO PNG JPEG WEBP LL_WEBP FAX4 JP2 LL_JP2\n\n");
 	  fprintf (stderr, "Extra args supported by MULTIBAND:\n");
 	  fprintf (stderr, "----------------------------------\n");
 	  fprintf (stderr, "-red or --red-band     pixel    RED band index\n");
@@ -5061,8 +5049,6 @@ main (int argc, char *argv[])
 			  compression = RL2_COMPRESSION_CCITTFAX3;
 		      if (strcasecmp (argv[i], "FAX4") == 0)
 			  compression = RL2_COMPRESSION_CCITTFAX4;
-		      if (strcasecmp (argv[i], "CHARLS") == 0)
-			  compression = RL2_COMPRESSION_CHARLS;
 		      if (strcasecmp (argv[i], "JP2") == 0)
 			  compression = RL2_COMPRESSION_LOSSY_JP2;
 		      if (strcasecmp (argv[i], "LL_JP2") == 0)

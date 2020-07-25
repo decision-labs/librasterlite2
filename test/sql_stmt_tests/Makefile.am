@@ -720,5 +720,4 @@ EXTRA_DIST = getmaxthreads1.testcase \
 	version_tiff.testcase \
 	version_geotiff.testcase \
 	version_webp.testcase \
-	version_charls.testcase \
 	version_openjpeg.testcase

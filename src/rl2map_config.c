@@ -2302,6 +2302,7 @@ parse_graphic_fill_color_replacement (xmlNodePtr node,
 		const char *name = (const char *) (node->name);
 		if (strcmp (name, "Recode") == 0)
 		  {
+fprintf(stderr, "<Recode>\n");
 		      xmlNodePtr child = node->children;
 		      while (child)
 			{

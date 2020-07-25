@@ -808,7 +808,6 @@ enable_webp
 enable_lzma
 enable_lz4
 enable_zstd
-enable_charls
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1490,7 +1489,6 @@ Optional Features:
   --enable-lzma           enables LZMA inclusion [default=yes]
   --enable-lz4            enables LZ4 inclusion [default=yes]
   --enable-zstd           enables ZSTD inclusion [default=yes]
-  --enable-charls         enables CharLS inclusion [default=yes]
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -3186,9 +3184,7 @@ $as_echo "#define NDEBUG 1" >>confdefs.h
 
 
 
-
 # config depending options
-
 
 
 
@@ -18412,128 +18408,6 @@ fi
 
 else
   $as_echo "#define OMIT_ZSTD 1" >>confdefs.h
-
-fi
-#-----------------------------------------------------------------------
-
-#-----------------------------------------------------------------------
-#   --enable-charls
-#
-# Check whether --enable-charls was given.
-if test "${enable_charls+set}" = set; then :
-  enableval=$enable_charls;
-else
-  enable_charls=yes
-fi
-
-  if test x"$enable_charls" != "xno"; then
-  #
-  # testing CharLS headers
-  # they could be either
-  # -/include/CharLS/interface.h (version 1.0)
-  # or
-  # -/include/CharLS/charls.h (version 2.0)
-  #
-  for ac_header in CharLS/interface.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "CharLS/interface.h" "ac_cv_header_CharLS_interface_h" "$ac_includes_default"
-if test "x$ac_cv_header_CharLS_interface_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_CHARLS_INTERFACE_H 1
-_ACEOF
-
-fi
-
-done
-
-  for ac_header in CharLS/charls.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "CharLS/charls.h" "ac_cv_header_CharLS_charls_h" "$ac_includes_default"
-if test "x$ac_cv_header_CharLS_charls_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_CHARLS_CHARLS_H 1
-_ACEOF
-
-fi
-
-done
-
-  if test x"$ac_cv_header_CharLS_interface_h" != x"yes" &&
-    test x"$ac_cv_header_CharLS_charls_h" != x"yes";
-  then
-	as_fn_error $? "'CharLS' is required but no header file (interface.h or charls.h) seems to be installed on this system" "$LINENO" 5
-  fi
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for JpegLsEncode in -lCharLS" >&5
-$as_echo_n "checking for JpegLsEncode in -lCharLS... " >&6; }
-if ${ac_cv_lib_CharLS_JpegLsEncode+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lCharLS -lm $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char JpegLsEncode ();
-int
-main ()
-{
-return JpegLsEncode ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_CharLS_JpegLsEncode=yes
-else
-  ac_cv_lib_CharLS_JpegLsEncode=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_CharLS_JpegLsEncode" >&5
-$as_echo "$ac_cv_lib_CharLS_JpegLsEncode" >&6; }
-if test "x$ac_cv_lib_CharLS_JpegLsEncode" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBCHARLS 1
-_ACEOF
-
-  LIBS="-lCharLS $LIBS"
-
-else
-  as_fn_error $? "'libCharLS' is required but it doesn't seems to be installed on this system." "$LINENO" 5
-fi
-
-  # testing for CharLS 1.0 or 2.0
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef HAVE_CHARLS_CHARLS_H
-									#include <CharLS/charls.h>
-									#else
-									#include <Charls/interface.h>
-									#endif
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-
-						{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-						$as_echo "#define CHARLS_2 1" >>confdefs.h
-
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-else
-  $as_echo "#define OMIT_CHARLS 1" >>confdefs.h
 
 fi
 #-----------------------------------------------------------------------

@@ -114,7 +114,6 @@ is_valid_compression (unsigned char compression)
       case RL2_COMPRESSION_LOSSY_WEBP:
       case RL2_COMPRESSION_LOSSLESS_WEBP:
       case RL2_COMPRESSION_CCITTFAX4:
-      case RL2_COMPRESSION_CHARLS:
       case RL2_COMPRESSION_LOSSY_JP2:
       case RL2_COMPRESSION_LOSSLESS_JP2:
 	  return 1;
@@ -210,7 +209,6 @@ check_coverage_self_consistency (unsigned char sample_type,
 	    case RL2_COMPRESSION_JPEG:
 	    case RL2_COMPRESSION_LOSSY_WEBP:
 	    case RL2_COMPRESSION_LOSSLESS_WEBP:
-	    case RL2_COMPRESSION_CHARLS:
 	    case RL2_COMPRESSION_LOSSY_JP2:
 	    case RL2_COMPRESSION_LOSSLESS_JP2:
 		break;
@@ -243,7 +241,6 @@ check_coverage_self_consistency (unsigned char sample_type,
 		  case RL2_COMPRESSION_ZSTD:
 		  case RL2_COMPRESSION_ZSTD_NO:
 		  case RL2_COMPRESSION_PNG:
-		  case RL2_COMPRESSION_CHARLS:
 		  case RL2_COMPRESSION_LOSSY_JP2:
 		  case RL2_COMPRESSION_LOSSLESS_JP2:
 		      break;
@@ -268,7 +265,6 @@ check_coverage_self_consistency (unsigned char sample_type,
 		  case RL2_COMPRESSION_JPEG:
 		  case RL2_COMPRESSION_LOSSY_WEBP:
 		  case RL2_COMPRESSION_LOSSLESS_WEBP:
-		  case RL2_COMPRESSION_CHARLS:
 		  case RL2_COMPRESSION_LOSSY_JP2:
 		  case RL2_COMPRESSION_LOSSLESS_JP2:
 		      break;
@@ -304,7 +300,6 @@ check_coverage_self_consistency (unsigned char sample_type,
 			case RL2_COMPRESSION_ZSTD:
 			case RL2_COMPRESSION_ZSTD_NO:
 			case RL2_COMPRESSION_PNG:
-			case RL2_COMPRESSION_CHARLS:
 			case RL2_COMPRESSION_LOSSY_JP2:
 			case RL2_COMPRESSION_LOSSLESS_JP2:
 			    break;
@@ -328,7 +323,6 @@ check_coverage_self_consistency (unsigned char sample_type,
 			case RL2_COMPRESSION_PNG:
 			case RL2_COMPRESSION_LOSSY_WEBP:
 			case RL2_COMPRESSION_LOSSLESS_WEBP:
-			case RL2_COMPRESSION_CHARLS:
 			case RL2_COMPRESSION_LOSSY_JP2:
 			case RL2_COMPRESSION_LOSSLESS_JP2:
 			    break;
@@ -388,7 +382,6 @@ check_coverage_self_consistency (unsigned char sample_type,
 		  case RL2_COMPRESSION_ZSTD:
 		  case RL2_COMPRESSION_ZSTD_NO:
 		  case RL2_COMPRESSION_PNG:
-		  case RL2_COMPRESSION_CHARLS:
 		  case RL2_COMPRESSION_LOSSY_JP2:
 		  case RL2_COMPRESSION_LOSSLESS_JP2:
 		      break;
@@ -550,12 +543,6 @@ rl2_is_supported_codec (unsigned char compression)
       case RL2_COMPRESSION_LOSSY_WEBP:
       case RL2_COMPRESSION_LOSSLESS_WEBP:
 #ifndef OMIT_WEBP
-	  return RL2_TRUE;
-#else
-	  return RL2_FALSE;
-#endif
-      case RL2_COMPRESSION_CHARLS:
-#ifndef OMIT_CHARLS
 	  return RL2_TRUE;
 #else
 	  return RL2_FALSE;
@@ -817,7 +804,6 @@ rl2_is_coverage_compression_lossless (rl2CoveragePtr ptr, int *is_lossless)
       case RL2_COMPRESSION_ZSTD_NO:
       case RL2_COMPRESSION_PNG:
       case RL2_COMPRESSION_LOSSLESS_WEBP:
-      case RL2_COMPRESSION_CHARLS:
       case RL2_COMPRESSION_LOSSLESS_JP2:
 	  *is_lossless = RL2_TRUE;
 	  break;

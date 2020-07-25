@@ -317,8 +317,6 @@ get_coverage_defs (sqlite3 * sqlite, const char *db_prefix,
 		    xcompression = RL2_COMPRESSION_LOSSLESS_WEBP;
 		if (strcmp (compr, "CCITTFAX4") == 0)
 		    xcompression = RL2_COMPRESSION_CCITTFAX4;
-		if (strcmp (compr, "CHARLS") == 0)
-		    xcompression = RL2_COMPRESSION_CHARLS;
 		if (strcmp (compr, "LOSSY_JP2") == 0)
 		    xcompression = RL2_COMPRESSION_LOSSY_JP2;
 		if (strcmp (compr, "LOSSLESS_JP2") == 0)

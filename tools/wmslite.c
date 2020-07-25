@@ -3958,9 +3958,6 @@ unsupported_codec (const char *compression)
     if (strcasecmp (compression, "ZSTD_NO") == 0
 	&& rl2_is_supported_codec (RL2_COMPRESSION_ZSTD_NO) != 1)
 	return 1;
-    if (strcasecmp (compression, "CHARLS") == 0
-	&& rl2_is_supported_codec (RL2_COMPRESSION_CHARLS) != 1)
-	return 1;
     if (strcasecmp (compression, "WEBP") == 0
 	&& rl2_is_supported_codec (RL2_COMPRESSION_LOSSY_WEBP) != 1)
 	return 1;
@@ -4748,7 +4745,6 @@ do_version ()
     fprintf (stderr, "TIFF ...........: %s\n", rl2_tiff_version ());
     fprintf (stderr, "GeoTIFF ........: %s\n", rl2_geotiff_version ());
     fprintf (stderr, "WEBP ...........: %s\n", rl2_webp_version ());
-    fprintf (stderr, "CharLS .........: %s\n", rl2_charLS_version ());
     fprintf (stderr, "JPEG2000 .......: %s\n", rl2_openJPEG_version ());
     fprintf (stderr, "\n");
 }

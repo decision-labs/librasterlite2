@@ -1397,7 +1397,6 @@ do_version ()
     fprintf (stderr, "TIFF ...........: %s\n", rl2_tiff_version ());
     fprintf (stderr, "GeoTIFF ........: %s\n", rl2_geotiff_version ());
     fprintf (stderr, "WEBP ...........: %s\n", rl2_webp_version ());
-    fprintf (stderr, "CharLS .........: %s\n", rl2_charLS_version ());
     fprintf (stderr, "JPEG2000 .......: %s\n", rl2_openJPEG_version ());
     fprintf (stderr, "\n");
 }

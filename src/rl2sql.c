@@ -265,22 +265,6 @@ fnct_rl2_webp_version (sqlite3_context * context, int argc,
 }
 
 static void
-fnct_rl2_charLS_version (sqlite3_context * context, int argc,
-			 sqlite3_value ** argv)
-{
-/* SQL function:
-/ rl2_charLS_version()
-/
-/ return a text string representing the current CharLS version
-*/
-    int len;
-    const char *p_result = rl2_charLS_version ();
-    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
-    len = strlen (p_result);
-    sqlite3_result_text (context, p_result, len, SQLITE_TRANSIENT);
-}
-
-static void
 fnct_rl2_openJPEG_version (sqlite3_context * context, int argc,
 			   sqlite3_value ** argv)
 {
@@ -482,22 +466,6 @@ fnct_rl2_has_codec_zstd_no (sqlite3_context * context, int argc,
 / will return 1 (TRUE) or 0 (FALSE) depending of OMIT_ZSTD
 */
     int ret = rl2_is_supported_codec (RL2_COMPRESSION_ZSTD_NO);
-    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
-    if (ret < 0)
-	ret = 0;
-    sqlite3_result_int (context, ret);
-}
-
-static void
-fnct_rl2_has_codec_charls (sqlite3_context * context, int argc,
-			   sqlite3_value ** argv)
-{
-/* SQL function:
-/ rl2_has_codec_charls()
-/
-/ will return 1 (TRUE) or 0 (FALSE) depending of OMIT_CHARLS
-*/
-    int ret = rl2_is_supported_codec (RL2_COMPRESSION_CHARLS);
     RL2_UNUSED ();		/* LCOV_EXCL_LINE */
     if (ret < 0)
 	ret = 0;
@@ -2903,8 +2871,6 @@ fnct_CreateRasterCoverage (sqlite3_context * context, int argc,
 	compr = RL2_COMPRESSION_LOSSLESS_WEBP;
     if (strcasecmp (compression, "FAX4") == 0)
 	compr = RL2_COMPRESSION_CCITTFAX4;
-    if (strcasecmp (compression, "CHARLS") == 0)
-	compr = RL2_COMPRESSION_CHARLS;
     if (strcasecmp (compression, "JP2") == 0)
 	compr = RL2_COMPRESSION_LOSSY_JP2;
     if (strcasecmp (compression, "LL_JP2") == 0)
@@ -11360,9 +11326,6 @@ register_rl2_sql_functions (void *p_db, const void *p_data)
     sqlite3_create_function (db, "rl2_webp_version", 0,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, 0,
 			     fnct_rl2_webp_version, 0, 0);
-    sqlite3_create_function (db, "rl2_charLS_version", 0,
-			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, 0,
-			     fnct_rl2_charLS_version, 0, 0);
     sqlite3_create_function (db, "rl2_openJpeg_version", 0,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, 0,
 			     fnct_rl2_openJPEG_version, 0, 0);
@@ -11405,9 +11368,6 @@ register_rl2_sql_functions (void *p_db, const void *p_data)
     sqlite3_create_function (db, "rl2_has_codec_fax4", 0,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, 0,
 			     fnct_rl2_has_codec_fax4, 0, 0);
-    sqlite3_create_function (db, "rl2_has_codec_charls", 0,
-			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, 0,
-			     fnct_rl2_has_codec_charls, 0, 0);
     sqlite3_create_function (db, "rl2_has_codec_webp", 0,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, 0,
 			     fnct_rl2_has_codec_webp, 0, 0);

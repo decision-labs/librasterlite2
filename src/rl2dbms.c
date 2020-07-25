@@ -214,9 +214,6 @@ insert_into_raster_coverages (sqlite3 * handle, const char *coverage,
       case RL2_COMPRESSION_CCITTFAX4:
 	  xcompression = "CCITTFAX4";
 	  break;
-      case RL2_COMPRESSION_CHARLS:
-	  xcompression = "CHARLS";
-	  break;
       case RL2_COMPRESSION_LOSSY_JP2:
 	  xcompression = "LOSSY_JP2";
 	  break;
@@ -2426,11 +2423,6 @@ rl2_create_coverage_from_dbms (sqlite3 * handle, const char *db_prefix,
 			{
 			    ok_compression = 1;
 			    compression = RL2_COMPRESSION_CCITTFAX4;
-			}
-		      if (strcasecmp (value, "CHARLS") == 0)
-			{
-			    ok_compression = 1;
-			    compression = RL2_COMPRESSION_CHARLS;
 			}
 		      if (strcasecmp (value, "LOSSY_JP2") == 0)
 			{
@@ -9490,11 +9482,6 @@ rl2_copy_raster_coverage (sqlite3 * sqlite, const char *db_prefix,
 			    ok_compression = 1;
 			    compression = value;
 			}
-		      if (strcasecmp (value, "CHARLS") == 0)
-			{
-			    ok_compression = 1;
-			    compression = value;
-			}
 		      if (strcasecmp (value, "LOSSY_JP2") == 0)
 			{
 			    ok_compression = 1;
@@ -9538,8 +9525,6 @@ rl2_copy_raster_coverage (sqlite3 * sqlite, const char *db_prefix,
 				compr = RL2_COMPRESSION_LOSSLESS_WEBP;
 			    if (strcasecmp (compression, "FAX4") == 0)
 				compr = RL2_COMPRESSION_CCITTFAX4;
-			    if (strcasecmp (compression, "CHARLS") == 0)
-				compr = RL2_COMPRESSION_CHARLS;
 			    if (strcasecmp (compression, "JP2") == 0)
 				compr = RL2_COMPRESSION_LOSSY_JP2;
 			    if (strcasecmp (compression, "LL_JP2") == 0)

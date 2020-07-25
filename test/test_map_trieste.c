@@ -486,20 +486,6 @@ test_coverage (sqlite3 * sqlite, unsigned char pixel, unsigned char compression,
       case RL2_PIXEL_GRAYSCALE:
 	  switch (compression)
 	    {
-	    case RL2_COMPRESSION_CHARLS:
-		switch (tile_sz)
-		  {
-		  case TILE_256:
-		      coverage = "gray_charls_256";
-		      break;
-		  case TILE_512:
-		      coverage = "gray_charls_512";
-		      break;
-		  case TILE_1024:
-		      coverage = "gray_charls_1024";
-		      break;
-		  };
-		break;
 	    case RL2_COMPRESSION_PNG:
 		switch (tile_sz)
 		  {
@@ -538,10 +524,6 @@ test_coverage (sqlite3 * sqlite, unsigned char pixel, unsigned char compression,
     num_bands = 1;
     switch (compression)
       {
-      case RL2_COMPRESSION_CHARLS:
-	  compression_name = "CHARLS";
-	  qlty = 100;
-	  break;
       case RL2_COMPRESSION_PNG:
 	  compression_name = "PNG";
 	  qlty = 100;
@@ -700,20 +682,6 @@ drop_coverage (sqlite3 * sqlite, unsigned char compression, int tile_sz,
 /* setting the coverage name */
     switch (compression)
       {
-      case RL2_COMPRESSION_CHARLS:
-	  switch (tile_sz)
-	    {
-	    case TILE_256:
-		coverage = "gray_charls_256";
-		break;
-	    case TILE_512:
-		coverage = "gray_charls_512";
-		break;
-	    case TILE_1024:
-		coverage = "gray_charls_1024";
-		break;
-	    };
-	  break;
       case RL2_COMPRESSION_PNG:
 	  switch (tile_sz)
 	    {
@@ -812,23 +780,6 @@ main (int argc, char *argv[])
       }
 
 /* GRAYSCALE tests */
-#ifndef OMIT_CHARLS		/* only if CharLS is enabled */
-    ret = -100;
-    if (!test_coverage
-	(db_handle, RL2_PIXEL_GRAYSCALE, RL2_COMPRESSION_CHARLS, TILE_256,
-	 &ret))
-	return ret;
-    ret = -120;
-    if (!test_coverage
-	(db_handle, RL2_PIXEL_GRAYSCALE, RL2_COMPRESSION_CHARLS, TILE_512,
-	 &ret))
-	return ret;
-    ret = -140;
-    if (!test_coverage
-	(db_handle, RL2_PIXEL_GRAYSCALE, RL2_COMPRESSION_CHARLS, TILE_1024,
-	 &ret))
-	return ret;
-#endif /* end CharLS conditional */
 
     ret = -200;
     if (!test_coverage
@@ -862,17 +813,6 @@ main (int argc, char *argv[])
 #endif /* end OpenJpeg conditional */
 
 /* dropping all GRAYSCALE Coverages */
-#ifndef OMIT_CHARLS		/* only if CharLS is enabled */
-    ret = -170;
-    if (!drop_coverage (db_handle, RL2_COMPRESSION_CHARLS, TILE_256, &ret))
-	return ret;
-    ret = -180;
-    if (!drop_coverage (db_handle, RL2_COMPRESSION_CHARLS, TILE_512, &ret))
-	return ret;
-    ret = -190;
-    if (!drop_coverage (db_handle, RL2_COMPRESSION_CHARLS, TILE_1024, &ret))
-	return ret;
-#endif /* end CharLS conditional */
 
     ret = -270;
     if (!drop_coverage (db_handle, RL2_COMPRESSION_PNG, TILE_256, &ret))

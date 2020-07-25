@@ -162,8 +162,6 @@ extern "C"
 #define RL2_COMPRESSION_CCITTFAX4	0x30
 /** RasterLite2 constant: Compression LZW */
 #define RL2_COMPRESSION_LZW		0x31
-/** RasterLite2 constant: Compression CHARLS */
-#define RL2_COMPRESSION_CHARLS		0x32
 /** RasterLite2 constant: Compression JPEG2000 (lossy mode) */
 #define RL2_COMPRESSION_LOSSY_JP2	0x33
 /** RasterLite2 constant: Compression JPEG2000 (lossless mode) */
@@ -783,13 +781,6 @@ extern "C"
  \return the version string.
  */
     RL2_DECLARE const char *rl2_webp_version (void);
-
-/**
- Return the current CharLS version.
-
- \return the version string.
- */
-    RL2_DECLARE const char *rl2_charLS_version (void);
 
 /**
  Return the current OpenJPEG version.

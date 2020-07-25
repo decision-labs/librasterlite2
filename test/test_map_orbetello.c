@@ -1116,21 +1116,6 @@ test_coverage (sqlite3 * sqlite, unsigned char compression, int tile_sz,
 /* setting the coverage name */
     switch (compression)
       {
-      case RL2_COMPRESSION_CHARLS:
-	  switch (tile_sz)
-	    {
-	    case TILE_256:
-		coverage = "orbetello_charls_256";
-		test_map_image = 1;
-		break;
-	    case TILE_512:
-		coverage = "orbetello_charls_512";
-		break;
-	    case TILE_1024:
-		coverage = "orbetello_charls_1024";
-		break;
-	    };
-	  break;
       case RL2_COMPRESSION_LOSSY_JP2:
 	  switch (tile_sz)
 	    {
@@ -1167,10 +1152,6 @@ test_coverage (sqlite3 * sqlite, unsigned char compression, int tile_sz,
     num_bands = 4;
     switch (compression)
       {
-      case RL2_COMPRESSION_CHARLS:
-	  compression_name = "CHARLS";
-	  qlty = 100;
-	  break;
       case RL2_COMPRESSION_LOSSY_JP2:
 	  compression_name = "JP2";
 	  qlty = 100;
@@ -2014,43 +1995,6 @@ test_coverage (sqlite3 * sqlite, unsigned char compression, int tile_sz,
 	  return 0;
       }
 
-    if (compression == RL2_COMPRESSION_CHARLS && tile_sz == TILE_256)
-      {
-	  /* testing a Monolithic Pyramid */
-	  geom = get_center_point (sqlite, coverage);
-	  if (geom == NULL)
-	    {
-		*retcode += -70;
-		return 0;
-	    }
-	  sql =
-	      sqlite3_mprintf ("SELECT RL2_PyramidizeMonolithic(%Q, 1, 1)",
-			       coverage);
-	  ret = execute_check (sqlite, sql);
-	  sqlite3_free (sql);
-	  if (ret != SQLITE_OK)
-	    {
-		fprintf (stderr, "PyramidizeMonolithic \"%s\" error: %s\n",
-			 coverage, err_msg);
-		sqlite3_free (err_msg);
-		*retcode += -71;
-		return 0;
-	    }
-	  if (!do_export_map_image
-	      (sqlite, coverage, geom, "rgb_histogram2", "jpg", 1))
-	    {
-		*retcode += 71;
-		return 0;
-	    }
-	  if (!do_export_map_image
-	      (sqlite, coverage, geom, "gray_histogram2", "jpg", 1))
-	    {
-		*retcode += 72;
-		return 0;
-	    }
-	  gaiaFreeGeomColl (geom);
-      }
-
     return 1;
 }
 
@@ -2328,19 +2272,6 @@ drop_coverage (sqlite3 * sqlite, unsigned char compression, int tile_sz,
 /* setting the coverage name */
     switch (compression)
       {
-      case RL2_COMPRESSION_CHARLS:
-	  switch (tile_sz)
-	    {
-	    case TILE_256:
-		coverage = "orbetello_charls_256";
-		break;
-	    case TILE_512:
-		coverage = "orbetello_charls_512";
-		break;
-	    case TILE_1024:
-		coverage = "orbetello_charls_1024";
-		break;
-	    };
 	  break;
       case RL2_COMPRESSION_LOSSY_JP2:
 	  switch (tile_sz)
@@ -2546,17 +2477,6 @@ main (int argc, char *argv[])
       }
 
 /* tests */
-#ifndef OMIT_CHARLS		/* only if CharLS is enabled */
-    ret = -100;
-    if (!test_coverage (db_handle, RL2_COMPRESSION_CHARLS, TILE_256, &ret))
-	return ret;
-    ret = -120;
-    if (!test_coverage (db_handle, RL2_COMPRESSION_CHARLS, TILE_512, &ret))
-	return ret;
-    ret = -140;
-    if (!test_coverage (db_handle, RL2_COMPRESSION_CHARLS, TILE_1024, &ret))
-	return ret;
-#endif /* end CharLS conditional */
 
 #ifndef OMIT_OPENJPEG		/* only if OpenJpeg is enabled */
     ret = -200;
@@ -2584,17 +2504,6 @@ main (int argc, char *argv[])
 	return ret;
 
 /* dropping all Coverages */
-#ifndef OMIT_CHARLS		/* only if CharLS is enabled */
-    ret = -170;
-    if (!drop_coverage (db_handle, RL2_COMPRESSION_CHARLS, TILE_256, &ret))
-	return ret;
-    ret = -180;
-    if (!drop_coverage (db_handle, RL2_COMPRESSION_CHARLS, TILE_512, &ret))
-	return ret;
-    ret = -190;
-    if (!drop_coverage (db_handle, RL2_COMPRESSION_CHARLS, TILE_1024, &ret))
-	return ret;
-#endif /* end CharLS conditional */
 
 #ifndef OMIT_OPENJPEG		/* only if OpenJpeg is enabled */
     ret = -270;
@@ -2711,19 +2620,6 @@ main (int argc, char *argv[])
     if (ret != result)
       {
 	  fprintf (stderr, "rl2_has_codec_zstd_no() unexpected result: %d\n",
-		   ret);
-	  return -1;
-      }
-
-#ifndef OMIT_CHARLS
-    result = 1;
-#else
-    result = 0;
-#endif /* ; */
-    ret = execute_with_retval (db_handle, "SELECT rl2_has_codec_charls()");
-    if (ret != result)
-      {
-	  fprintf (stderr, "rl2_has_codec_charls() unexpected result: %d\n",
 		   ret);
 	  return -1;
       }

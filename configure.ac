@@ -28,8 +28,6 @@ AH_TEMPLATE([NDEBUG],
 AC_DEFINE(NDEBUG)
 AH_TEMPLATE([TARGET_CPU],
             [Should contain a text-string describing the intended target CPU])
-AH_TEMPLATE([CHARLS_2],
-			[testing for CharLS 2.0])
             
 # config depending options
 AH_TEMPLATE([OMIT_LZMA],
@@ -42,8 +40,6 @@ AH_TEMPLATE([OMIT_WEBP],
             [Should be defined in order to disable WebP support.])
 AH_TEMPLATE([OMIT_OPENJPEG],
             [Should be defined in order to disable OpenJpeg support.])
-AH_TEMPLATE([OMIT_CHARLS],
-            [Should be defined in order to disable CharLS support.])
 AH_TEMPLATE([PROJ_NEW],
             [Should be defined in order to enable PROJ.6 support.])
 
@@ -219,46 +215,6 @@ if test x"$enable_zstd" != "xno"; then
     AC_SUBST(LIBZSTD_LIBS)
 else
   AC_DEFINE(OMIT_ZSTD)
-fi
-#-----------------------------------------------------------------------
-
-#-----------------------------------------------------------------------
-#   --enable-charls
-#
-AC_ARG_ENABLE(charls, [AS_HELP_STRING(
-  [--enable-charls], [enables CharLS inclusion [default=yes]])],
-  [], [enable_charls=yes])
-  if test x"$enable_charls" != "xno"; then
-  #
-  # testing CharLS headers
-  # they could be either
-  # -/include/CharLS/interface.h (version 1.0)
-  # or
-  # -/include/CharLS/charls.h (version 2.0)
-  #
-  AC_CHECK_HEADERS(CharLS/interface.h)
-  AC_CHECK_HEADERS(CharLS/charls.h)
-  if test x"$ac_cv_header_CharLS_interface_h" != x"yes" &&
-    test x"$ac_cv_header_CharLS_charls_h" != x"yes";
-  then
-	AC_MSG_ERROR(['CharLS' is required but no header file (interface.h or charls.h) seems to be installed on this system])
-  fi
-  AC_CHECK_LIB(CharLS,JpegLsEncode,,AC_MSG_ERROR(['libCharLS' is required but it doesn't seems to be installed on this system.]),-lm)
-  # testing for CharLS 1.0 or 2.0
-  AC_COMPILE_IFELSE([AC_LANG_SOURCE([[#ifdef HAVE_CHARLS_CHARLS_H
-									#include <CharLS/charls.h>
-									#else
-									#include <Charls/interface.h>
-									#endif]],
-								[[void *d; opj_stream_t *s; opj_stream_set_user_data(s, &d, NULL);]])],
-					[
-						AC_MSG_RESULT([yes])
-						AC_DEFINE(CHARLS_2)
-					],
-					[AC_MSG_RESULT([no])]
-				)  
-else
-  AC_DEFINE(OMIT_CHARLS)
 fi
 #-----------------------------------------------------------------------
 
