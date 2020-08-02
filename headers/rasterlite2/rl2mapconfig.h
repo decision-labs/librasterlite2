@@ -551,7 +551,7 @@ extern "C"
  Typedef for Topology Layer Internal Style
  */
     typedef rl2MapTopologyLayerInternalStyle
-	*rl2MapTopologyLayerInternalStylePtr;
+	* rl2MapTopologyLayerInternalStylePtr;
 
 /** 
  Container for Network Layer Style
@@ -692,7 +692,7 @@ extern "C"
 	char *abstract;
 /** Multithread rendering enabled */
 	int multithread_enabled;
-/** Ma number of concurrent threads */
+/** Number of concurrent threads */
 	int max_threads;
 /** Map SRID */
 	int srid;
@@ -708,6 +708,16 @@ extern "C"
 	unsigned char map_background_blue;
 /** Map background is Transparent */
 	int map_background_transparent;
+/** Raster/WMS auto-switch is enabled */
+	int raster_wms_auto_switch;
+/** Label Anti Collision is enabled */
+	int label_anti_collision;
+/** Label Wrap Text is enabled */
+	int label_wrap_text;
+/** Label Auto Rotate is enabled */
+	int label_auto_rotate;
+/** Label Shift Position is enabled */
+	int label_shift_position;
 /** pointer to first ATTACHED DB [linked list]; may be NULL */
 	rl2MapAttachedDbPtr first_db;
 /** pointer to last ATTACHED DB [linked list]; may be NULL */

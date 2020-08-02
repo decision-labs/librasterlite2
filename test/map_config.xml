@@ -9,7 +9,9 @@
 		<MultiThreading Enabled="true" MaxThreads="8" />
 		<MapCrs Crs="EPSG:3003" AutoTransformEnabled="true" />
 		<GeographicCoords DMS="false" />
-		<MapBackground Color="#ffffff" Transparent="true" />
+		<MapBackground Color="#faeca8" Transparent="true" />
+		<RasterWmsAutoSwitch Enabled="false" />
+		<LabelAdvancedOptions AntiCollisionEnabled="false" WrapTextEnabled="true" AutoRotateEnabled="false" ShiftPositionEnabled="true" />
 	</MapOptions>
 	<MapAttachedDatabases>
 		<MapAttachedDB DbPrefix="a" Path="./test.sqlite" />

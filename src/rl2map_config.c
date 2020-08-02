@@ -242,6 +242,11 @@ do_create_map_config ()
     map_config->map_background_green = 255;
     map_config->map_background_blue = 255;
     map_config->map_background_transparent = 0;
+    map_config->raster_wms_auto_switch = 0;
+    map_config->label_anti_collision = 0;
+    map_config->label_wrap_text = 0;
+    map_config->label_auto_rotate = 0;
+    map_config->label_shift_position = 0;
     map_config->first_db = NULL;
     map_config->last_db = NULL;
     map_config->first_lyr = NULL;
@@ -2302,7 +2307,6 @@ parse_graphic_fill_color_replacement (xmlNodePtr node,
 		const char *name = (const char *) (node->name);
 		if (strcmp (name, "Recode") == 0)
 		  {
-fprintf(stderr, "<Recode>\n");
 		      xmlNodePtr child = node->children;
 		      while (child)
 			{
@@ -4611,6 +4615,128 @@ parse_map_background (xmlNodePtr node, rl2MapConfigPtr map_config)
 }
 
 static void
+parse_raster_wms_auto_switch (xmlNodePtr node, rl2MapConfigPtr map_config)
+{
+/* parsing a <RasterWmsAutoSwitch> tag */
+    const char *value;
+    struct _xmlAttr *attr = node->properties;
+    while (attr != NULL)
+      {
+	  /* attributes */
+	  if (attr->type == XML_ATTRIBUTE_NODE)
+	    {
+		const char *name = (const char *) (attr->name);
+		if (strcmp (name, "Enabled") == 0)
+		  {
+		      xmlNode *text = attr->children;
+		      map_config->raster_wms_auto_switch = 0;
+		      if (text != NULL)
+			{
+			    if (text->type == XML_TEXT_NODE)
+			      {
+				  value = (const char *) (text->content);
+				  if (value != NULL)
+				    {
+					if (strcmp (value, "true") == 0)
+					    map_config->raster_wms_auto_switch =
+						1;
+				    }
+			      }
+			}
+		  }
+		attr = attr->next;
+	    }
+      }
+}
+
+static void
+parse_label_advanced_options (xmlNodePtr node, rl2MapConfigPtr map_config)
+{
+/* parsing a <LabelAdvancedOption> tag */
+    const char *value;
+    struct _xmlAttr *attr = node->properties;
+    while (attr != NULL)
+      {
+	  /* attributes */
+	  if (attr->type == XML_ATTRIBUTE_NODE)
+	    {
+		const char *name = (const char *) (attr->name);
+		if (strcmp (name, "AntiCollisionEnabled") == 0)
+		  {
+		      xmlNode *text = attr->children;
+		      map_config->label_anti_collision = 0;
+		      if (text != NULL)
+			{
+			    if (text->type == XML_TEXT_NODE)
+			      {
+				  value = (const char *) (text->content);
+				  if (value != NULL)
+				    {
+					if (strcmp (value, "true") == 0)
+					    map_config->label_anti_collision =
+						1;
+				    }
+			      }
+			}
+		  }
+		if (strcmp (name, "WrapTextEnabled") == 0)
+		  {
+		      xmlNode *text = attr->children;
+		      map_config->label_wrap_text = 0;
+		      if (text != NULL)
+			{
+			    if (text->type == XML_TEXT_NODE)
+			      {
+				  value = (const char *) (text->content);
+				  if (value != NULL)
+				    {
+					if (strcmp (value, "true") == 0)
+					    map_config->label_wrap_text = 1;
+				    }
+			      }
+			}
+		  }
+		if (strcmp (name, "AutoRotateEnabled") == 0)
+		  {
+		      xmlNode *text = attr->children;
+		      map_config->label_auto_rotate = 0;
+		      if (text != NULL)
+			{
+			    if (text->type == XML_TEXT_NODE)
+			      {
+				  value = (const char *) (text->content);
+				  if (value != NULL)
+				    {
+					if (strcmp (value, "true") == 0)
+					    map_config->label_auto_rotate = 1;
+				    }
+			      }
+			}
+		  }
+		if (strcmp (name, "ShiftPositionEnabled") == 0)
+		  {
+		      xmlNode *text = attr->children;
+		      map_config->label_shift_position = 0;
+		      if (text != NULL)
+			{
+			    if (text->type == XML_TEXT_NODE)
+			      {
+				  value = (const char *) (text->content);
+				  if (value != NULL)
+				    {
+					if (strcmp (value, "true") == 0)
+					    map_config->label_shift_position =
+						1;
+				    }
+			      }
+			}
+		  }
+		attr = attr->next;
+	    }
+      }
+}
+
+static void
 parse_map_options (xmlNodePtr node, rl2MapConfigPtr map_config)
 {
 /* parsing a <MapOptions> tag */
@@ -4627,6 +4753,10 @@ parse_map_options (xmlNodePtr node, rl2MapConfigPtr map_config)
 		    parse_geographic_coords (node, map_config);
 		if (strcmp (name, "MapBackground") == 0)
 		    parse_map_background (node, map_config);
+		if (strcmp (name, "RasterWmsAutoSwitch") == 0)
+		    parse_raster_wms_auto_switch (node, map_config);
+		if (strcmp (name, "LabelAdvancedOptions") == 0)
+		    parse_label_advanced_options (node, map_config);
 	    }
 	  node = node->next;
       }
