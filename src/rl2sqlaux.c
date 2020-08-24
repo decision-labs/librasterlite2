@@ -96,6 +96,7 @@ struct aux_raster_render
     int reaspect;
     const char *style_name;
     const unsigned char *xml_style;
+    unsigned char syntetic_band;
     unsigned char out_pixel;
     struct aux_raster_image *output;
     int is_map_canvas;
@@ -6492,6 +6493,7 @@ do_get_raw_raster_data (struct aux_renderer *aux, int by_section)
     int outbuf_size;
     unsigned char *mask = NULL;
     int mask_size;
+    unsigned char syntetic_band = aux->syntetic_band;
 
     if (reproject_on_the_fly)
       {
@@ -6557,7 +6559,7 @@ do_get_raw_raster_data (struct aux_renderer *aux, int by_section)
 	  if (rl2_get_raw_raster_data_transparent
 	      (sqlite, max_threads, coverage, base_width, base_height,
 	       minx, miny, maxx, maxy, xx_res, yy_res,
-	       &outbuf, &outbuf_size, &mask, &mask_size, &palette, &out_pixel,
+	       &outbuf, &outbuf_size, &mask, &mask_size, syntetic_band, &palette, &out_pixel,
 	       no_data, symbolizer, stats) != RL2_OK)
 	      goto error;
 	  if (was_monochrome
@@ -6598,6 +6600,7 @@ do_paint_map_from_raster (struct aux_raster_render *args)
     int height;
     const char *style_name;
     const unsigned char *xml_style;
+    unsigned char syntetic_band;
     const char *format;
     int transparent;
     int quality = 0;
@@ -6656,6 +6659,7 @@ do_paint_map_from_raster (struct aux_raster_render *args)
     height = args->height;
     style_name = args->style_name;
     xml_style = args->xml_style;
+    syntetic_band = args->syntetic_band;
     if (args->output != NULL && args->is_map_canvas == 0)
       {
 	  bg_red = args->output->bg_red;
@@ -7112,6 +7116,7 @@ do_paint_map_from_raster (struct aux_raster_render *args)
     aux.palette = NULL;
     aux.no_data = no_data;
     aux.out_pixel = out_pixel;
+    aux.syntetic_band = syntetic_band;
     if (args->output != NULL)
 	aux.is_blob_image = 1;
     else
@@ -7903,7 +7908,7 @@ rl2_map_image_paint_from_raster (sqlite3 * sqlite, const void *data,
 				 const char *cvg_name,
 				 const unsigned char *blob, int blob_sz,
 				 const char *style_name,
-				 unsigned char *xml_style)
+				 unsigned char *xml_style, unsigned char syntetic_band)
 {
 /* rendering a Map Image from a Raster Coverage - Graphics Context */
     struct aux_raster_render aux;
@@ -7932,6 +7937,7 @@ rl2_map_image_paint_from_raster (sqlite3 * sqlite, const void *data,
     aux.xml_style = xml_style;
     aux.out_pixel = RL2_PIXEL_RGB;
     aux.output = NULL;
+    aux.syntetic_band = syntetic_band;
     aux.is_map_canvas = 0;
 
     return do_paint_map_from_raster (&aux);

@@ -13,6 +13,7 @@
 		<RasterWmsAutoSwitch Enabled="false" />
 		<LabelAdvancedOptions AntiCollisionEnabled="false" WrapTextEnabled="true" AutoRotateEnabled="false" ShiftPositionEnabled="true" />
 	</MapOptions>
+	<MapBoundingBox MinX="10.05" MinY="20.75" MaxX="15.12" MaxY="23.43" />
 	<MapAttachedDatabases>
 		<MapAttachedDB DbPrefix="a" Path="./test.sqlite" />
 		<MapAttachedDB DbPrefix="b" Path="./test2.sqlite" />
@@ -155,7 +156,7 @@
 		</RasterLayerStyle>
 	</MapLayer>
 	<MapLayer Type="vector_view" DbPrefix="main" Name="vector_4" Visible="true">
-		<VectorLayerStyle>
+		<VectorLayerStyle TextSymbolizerAlone="true">
 			<PolygonSymbolizer>
 				<Fill>
 					<GraphicFill>
@@ -190,7 +191,7 @@
 				</Displacement>
 				<PerpendicularOffset>10.25</PerpendicularOffset>
 			</PolygonSymbolizer>
-			<TextSymbolizer TextSymbolizerAlone="true">
+			<TextSymbolizer>
 				<Label>@name@</Label>
 				<Font>
 					<SvgParameter name="font-family">sans serif</SvgParameter>
@@ -235,7 +236,7 @@
 		</VectorLayerStyle>
 	</MapLayer>
 	<MapLayer Type="vector_view" DbPrefix="main" Name="vector_6" Visible="true">
-		<VectorLayerStyle>
+		<VectorLayerStyle TextSymbolizerAlone="false">
 			<Rule>
 				<MaxScaleDenominator>100000.00</MaxScaleDenominator>
 			</Rule>

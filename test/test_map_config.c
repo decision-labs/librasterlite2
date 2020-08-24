@@ -77,6 +77,7 @@ test_map_config (const unsigned char *xml, int *retcode)
     int text_line = 0;
     int ret = 0;
     rl2MapLayerPtr lyr;
+    rl2MapConfigPtr clone;
     rl2MapConfigPtr map = rl2_parse_map_config_xml (xml);
     if (map == NULL)
       {
@@ -273,8 +274,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected ContrastEnhancement GammaValue %1.2f !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->raster_style->contrast_enhancement->
-			       gamma_value);
+			       lyr->raster_style->
+			       contrast_enhancement->gamma_value);
 		      ret = -19;
 		      goto stop;
 		  }
@@ -315,8 +316,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 			       "Layer <%s><%s> unexpected ChannelSelection RGB=%d Green=%d !!\n",
 			       lyr->prefix, lyr->name,
 			       lyr->raster_style->channel_selection->rgb,
-			       lyr->raster_style->channel_selection->
-			       green_channel);
+			       lyr->raster_style->
+			       channel_selection->green_channel);
 		      ret = -23;
 		      goto stop;
 		  }
@@ -357,8 +358,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 			       "Layer <%s><%s> unexpected ChannelSelection RGB=%d Green=%d !!\n",
 			       lyr->prefix, lyr->name,
 			       lyr->raster_style->channel_selection->rgb,
-			       lyr->raster_style->channel_selection->
-			       gray_channel);
+			       lyr->raster_style->
+			       channel_selection->gray_channel);
 		      ret = -27;
 		      goto stop;
 		  }
@@ -676,8 +677,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected Internal Style Name \"%s\" !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->topology_internal_style->
-			       style_internal_name);
+			       lyr->
+			       topology_internal_style->style_internal_name);
 		      ret = -57;
 		      goto stop;
 		  }
@@ -735,8 +736,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected Internal Style Name \"%s\" !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->network_internal_style->
-			       style_internal_name);
+			       lyr->
+			       network_internal_style->style_internal_name);
 		      ret = -62;
 		      goto stop;
 		  }
@@ -830,10 +831,10 @@ test_map_config (const unsigned char *xml, int *retcode)
 			       "Layer <%s><%s> unexpected PointSymbolizerMarkStroke #%02x%02x%02x !!\n",
 			       lyr->prefix, lyr->name,
 			       lyr->vector_style->point_sym->mark->stroke->red,
-			       lyr->vector_style->point_sym->mark->stroke->
-			       green,
-			       lyr->vector_style->point_sym->mark->stroke->
-			       blue);
+			       lyr->vector_style->point_sym->mark->
+			       stroke->green,
+			       lyr->vector_style->point_sym->mark->
+			       stroke->blue);
 		      ret = -71;
 		      goto stop;
 		  }
@@ -948,8 +949,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected LineSymbolizerStrokeOpacity %1.2f !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->first_line_sym->stroke->
-			       opacity);
+			       lyr->vector_style->first_line_sym->
+			       stroke->opacity);
 		      ret = -82;
 		      goto stop;
 		  }
@@ -958,8 +959,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected LineSymbolizerStrokeWidth %1.2f !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->first_line_sym->stroke->
-			       width);
+			       lyr->vector_style->first_line_sym->
+			       stroke->width);
 		      ret = -83;
 		      goto stop;
 		  }
@@ -968,8 +969,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected LineSymbolizerStrokeDotStyle %d !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->first_line_sym->stroke->
-			       dot_style);
+			       lyr->vector_style->first_line_sym->
+			       stroke->dot_style);
 		      ret = -84;
 		      goto stop;
 		  }
@@ -1070,8 +1071,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected PolygonSymbolizerFillGraphicResource \"%s\" !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->polygon_sym->fill->
-			       graphic->resource);
+			       lyr->vector_style->polygon_sym->fill->graphic->
+			       resource);
 		      ret = -94;
 		      goto stop;
 		  }
@@ -1082,8 +1083,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected PolygonSymbolizerFillGraphicFormat \"%s\" !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->polygon_sym->fill->
-			       graphic->format);
+			       lyr->vector_style->polygon_sym->fill->graphic->
+			       format);
 		      ret = -95;
 		      goto stop;
 		  }
@@ -1098,20 +1099,20 @@ test_map_config (const unsigned char *xml, int *retcode)
 		  }
 		if (lyr->vector_style->polygon_sym->fill->graphic->color->red !=
 		    0xfb
-		    || lyr->vector_style->polygon_sym->fill->graphic->
-		    color->green != 0xe3
-		    || lyr->vector_style->polygon_sym->fill->graphic->
-		    color->blue != 0x46)
+		    || lyr->vector_style->polygon_sym->fill->graphic->color->
+		    green != 0xe3
+		    || lyr->vector_style->polygon_sym->fill->graphic->color->
+		    blue != 0x46)
 		  {
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected PolygonSymbolizerFillGraphicRemapColor #%02x%02x%02x !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->polygon_sym->fill->
-			       graphic->color->red,
-			       lyr->vector_style->polygon_sym->fill->
-			       graphic->color->green,
-			       lyr->vector_style->polygon_sym->fill->
-			       graphic->color->blue);
+			       lyr->vector_style->polygon_sym->fill->graphic->
+			       color->red,
+			       lyr->vector_style->polygon_sym->fill->graphic->
+			       color->green,
+			       lyr->vector_style->polygon_sym->fill->graphic->
+			       color->blue);
 		      ret = -97;
 		      goto stop;
 		  }
@@ -1159,8 +1160,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected PolygonSymbolizerStrokeDotStyle %d !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->polygon_sym->stroke->
-			       dot_style);
+			       lyr->vector_style->polygon_sym->
+			       stroke->dot_style);
 		      ret = -102;
 		      goto stop;
 		  }
@@ -1188,8 +1189,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected PolygonSymbolizerPerpendicularOffset %1.2f !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->
-			       polygon_sym->perpendicular_offset);
+			       lyr->vector_style->polygon_sym->
+			       perpendicular_offset);
 		      ret = -104;
 		      goto stop;
 		  }
@@ -1308,8 +1309,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected TextSymbolizerPointPlacementRotation %1.2f !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->text_sym->placement->point->
-			       rotation);
+			       lyr->vector_style->text_sym->placement->
+			       point->rotation);
 		      ret = -117;
 		      goto stop;
 		  }
@@ -1319,8 +1320,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected TextSymbolizerPointPlacementAnchorX %1.2f !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->text_sym->placement->point->
-			       anchor_x);
+			       lyr->vector_style->text_sym->placement->
+			       point->anchor_x);
 		      ret = -118;
 		      goto stop;
 		  }
@@ -1330,30 +1331,30 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected TextSymbolizerPointPlacementAnchorY %1.2f !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->text_sym->placement->point->
-			       anchor_y);
+			       lyr->vector_style->text_sym->placement->
+			       point->anchor_y);
 		      ret = -119;
 		      goto stop;
 		  }
-		if (lyr->vector_style->text_sym->placement->point->
-		    displacement_x != 10.1)
+		if (lyr->vector_style->text_sym->placement->
+		    point->displacement_x != 10.1)
 		  {
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected TextSymbolizerPointPlacementDisplacementX %1.2f !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->text_sym->placement->point->
-			       displacement_x);
+			       lyr->vector_style->text_sym->placement->
+			       point->displacement_x);
 		      ret = -120;
 		      goto stop;
 		  }
-		if (lyr->vector_style->text_sym->placement->point->
-		    displacement_y != 0.32)
+		if (lyr->vector_style->text_sym->placement->
+		    point->displacement_y != 0.32)
 		  {
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected TextSymbolizerPointPlacementDisplacementY %1.2f !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->text_sym->placement->point->
-			       displacement_y);
+			       lyr->vector_style->text_sym->placement->
+			       point->displacement_y);
 		      ret = -121;
 		      goto stop;
 		  }
@@ -1400,8 +1401,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected TextSymbolizerHaloFillOpacity %1.2f !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->text_sym->halo->fill->
-			       opacity);
+			       lyr->vector_style->text_sym->halo->
+			       fill->opacity);
 		      ret = -126;
 		      goto stop;
 		  }
@@ -1473,14 +1474,14 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      ret = -133;
 		      goto stop;
 		  }
-		if (lyr->vector_style->text_sym->placement->
-		    line->perpendicular_offset != 1.32)
+		if (lyr->vector_style->text_sym->placement->line->
+		    perpendicular_offset != 1.32)
 		  {
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected TextSymbolizerLinePlacementPerpendicularOffset %1.2f !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->text_sym->placement->
-			       line->perpendicular_offset);
+			       lyr->vector_style->text_sym->placement->line->
+			       perpendicular_offset);
 		      ret = -134;
 		      goto stop;
 		  }
@@ -1489,8 +1490,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected TextSymbolizerLinePlacementIsRepeated %d !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->text_sym->placement->
-			       line->repeated);
+			       lyr->vector_style->text_sym->placement->line->
+			       repeated);
 		      ret = -135;
 		      goto stop;
 		  }
@@ -1500,8 +1501,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected TextSymbolizerLinePlacementInitialGap %1.2f !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->text_sym->placement->
-			       line->initial_gap);
+			       lyr->vector_style->text_sym->placement->line->
+			       initial_gap);
 		      ret = -136;
 		      goto stop;
 		  }
@@ -1510,8 +1511,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected TextSymbolizerLinePlacementGap %1.2f !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->text_sym->placement->
-			       line->gap);
+			       lyr->vector_style->text_sym->placement->line->
+			       gap);
 		      ret = -137;
 		      goto stop;
 		  }
@@ -1520,8 +1521,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected TextSymbolizerLinePlacementIsAligned %d !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->text_sym->placement->
-			       line->aligned);
+			       lyr->vector_style->text_sym->placement->line->
+			       aligned);
 		      ret = -138;
 		      goto stop;
 		  }
@@ -1531,8 +1532,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected TextSymbolizerLinePlacementGeneralizeLine %d !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->text_sym->placement->
-			       line->generalize);
+			       lyr->vector_style->text_sym->placement->line->
+			       generalize);
 		      ret = -139;
 		      goto stop;
 		  }
@@ -1664,6 +1665,82 @@ test_map_config (const unsigned char *xml, int *retcode)
 	  goto stop;
       }
 
+/* testing MapBoundingBox */
+    if (map->bbox == NULL)
+      {
+	  fprintf (stderr, "MapBoundingBox unexpected NULL !!\n");
+	  ret = -156;
+	  goto stop;
+      }
+    if (map->bbox->minx != 10.05)
+      {
+	  fprintf (stderr, "MapBoundingBox unexpected MinX=%1.6f\n",
+		   map->bbox->minx);
+	  ret = -157;
+	  goto stop;
+      }
+    if (map->bbox->miny != 20.75)
+      {
+	  fprintf (stderr, "MapBoundingBox unexpected MinY=%1.6f\n",
+		   map->bbox->miny);
+	  ret = -158;
+	  goto stop;
+      }
+    if (map->bbox->maxx != 15.12)
+      {
+	  fprintf (stderr, "MapBoundingBox unexpected MaxX=%1.6f\n",
+		   map->bbox->maxx);
+	  ret = -159;
+	  goto stop;
+      }
+    if (map->bbox->maxy != 23.43)
+      {
+	  fprintf (stderr, "MapBoundingBox unexpected MaxY=%1.6f\n",
+		   map->bbox->maxy);
+	  ret = -160;
+	  goto stop;
+      }
+
+/* testing TextSymbolizerAlone */
+    lyr = map->first_lyr;
+    while (lyr != NULL)
+      {
+	  int expected = 0;
+	  if (strcmp (lyr->prefix, "main") == 0
+	      && strcmp (lyr->name, "vector_4") == 0)
+	      expected = 1;
+	  if (lyr->vector_style != NULL)
+	    {
+		if (lyr->vector_style->text_alone != expected)
+		  {
+		      fprintf (stderr,
+			       "VectorLayerStyle \"%s\".\"%s\" unexpected TextSymbolizerAlone=%d\n",
+			       lyr->prefix, lyr->name,
+			       lyr->vector_style->text_alone);
+		      ret = -161;
+		      goto stop;
+		  }
+	    }
+	  lyr = lyr->next;
+      }
+
+/* testing Clone Map Config */
+    clone = rl2_clone_map_config (map);
+    if (clone == NULL)
+      {
+	  fprintf (stderr, "CloneMapConfig unexpected NULL\n");
+	  ret = -162;
+	  goto stop;
+      }
+    if (rl2_compare_map_configs (map, clone) == 0)
+      {
+	  fprintf (stderr, "CompareMapConfigs unexpected result: 0\n");
+	  ret = -163;
+	  goto stop;
+      }
+    rl2_destroy_map_config (clone);
+
+
   stop:
     if (map != NULL)
 	rl2_destroy_map_config (map);
@@ -1671,92 +1748,92 @@ test_map_config (const unsigned char *xml, int *retcode)
     if (!raster_1)
       {
 	  fprintf (stderr, "Layer \"raster_1\" not found !!\n");
-	  ret = -160;
+	  ret = -170;
       }
     if (!raster_2)
       {
 	  fprintf (stderr, "Layer \"raster_2\" not found !!\n");
-	  ret = -161;
+	  ret = -171;
       }
     if (!raster_3)
       {
 	  fprintf (stderr, "Layer \"raster_3\" not found !!\n");
-	  ret = -162;
+	  ret = -172;
       }
     if (!raster_4)
       {
 	  fprintf (stderr, "Layer \"raster_4\" not found !!\n");
-	  ret = -163;
+	  ret = -173;
       }
     if (!raster_5)
       {
 	  fprintf (stderr, "Layer \"raster_5\" not found !!\n");
-	  ret = -164;
+	  ret = -174;
       }
     if (!raster_6)
       {
 	  fprintf (stderr, "Layer \"raster_6\" not found !!\n");
-	  ret = -165;
+	  ret = -175;
       }
     if (!wms)
       {
 	  fprintf (stderr, "Layer \"wms_layer_2\" not found !!\n");
-	  ret = -166;
+	  ret = -176;
       }
     if (!vector_1)
       {
 	  fprintf (stderr, "Layer \"vector_1\" not found !!\n");
-	  ret = -167;
+	  ret = -177;
       }
     if (!vector_2)
       {
 	  fprintf (stderr, "Layer \"vector_2\" not found !!\n");
-	  ret = -168;
+	  ret = -178;
       }
     if (!vector_3)
       {
 	  fprintf (stderr, "Layer \"vector_3\" not found !!\n");
-	  ret = -169;
+	  ret = -179;
       }
     if (!topology_1)
       {
 	  fprintf (stderr, "Layer \"topology_1\" not found !!\n");
-	  ret = -170;
+	  ret = -180;
       }
     if (!network_1)
       {
 	  fprintf (stderr, "Layer \"network_1\" not found !!\n");
-	  ret = -171;
+	  ret = -181;
       }
     if (!point)
       {
 	  fprintf (stderr, "Layer \"vector_6\" not found !!\n");
-	  ret = -172;
+	  ret = -182;
       }
     if (!line)
       {
 	  fprintf (stderr, "Layer \"vector_5\" not found !!\n");
-	  ret = -173;
+	  ret = -183;
       }
     if (!polygon_1)
       {
 	  fprintf (stderr, "Layer \"topology_2\" not found !!\n");
-	  ret = -174;
+	  ret = -184;
       }
     if (!polygon_2)
       {
 	  fprintf (stderr, "Layer \"vector_4\" not found !!\n");
-	  ret = -175;
+	  ret = -185;
       }
     if (!text_point)
       {
 	  fprintf (stderr, "Layer \"vector_6\" not found !!\n");
-	  ret = -176;
+	  ret = -186;
       }
     if (!text_line)
       {
 	  fprintf (stderr, "Layer \"line_label_1\" not found !!\n");
-	  ret = -177;
+	  ret = -187;
       }
 
     *retcode = ret;
@@ -1834,7 +1911,8 @@ main (int argc, char *argv[])
     if (xml != NULL)
       {
 	  /* test */
-	  if (!test_map_config (xml, &ret))
+	  ret = test_map_config (xml, &ret);
+	  if (ret < 0)
 	      result = ret;
       }
 

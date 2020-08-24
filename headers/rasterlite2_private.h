@@ -1238,6 +1238,7 @@ extern "C"
 	int scale;
 	unsigned char *outbuf;
 	unsigned char *mask;
+	unsigned char syntetic_band;
 	rl2PalettePtr palette;
 	unsigned char out_pixel;
 	int is_blob_image;
@@ -1470,8 +1471,11 @@ extern "C"
 	unsigned int height;
 	unsigned char sample_type;
 	unsigned char num_bands;
-	unsigned char auto_ndvi;
+	unsigned char auto_band;
+	unsigned char syntetic_band;
 	unsigned char red_band_index;
+	unsigned char green_band_index;
+	unsigned char blue_band_index;
 	unsigned char nir_band_index;
 	double x_res;
 	double y_res;
@@ -1563,143 +1567,143 @@ extern "C"
 	int ctx_face_seeds_ready;
     } rl2PrivCanvas;
     typedef rl2PrivCanvas *rl2PrivCanvasPtr;
-    
+
     /*
-    typedef struct rl2_priv_map_attached_db
-    {
-		char *prefix;
-		char *path;
-		struct rl2_priv_map_attached_db *next;
-	} rl2PrivMapAttachedDb;
-	typedef rl2PrivMapAttachedDb *rl2PrivMapAttachedDbPtr;
-	
-	typedef struct rl2_priv_cfg_color
-	{
-		unsigned char red;
-		unsigned char green;
-		unsigned char blue;
-	} rl2PrivCfgColor;
-	typedef rl2PrivCfgColor *rl2PrivCfgColorPtr;
-	
-	typedef struct rl2_priv_cfg_graphic_fill
-	{
-		char *resource;
-		char *format;
-		rl2PrivCfgColorPtr color;
-	} rl2PrivCfgGraphicFill;
-	typedef rl2PrivCfgGraphicFill *rl2PrivCfgGraphicFillPtr;
-	
-	typedef struct rl2_priv_cfg_fill
-	{
-		rl2PrivCfgGraphicFillPtr graphic;
-		unsigned char red;
-		unsigned char green;
-		unsigned char blue;
-		double opacity;
-	} rl2PrivCfgFill;
-	typedef rl2PrivCfgFill *rl2PrivCfgFillPtr;
-	
-	typedef struct rl2_priv_cfg_stroke
-	{
-		unsigned char red;
-		unsigned char green;
-		unsigned char blue;
-		double opacity;
-		double width;
-		int linejoin;
-		int linecap;
-		int dash_count;
-		double *dash_list;
-		double dash_offset;
-	} rl2PrivCfgStroke;
-	typedef rl2PrivCfgStroke *rl2PrivCfgStrokePtr;
-	
-	typedef struct rl2_priv_cfg_polygon_symbolizer
-	{
-		rl2PrivCfgFillPtr fill;
-		rl2PrivCfgStrokePtr stroke;
-		double displacement_x;
-		double displacement_y;
-		double perpendicular_offset;
-	} rl2PrivCfgPolygonSymbolizer;
-	typedef rl2PrivCfgPolygonSymbolizer *rl2PrivCfgPolygonSymbolizerPtr;
-	
-	typedef struct rl2_priv_cfg_font
-	{
-		char *family;
-		int style;
-		int weight;
-		double size;
-	} rl2PrivCfgFont;
-	typedef rl2PrivCfgFont *rl2PrivCfgFontPtr;
-	
-	typedef struct rl2_priv_cfg_point_placement
-	{
-		double anchor_x;
-		double anchor_y;
-		double displacement_x;
-		double displacement_y;
-		double rotation;
-	} rl2PrivCfgPointPlacement;
-	typedef rl2PrivCfgPointPlacement *rl2PrivCfgPointPlacementPtr;
-	
-	typedef struct rl2_priv_cfg_placement
-	{
-		rl2PrivCfgPointPlacementPtr point;
-	} rl2PrivCfgPlacement;
-	typedef rl2PrivCfgPlacement *rl2PrivCfgPlacementPtr;
-	
-	typedef struct rl2_priv_cfg_halo
-	{
-		double radius;
-		rl2PrivCfgFillPtr fill;
-	} rl2PrivCfgHalo;
-	typedef rl2PrivCfgHalo *rl2PrivCfgHaloPtr;
-	
-	typedef struct rl2_priv_cfg_text_symbolizer
-	{
-		char *label;
-		rl2PrivCfgFontPtr font;
-		rl2PrivCfgPlacementPtr placement;
-		rl2PrivCfgHaloPtr halo;
-		rl2PrivCfgFillPtr fill;
-		int alone;
-	} rl2PrivCfgTextSymbolizer;
-	typedef rl2PrivCfgTextSymbolizer *rl2PrivCfgTextSymbolizerPtr;
-	
-	typedef struct rl2_priv_map_layer
-	{
-		int type;
-		char *prefix;
-		char *name;
-		int visible;
-		rl2PrivCfgPolygonSymbolizerPtr polygon_sym;
-		rl2PrivCfgTextSymbolizerPtr text_sym;
-		struct rl2_priv_map_layer *next;
-	} rl2PrivMapLayer;
-	typedef rl2PrivMapLayer *rl2PrivMapLayerPtr;
-	    
-    typedef struct rl2_priv_map_config
-    {
-		char *name;
-		char *title;
-		char *abstract;
-		int multithread_enabled;
-		int max_threads;
-		int srid;
-		int autotransform_enabled;
-		int dms;
-		unsigned char map_background_red;
-		unsigned char map_background_green;
-		unsigned char map_background_blue;
-		int map_background_transparent;
-		rl2PrivMapAttachedDbPtr first_db;
-		rl2PrivMapAttachedDbPtr last_db;
-		rl2PrivMapLayerPtr first_lyr;
-		rl2PrivMapLayerPtr last_lyr;
-	} rl2PrivMapConfig;
-	typedef rl2PrivMapConfig *rl2PrivMapConfigPtr;
-	*/
+       typedef struct rl2_priv_map_attached_db
+       {
+       char *prefix;
+       char *path;
+       struct rl2_priv_map_attached_db *next;
+       } rl2PrivMapAttachedDb;
+       typedef rl2PrivMapAttachedDb *rl2PrivMapAttachedDbPtr;
+
+       typedef struct rl2_priv_cfg_color
+       {
+       unsigned char red;
+       unsigned char green;
+       unsigned char blue;
+       } rl2PrivCfgColor;
+       typedef rl2PrivCfgColor *rl2PrivCfgColorPtr;
+
+       typedef struct rl2_priv_cfg_graphic_fill
+       {
+       char *resource;
+       char *format;
+       rl2PrivCfgColorPtr color;
+       } rl2PrivCfgGraphicFill;
+       typedef rl2PrivCfgGraphicFill *rl2PrivCfgGraphicFillPtr;
+
+       typedef struct rl2_priv_cfg_fill
+       {
+       rl2PrivCfgGraphicFillPtr graphic;
+       unsigned char red;
+       unsigned char green;
+       unsigned char blue;
+       double opacity;
+       } rl2PrivCfgFill;
+       typedef rl2PrivCfgFill *rl2PrivCfgFillPtr;
+
+       typedef struct rl2_priv_cfg_stroke
+       {
+       unsigned char red;
+       unsigned char green;
+       unsigned char blue;
+       double opacity;
+       double width;
+       int linejoin;
+       int linecap;
+       int dash_count;
+       double *dash_list;
+       double dash_offset;
+       } rl2PrivCfgStroke;
+       typedef rl2PrivCfgStroke *rl2PrivCfgStrokePtr;
+
+       typedef struct rl2_priv_cfg_polygon_symbolizer
+       {
+       rl2PrivCfgFillPtr fill;
+       rl2PrivCfgStrokePtr stroke;
+       double displacement_x;
+       double displacement_y;
+       double perpendicular_offset;
+       } rl2PrivCfgPolygonSymbolizer;
+       typedef rl2PrivCfgPolygonSymbolizer *rl2PrivCfgPolygonSymbolizerPtr;
+
+       typedef struct rl2_priv_cfg_font
+       {
+       char *family;
+       int style;
+       int weight;
+       double size;
+       } rl2PrivCfgFont;
+       typedef rl2PrivCfgFont *rl2PrivCfgFontPtr;
+
+       typedef struct rl2_priv_cfg_point_placement
+       {
+       double anchor_x;
+       double anchor_y;
+       double displacement_x;
+       double displacement_y;
+       double rotation;
+       } rl2PrivCfgPointPlacement;
+       typedef rl2PrivCfgPointPlacement *rl2PrivCfgPointPlacementPtr;
+
+       typedef struct rl2_priv_cfg_placement
+       {
+       rl2PrivCfgPointPlacementPtr point;
+       } rl2PrivCfgPlacement;
+       typedef rl2PrivCfgPlacement *rl2PrivCfgPlacementPtr;
+
+       typedef struct rl2_priv_cfg_halo
+       {
+       double radius;
+       rl2PrivCfgFillPtr fill;
+       } rl2PrivCfgHalo;
+       typedef rl2PrivCfgHalo *rl2PrivCfgHaloPtr;
+
+       typedef struct rl2_priv_cfg_text_symbolizer
+       {
+       char *label;
+       rl2PrivCfgFontPtr font;
+       rl2PrivCfgPlacementPtr placement;
+       rl2PrivCfgHaloPtr halo;
+       rl2PrivCfgFillPtr fill;
+       int alone;
+       } rl2PrivCfgTextSymbolizer;
+       typedef rl2PrivCfgTextSymbolizer *rl2PrivCfgTextSymbolizerPtr;
+
+       typedef struct rl2_priv_map_layer
+       {
+       int type;
+       char *prefix;
+       char *name;
+       int visible;
+       rl2PrivCfgPolygonSymbolizerPtr polygon_sym;
+       rl2PrivCfgTextSymbolizerPtr text_sym;
+       struct rl2_priv_map_layer *next;
+       } rl2PrivMapLayer;
+       typedef rl2PrivMapLayer *rl2PrivMapLayerPtr;
+
+       typedef struct rl2_priv_map_config
+       {
+       char *name;
+       char *title;
+       char *abstract;
+       int multithread_enabled;
+       int max_threads;
+       int srid;
+       int autotransform_enabled;
+       int dms;
+       unsigned char map_background_red;
+       unsigned char map_background_green;
+       unsigned char map_background_blue;
+       int map_background_transparent;
+       rl2PrivMapAttachedDbPtr first_db;
+       rl2PrivMapAttachedDbPtr last_db;
+       rl2PrivMapLayerPtr first_lyr;
+       rl2PrivMapLayerPtr last_lyr;
+       } rl2PrivMapConfig;
+       typedef rl2PrivMapConfig *rl2PrivMapConfigPtr;
+     */
 
     RL2_PRIVATE int
 	rl2_blob_from_file (const char *path, unsigned char **blob,
@@ -1806,8 +1810,11 @@ extern "C"
 					 unsigned int height,
 					 unsigned char sample_type,
 					 unsigned char num_bands,
-					 unsigned char auto_ndvi,
+					 unsigned char auto_band,
+					 unsigned char syntetic_band,
 					 unsigned char red_band_index,
+					 unsigned char green_band_index,
+					 unsigned char blue_band_index,
 					 unsigned char nir_band_index,
 					 double x_res, double y_res,
 					 double minx, double miny,
@@ -1827,8 +1834,11 @@ extern "C"
 						 unsigned int height,
 						 unsigned char sample_type,
 						 unsigned char num_bands,
-						 unsigned char auto_ndvi,
+						 unsigned char auto_band,
+						 unsigned char syntetic_band,
 						 unsigned char red_band_index,
+						 unsigned char green_band_index,
+						 unsigned char blue_band_index,
 						 unsigned char nir_band_index,
 						 double x_res, double y_res,
 						 double minx, double miny,
@@ -1847,9 +1857,15 @@ extern "C"
 						     unsigned int height,
 						     unsigned char sample_type,
 						     unsigned char num_bands,
-						     unsigned char auto_ndvi,
+						     unsigned char auto_band,
+						     unsigned char
+						     syntetic_band,
 						     unsigned char
 						     red_band_index,
+						     unsigned char
+						     green_band_index,
+						     unsigned char
+						     blue_band_index,
 						     unsigned char
 						     nir_band_index,
 						     double x_res, double y_res,
@@ -1883,9 +1899,15 @@ extern "C"
 							     unsigned char
 							     num_bands,
 							     unsigned char
-							     auto_ndvi,
+							     auto_band,
+							     unsigned char
+							     syntetic_band,
 							     unsigned char
 							     red_band_index,
+							     unsigned char
+							     green_band_index,
+							     unsigned char
+							     blue_band_index,
 							     unsigned char
 							     nir_band_index,
 							     double x_res,
@@ -2458,8 +2480,11 @@ extern "C"
 					 unsigned int height,
 					 unsigned char sample_type,
 					 unsigned char num_bands,
-					 unsigned char auto_ndvi,
+					 unsigned char auto_band,
+					 unsigned char syntetic_band,
 					 unsigned char red_band_index,
+					 unsigned char green_band_index,
+					 unsigned char blue_band_index,
 					 unsigned char nir_band_index,
 					 double x_res, double y_res,
 					 double minx, double maxy,
@@ -2475,9 +2500,15 @@ extern "C"
 						     unsigned int height,
 						     unsigned char sample_type,
 						     unsigned char num_bands,
-						     unsigned char auto_ndvi,
+						     unsigned char auto_band,
+						     unsigned char
+						     syntetic_band,
 						     unsigned char
 						     red_band_index,
+						     unsigned char
+						     green_band_index,
+						     unsigned char
+						     blue_band_index,
 						     unsigned char
 						     nir_band_index,
 						     double x_res, double y_res,
@@ -2589,6 +2620,7 @@ extern "C"
 						    double y_res,
 						    unsigned char **buffer,
 						    int *buf_size,
+						    unsigned char syntetic_band,
 						    rl2PalettePtr * palette,
 						    unsigned char out_pixel,
 						    rl2PixelPtr bgcolor,
@@ -2621,6 +2653,8 @@ extern "C"
 								unsigned char
 								**mask,
 								int *mask_size,
+								unsigned char
+								syntetic_band,
 								rl2PalettePtr *
 								palette,
 								unsigned char
@@ -2956,7 +2990,7 @@ extern "C"
 
     RL2_PRIVATE struct rl2_advanced_labeling *rl2_get_labeling_ref (const void
 								    *ctx);
-				
+
 #ifdef __cplusplus
 }
 #endif

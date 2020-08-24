@@ -467,8 +467,6 @@ extern "C"
 	rl2MapHaloPtr halo;
 /** Fill */
 	rl2MapFillPtr fill;
-/** Text Symbolizer alone (ignore Geometry) */
-	int alone;
     } rl2MapTextSymbolizer;
 /**
  Typedef for Text Symbolizer
@@ -492,6 +490,8 @@ extern "C"
 	rl2MapPolygonSymbolizerPtr polygon_sym;
 /** Text Symbolizer (may be NULL) */
 	rl2MapTextSymbolizerPtr text_sym;
+/** Text Symbolizer alone (ignore Geometry) */
+	int text_alone;
     } rl2MapVectorLayerStyle;
 /**
  Typedef for Vector Layer Style
@@ -680,6 +680,28 @@ extern "C"
     typedef rl2MapLayer *rl2MapLayerPtr;
 
 /**
+ Container for Map Bounding Box
+ */
+    typedef struct rl2_map_bounding_box
+    {
+/** BBOX MinX */
+	double minx;
+/** BBOX MinY */
+	double miny;
+/** BBOX MaxX */
+	double maxx;
+/** BBOX MaxY */
+	double maxy;
+    } rl2MapBoundingBox;
+/**
+ Typedef for Map Bounding Box
+ 
+ \sa rlMapBoundingBox;
+ */
+    typedef rl2MapBoundingBox *rl2MapBoundingBoxPtr;
+
+
+/**
  Container for Map Config
  */
     typedef struct rl2_map_config
@@ -718,6 +740,8 @@ extern "C"
 	int label_auto_rotate;
 /** Label Shift Position is enabled */
 	int label_shift_position;
+/** pointer to MapBoundingBox */
+	rl2MapBoundingBoxPtr bbox;
 /** pointer to first ATTACHED DB [linked list]; may be NULL */
 	rl2MapAttachedDbPtr first_db;
 /** pointer to last ATTACHED DB [linked list]; may be NULL */
@@ -737,7 +761,13 @@ extern "C"
     RL2_DECLARE rl2MapConfigPtr rl2_parse_map_config_xml (const unsigned char
 							  *xml);
 
+    RL2_DECLARE rl2MapConfigPtr rl2_clone_map_config (rl2MapConfigPtr
+						      map_config);
+
     RL2_DECLARE void rl2_destroy_map_config (rl2MapConfigPtr map_config);
+
+    RL2_DECLARE int rl2_compare_map_configs (rl2MapConfigPtr conf1,
+					     rl2MapConfigPtr conf2);
 
 #ifdef __cplusplus
 }

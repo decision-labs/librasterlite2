@@ -283,6 +283,13 @@ extern "C"
 /** Rasterlite2 constants: Font Weight Bold */
 #define RL2_FONT_WEIGHT_BOLD	0x41
 
+/** Syntetic/Calculated Band: NONE */
+#define RL2_SYNTETIC_NONE		0xf0
+/** Syntetic/Calculated Band: NDVI */
+#define RL2_SYNTETIC_NDVI		0xf1
+/** Syntetic/Calculated Band: NDWI */
+#define RL2_SYNTETIC_NDWI		0xf2
+
 /** Rasterlite2 constants: LabelPlacement: Unknwn */
 #define RL2_LABEL_PLACEMENT_UNKNOWN	0x53
 /** Rasterlite2 constants: LabelPlacement: PointPlacement */
@@ -4033,7 +4040,7 @@ extern "C"
 					     unsigned char **buffer,
 					     int *buf_size,
 					     unsigned char **mask,
-					     int *mask_size,
+					     int *mask_size, unsigned char syntetic_band,
 					     rl2PalettePtr * palette,
 					     unsigned char *out_pixel,
 					     rl2PixelPtr no_data,
@@ -6135,7 +6142,7 @@ extern "C"
 						     const unsigned char *blob,
 						     int blob_sz,
 						     const char *style_name,
-						     unsigned char *xml_style);
+						     unsigned char *xml_style, unsigned char syntetic_band);
 
     RL2_DECLARE int rl2_map_image_blob_from_vector (sqlite3 * sqlite,
 						    const void *data,
@@ -6277,8 +6284,10 @@ extern "C"
 					  double no_data_value,
 					  double densify_dist,
 					  double z_simplify_dist, int update_m);
-	
-	RL2_DECLARE int rl2_serialize_map_config (rl2MapConfigPtr map_config_obj, unsigned char **blob, int *blob_sz);
+
+    RL2_DECLARE int rl2_serialize_map_config (rl2MapConfigPtr map_config_obj,
+					      unsigned char **blob,
+					      int *blob_sz);
 
 #ifdef __cplusplus
 }

@@ -5064,8 +5064,9 @@ get_section_raw_raster_data (sqlite3 * handle, int max_threads,
 			 no_data);
     if (!rl2_load_dbms_tiles_section
 	(handle, max_threads, sect_id, stmt_tiles, stmt_data, bufpix, width,
-	 height, sample_type, num_bands, 0, 0, 0, x_res, y_res, minx, miny,
-	 maxx, maxy, 0, RL2_SCALE_1, palette, no_data))
+	 height, sample_type, num_bands, 0, RL2_SYNTETIC_NONE, 0, 0, 0, 0,
+	 x_res, y_res, minx, miny, maxx, maxy, 0, RL2_SCALE_1, palette,
+	 no_data))
 	goto error;
     sqlite3_finalize (stmt_tiles);
     sqlite3_finalize (stmt_data);

@@ -3550,9 +3550,10 @@ do_decode_tile (rl2AuxDecoderPtr decoder)
     if (!rl2_copy_raw_pixels_transparent
 	((rl2RasterPtr) (decoder->raster), decoder->outbuf, decoder->mask,
 	 decoder->width, decoder->height, decoder->sample_type,
-	 decoder->num_bands, decoder->auto_ndvi, decoder->red_band_index,
-	 decoder->nir_band_index, decoder->x_res, decoder->y_res,
-	 decoder->minx, decoder->maxy, decoder->tile_minx,
+	 decoder->num_bands, decoder->auto_band, decoder->syntetic_band,
+	 decoder->red_band_index, decoder->green_band_index,
+	 decoder->blue_band_index, decoder->nir_band_index, decoder->x_res,
+	 decoder->y_res, decoder->minx, decoder->maxy, decoder->tile_minx,
 	 decoder->tile_maxy, (rl2PixelPtr) (decoder->no_data),
 	 (rl2RasterSymbolizerPtr) (decoder->style),
 	 (rl2RasterStatisticsPtr) (decoder->stats)))
@@ -4088,8 +4089,11 @@ rl2_load_dbms_tiles_common (sqlite3 * handle, int max_threads,
 			    sqlite3_stmt * stmt_data, unsigned char *outbuf,
 			    unsigned int width, unsigned int height,
 			    unsigned char sample_type,
-			    unsigned char num_bands, unsigned char auto_ndvi,
+			    unsigned char num_bands, unsigned char auto_band,
+			    unsigned char syntetic_band,
 			    unsigned char red_band_index,
+			    unsigned char green_band_index,
+			    unsigned char blue_band_index,
 			    unsigned char nir_band_index, double x_res,
 			    double y_res, double minx, double maxy, int scale,
 			    rl2PalettePtr palette, rl2PixelPtr no_data,
@@ -4129,8 +4133,11 @@ rl2_load_dbms_tiles_common (sqlite3 * handle, int max_threads,
 	  decoder->height = height;
 	  decoder->sample_type = sample_type;
 	  decoder->num_bands = num_bands;
-	  decoder->auto_ndvi = auto_ndvi;
+	  decoder->auto_band = auto_band;
+	  decoder->syntetic_band = syntetic_band;
 	  decoder->red_band_index = red_band_index;
+	  decoder->green_band_index = green_band_index;
+	  decoder->blue_band_index = blue_band_index;
 	  decoder->nir_band_index = nir_band_index;
 	  decoder->x_res = x_res;
 	  decoder->y_res = y_res;
@@ -4315,12 +4322,14 @@ load_dbms_tiles_common_transparent (sqlite3 * handle, int max_threads,
 				    unsigned int height,
 				    unsigned char sample_type,
 				    unsigned char num_bands,
-				    unsigned char auto_ndvi,
+				    unsigned char auto_band,
+				    unsigned char syntetic_band,
 				    unsigned char red_band_index,
-				    unsigned char nir_band_index,
-				    double x_res, double y_res, double minx,
-				    double maxy, int scale,
-				    rl2PalettePtr palette,
+				    unsigned char green_band_index,
+				    unsigned char blue_band_index,
+				    unsigned char nir_band_index, double x_res,
+				    double y_res, double minx, double maxy,
+				    int scale, rl2PalettePtr palette,
 				    rl2PixelPtr no_data,
 				    rl2RasterSymbolizerPtr style,
 				    rl2RasterStatisticsPtr stats)
@@ -4358,8 +4367,11 @@ load_dbms_tiles_common_transparent (sqlite3 * handle, int max_threads,
 	  decoder->height = height;
 	  decoder->sample_type = sample_type;
 	  decoder->num_bands = num_bands;
-	  decoder->auto_ndvi = auto_ndvi;
+	  decoder->auto_band = auto_band;
+	  decoder->syntetic_band = syntetic_band;
 	  decoder->red_band_index = red_band_index;
+	  decoder->green_band_index = green_band_index;
+	  decoder->blue_band_index = blue_band_index;
 	  decoder->nir_band_index = nir_band_index;
 	  decoder->x_res = x_res;
 	  decoder->y_res = y_res;
@@ -5340,8 +5352,10 @@ rl2_load_dbms_tiles (sqlite3 * handle, int max_threads,
 		     sqlite3_stmt * stmt_tiles, sqlite3_stmt * stmt_data,
 		     unsigned char *outbuf, unsigned int width,
 		     unsigned int height, unsigned char sample_type,
-		     unsigned char num_bands, unsigned char auto_ndvi,
-		     unsigned char red_band_index,
+		     unsigned char num_bands, unsigned char auto_band,
+		     unsigned char syntetic_band, unsigned char red_band_index,
+		     unsigned char green_band_index,
+		     unsigned char blue_band_index,
 		     unsigned char nir_band_index, double x_res, double y_res,
 		     double minx, double miny, double maxx, double maxy,
 		     int level, int scale, rl2PalettePtr palette,
@@ -5359,8 +5373,9 @@ rl2_load_dbms_tiles (sqlite3 * handle, int max_threads,
 
     if (!rl2_load_dbms_tiles_common
 	(handle, max_threads, stmt_tiles, stmt_data, outbuf, width, height,
-	 sample_type, num_bands, auto_ndvi, red_band_index, nir_band_index,
-	 x_res, y_res, minx, maxy, scale, palette, no_data, style, stats))
+	 sample_type, num_bands, auto_band, syntetic_band, red_band_index,
+	 green_band_index, blue_band_index, nir_band_index, x_res, y_res, minx,
+	 maxy, scale, palette, no_data, style, stats))
 	return 0;
     return 1;
 }
@@ -5372,8 +5387,11 @@ rl2_load_dbms_tiles_section (sqlite3 * handle, int max_threads,
 			     sqlite3_stmt * stmt_data, unsigned char *outbuf,
 			     unsigned int width, unsigned int height,
 			     unsigned char sample_type,
-			     unsigned char num_bands, unsigned char auto_ndvi,
+			     unsigned char num_bands, unsigned char auto_band,
+			     unsigned char syntetic_band,
 			     unsigned char red_band_index,
+			     unsigned char green_band_index,
+			     unsigned char blue_band_index,
 			     unsigned char nir_band_index, double x_res,
 			     double y_res, double minx, double miny,
 			     double maxx, double maxy, int level, int scale,
@@ -5391,8 +5409,9 @@ rl2_load_dbms_tiles_section (sqlite3 * handle, int max_threads,
 
     if (!rl2_load_dbms_tiles_common
 	(handle, max_threads, stmt_tiles, stmt_data, outbuf, width, height,
-	 sample_type, num_bands, auto_ndvi, red_band_index, nir_band_index,
-	 x_res, y_res, minx, maxy, scale, palette, no_data, NULL, NULL))
+	 sample_type, num_bands, auto_band, syntetic_band, red_band_index,
+	 green_band_index, blue_band_index, nir_band_index, x_res, y_res, minx,
+	 maxy, scale, palette, no_data, NULL, NULL))
 	return 0;
     return 1;
 }
@@ -5405,8 +5424,11 @@ rl2_load_dbms_tiles_transparent (sqlite3 * handle, int max_threads,
 				 unsigned int width, unsigned int height,
 				 unsigned char sample_type,
 				 unsigned char num_bands,
-				 unsigned char auto_ndvi,
+				 unsigned char auto_band,
+				 unsigned char syntetic_band,
 				 unsigned char red_band_index,
+				 unsigned char green_band_index,
+				 unsigned char blue_band_index,
 				 unsigned char nir_band_index, double x_res,
 				 double y_res, double minx, double miny,
 				 double maxx, double maxy, int level, int scale,
@@ -5425,9 +5447,9 @@ rl2_load_dbms_tiles_transparent (sqlite3 * handle, int max_threads,
 
     if (!load_dbms_tiles_common_transparent
 	(handle, max_threads, stmt_tiles, stmt_data, outbuf, mask, width,
-	 height, sample_type, num_bands, auto_ndvi, red_band_index,
-	 nir_band_index, x_res, y_res, minx, maxy, scale, palette, no_data,
-	 style, stats))
+	 height, sample_type, num_bands, auto_band, syntetic_band,
+	 red_band_index, green_band_index, blue_band_index, nir_band_index,
+	 x_res, y_res, minx, maxy, scale, palette, no_data, style, stats))
 	return 0;
     return 1;
 }
@@ -5443,8 +5465,11 @@ rl2_load_dbms_tiles_section_transparent (sqlite3 * handle, int max_threads,
 					 unsigned int height,
 					 unsigned char sample_type,
 					 unsigned char num_bands,
-					 unsigned char auto_ndvi,
+					 unsigned char auto_band,
+					 unsigned char syntetic_band,
 					 unsigned char red_band_index,
+					 unsigned char green_band_index,
+					 unsigned char blue_band_index,
 					 unsigned char nir_band_index,
 					 double x_res, double y_res,
 					 double minx, double miny, double maxx,
@@ -5464,9 +5489,9 @@ rl2_load_dbms_tiles_section_transparent (sqlite3 * handle, int max_threads,
 
     if (!load_dbms_tiles_common_transparent
 	(handle, max_threads, stmt_tiles, stmt_data, outbuf, mask, width,
-	 height, sample_type, num_bands, auto_ndvi, red_band_index,
-	 nir_band_index, x_res, y_res, minx, maxy, scale, palette, no_data,
-	 NULL, NULL))
+	 height, sample_type, num_bands, auto_band, syntetic_band,
+	 red_band_index, green_band_index, blue_band_index, nir_band_index,
+	 x_res, y_res, minx, maxy, scale, palette, no_data, NULL, NULL))
 	return 0;
     return 1;
 }
@@ -5912,7 +5937,8 @@ rl2_get_raw_raster_data_common (sqlite3 * handle, int max_threads,
 				unsigned int height, double minx, double miny,
 				double maxx, double maxy, double x_res,
 				double y_res, unsigned char **buffer,
-				int *buf_size, rl2PalettePtr * palette,
+				int *buf_size, unsigned char syntetic_band,
+				rl2PalettePtr * palette,
 				unsigned char out_pixel, rl2PixelPtr bgcolor,
 				rl2RasterSymbolizerPtr style,
 				rl2RasterStatisticsPtr stats)
@@ -6299,9 +6325,9 @@ rl2_get_raw_raster_data_common (sqlite3 * handle, int max_threads,
 	  /* only from a single Section */
 	  if (!rl2_load_dbms_tiles_section
 	      (handle, max_threads, section_id, stmt_tiles, stmt_data, bufpix,
-	       width, height, sample_type, num_bands, auto_ndvi, red_band,
-	       nir_band, xx_res, yy_res, minx, miny, maxx, maxy, level, scale,
-	       plt, no_data))
+	       width, height, sample_type, num_bands, auto_ndvi, syntetic_band,
+	       red_band, green_band, blue_band, nir_band, xx_res, yy_res, minx,
+	       miny, maxx, maxy, level, scale, plt, no_data))
 	      goto error;
       }
     else
@@ -6309,9 +6335,9 @@ rl2_get_raw_raster_data_common (sqlite3 * handle, int max_threads,
 	  /* whole Coverage */
 	  if (!rl2_load_dbms_tiles
 	      (handle, max_threads, stmt_tiles, stmt_data, bufpix, width,
-	       height, sample_type, num_bands, auto_ndvi, red_band, nir_band,
-	       xx_res, yy_res, minx, miny, maxx, maxy, level, scale, plt,
-	       no_data, style, stats))
+	       height, sample_type, num_bands, auto_ndvi, syntetic_band,
+	       red_band, green_band, blue_band, nir_band, xx_res, yy_res, minx,
+	       miny, maxx, maxy, level, scale, plt, no_data, style, stats))
 	      goto error;
       }
     if (kill_no_data != NULL)
@@ -6383,6 +6409,7 @@ rl2_get_raw_raster_data_common_transparent (sqlite3 * handle, int max_threads,
 					    unsigned char **buffer,
 					    int *buf_size, unsigned char **mask,
 					    int *mask_size,
+					    unsigned char syntetic_band,
 					    rl2PalettePtr * palette,
 					    unsigned char out_pixel,
 					    rl2PixelPtr no_data,
@@ -6686,8 +6713,8 @@ rl2_get_raw_raster_data_common_transparent (sqlite3 * handle, int max_threads,
 	  if (!rl2_load_dbms_tiles_section_transparent
 	      (handle, max_threads, section_id, stmt_tiles, stmt_data, bufpix,
 	       bufmask, width, height, sample_type, num_bands, auto_ndvi,
-	       red_band, nir_band, xx_res, yy_res, minx, miny, maxx, maxy,
-	       level, scale, plt, no_data))
+	       syntetic_band, red_band, green_band, blue_band, nir_band, xx_res,
+	       yy_res, minx, miny, maxx, maxy, level, scale, plt, no_data))
 	      goto error;
       }
     else
@@ -6695,9 +6722,9 @@ rl2_get_raw_raster_data_common_transparent (sqlite3 * handle, int max_threads,
 	  /* whole Coverage */
 	  if (!rl2_load_dbms_tiles_transparent
 	      (handle, max_threads, stmt_tiles, stmt_data, bufpix, bufmask,
-	       width, height, sample_type, num_bands, auto_ndvi, red_band,
-	       nir_band, xx_res, yy_res, minx, miny, maxx, maxy, level, scale,
-	       plt, no_data, style, stats))
+	       width, height, sample_type, num_bands, auto_ndvi, syntetic_band,
+	       red_band, green_band, blue_band, nir_band, xx_res, yy_res, minx,
+	       miny, maxx, maxy, level, scale, plt, no_data, style, stats))
 	      goto error;
       }
     sqlite3_finalize (stmt_tiles);
@@ -6761,9 +6788,9 @@ get_raw_raster_data_nodata (sqlite3 * handle, int max_threads,
 			    double maxx, double maxy, double x_res,
 			    double y_res, unsigned char **buffer,
 			    int *buf_size, unsigned char **mask,
-			    int *mask_size, rl2PalettePtr * palette,
-			    unsigned char *out_pixel, rl2PixelPtr no_data,
-			    rl2RasterSymbolizerPtr style,
+			    int *mask_size, unsigned char syntetic_band,
+			    rl2PalettePtr * palette, unsigned char *out_pixel,
+			    rl2PixelPtr no_data, rl2RasterSymbolizerPtr style,
 			    rl2RasterStatisticsPtr stats)
 {
 /* 
@@ -7090,8 +7117,8 @@ get_raw_raster_data_nodata (sqlite3 * handle, int max_threads,
 	  if (!rl2_load_dbms_tiles_section_transparent
 	      (handle, max_threads, section_id, stmt_tiles, stmt_data, bufpix,
 	       bufmask, width, height, sample_type, num_bands, auto_ndvi,
-	       red_band, nir_band, xx_res, yy_res, minx, miny, maxx, maxy,
-	       level, scale, plt, no_data))
+	       syntetic_band, red_band, green_band, blue_band, nir_band, xx_res,
+	       yy_res, minx, miny, maxx, maxy, level, scale, plt, no_data))
 	      goto error;
       }
     else
@@ -7099,9 +7126,9 @@ get_raw_raster_data_nodata (sqlite3 * handle, int max_threads,
 	  /* whole Coverage */
 	  if (!rl2_load_dbms_tiles_transparent
 	      (handle, max_threads, stmt_tiles, stmt_data, bufpix, bufmask,
-	       width, height, sample_type, num_bands, auto_ndvi, red_band,
-	       nir_band, xx_res, yy_res, minx, miny, maxx, maxy, level, scale,
-	       plt, no_data, style, stats))
+	       width, height, sample_type, num_bands, auto_ndvi, syntetic_band,
+	       red_band, green_band, blue_band, nir_band, xx_res, yy_res, minx,
+	       miny, maxx, maxy, level, scale, plt, no_data, style, stats))
 	      goto error;
       }
     sqlite3_finalize (stmt_tiles);
@@ -7169,8 +7196,8 @@ rl2_get_raw_raster_data (sqlite3 * handle, int max_threads,
     return rl2_get_raw_raster_data_common (handle, max_threads, cvg, 0, 0,
 					   width, height, minx, miny, maxx,
 					   maxy, x_res, y_res, buffer,
-					   buf_size, palette, out_pixel, NULL,
-					   NULL, NULL);
+					   buf_size, RL2_SYNTETIC_NONE, palette,
+					   out_pixel, NULL, NULL, NULL);
 }
 
 RL2_DECLARE int
@@ -7187,8 +7214,9 @@ rl2_get_section_raw_raster_data (sqlite3 * handle, int max_threads,
     return rl2_get_raw_raster_data_common (handle, max_threads, cvg, 1,
 					   section_id, width, height, minx,
 					   miny, maxx, maxy, x_res, y_res,
-					   buffer, buf_size, palette,
-					   out_pixel, NULL, NULL, NULL);
+					   buffer, buf_size, RL2_SYNTETIC_NONE,
+					   palette, out_pixel, NULL, NULL,
+					   NULL);
 }
 
 static int
@@ -7857,8 +7885,9 @@ rl2_get_raw_raster_data_bgcolor (sqlite3 * handle, int max_threads,
     ret =
 	rl2_get_raw_raster_data_common (handle, max_threads, cvg, 0, 0, width,
 					height, minx, miny, maxx, maxy, x_res,
-					y_res, buffer, buf_size, palette,
-					*out_pixel, no_data, xstyle, stats);
+					y_res, buffer, buf_size,
+					RL2_SYNTETIC_NONE, palette, *out_pixel,
+					no_data, xstyle, stats);
     if (no_data != NULL)
 	rl2_destroy_pixel (no_data);
     if (*out_pixel == RL2_PIXEL_GRAYSCALE && pixel_type == RL2_PIXEL_DATAGRID)
@@ -7963,7 +7992,7 @@ rl2_get_raw_raster_data_transparent (sqlite3 * handle, int max_threads,
 				     double miny, double maxx, double maxy,
 				     double x_res, double y_res,
 				     unsigned char **buffer, int *buf_size,
-				     unsigned char **mask, int *mask_size,
+				     unsigned char **mask, int *mask_size, unsigned char syntetic_band,
 				     rl2PalettePtr * palette,
 				     unsigned char *out_pixel,
 				     rl2PixelPtr no_data,
@@ -7983,8 +8012,8 @@ rl2_get_raw_raster_data_transparent (sqlite3 * handle, int max_threads,
 	get_raw_raster_data_nodata (handle, max_threads, cvg, 0, 0, width,
 				    height, minx, miny, maxx, maxy, x_res,
 				    y_res, buffer, buf_size, mask,
-				    mask_size, palette, out_pixel, no_data,
-				    style, stats);
+				    mask_size, syntetic_band, palette,
+				    out_pixel, no_data, style, stats);
     return ret;
 }
 

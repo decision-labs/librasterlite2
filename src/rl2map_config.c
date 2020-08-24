@@ -247,6 +247,7 @@ do_create_map_config ()
     map_config->label_wrap_text = 0;
     map_config->label_auto_rotate = 0;
     map_config->label_shift_position = 0;
+    map_config->bbox = NULL;
     map_config->first_db = NULL;
     map_config->last_db = NULL;
     map_config->first_lyr = NULL;
@@ -563,6 +564,8 @@ rl2_destroy_map_config (rl2MapConfigPtr ptr)
 	free (map_config->title);
     if (map_config->abstract != NULL)
 	free (map_config->abstract);
+    if (map_config->bbox != NULL)
+	free (map_config->bbox);
     pDB = map_config->first_db;
     while (pDB != NULL)
       {
@@ -691,6 +694,7 @@ do_add_vector_style (rl2MapLayerPtr lyr)
     style->last_line_sym = NULL;
     style->polygon_sym = NULL;
     style->text_sym = NULL;
+    style->text_alone = 0;
     lyr->vector_style = style;
     return style;
 }
@@ -1398,7 +1402,6 @@ do_add_text_symbolizer (rl2MapVectorLayerStylePtr style)
     sym->placement = NULL;
     sym->halo = NULL;
     sym->fill = NULL;
-    sym->alone = 0;
     style->text_sym = sym;
     return sym;
 }
@@ -3009,34 +3012,6 @@ static void
 parse_text_symbolizer (xmlNodePtr node, rl2MapTextSymbolizerPtr sym)
 {
 /* parsing a <TextSymbolizer> tag */
-    struct _xmlAttr *attr = node->properties;
-    while (attr != NULL)
-      {
-	  /* attributes */
-	  if (attr->type == XML_ATTRIBUTE_NODE)
-	    {
-		const char *name = (const char *) (attr->name);
-		if (strcmp (name, "TextSymbolizerAlone") == 0)
-		  {
-		      xmlNode *text = attr->children;
-		      if (text != NULL)
-			{
-			    if (text->type == XML_TEXT_NODE)
-			      {
-				  const char *value =
-				      (const char *) (text->content);
-				  sym->alone = 0;
-				  if (value != NULL)
-				    {
-					if (strcmp (value, "true") == 0)
-					    sym->alone = 1;
-				    }
-			      }
-			}
-		  }
-		attr = attr->next;
-	    }
-      }
 
     node = node->children;
     while (node)
@@ -3122,6 +3097,36 @@ static void
 parse_vector_layer_style (xmlNodePtr node, rl2MapLayerPtr lyr)
 {
 /* parsing a <VectorLayerStyle> tag */
+    struct _xmlAttr *attr = node->properties;
+    while (attr != NULL)
+      {
+	  /* attributes */
+	  if (attr->type == XML_ATTRIBUTE_NODE)
+	    {
+		const char *name = (const char *) (attr->name);
+		if (strcmp (name, "TextSymbolizerAlone") == 0)
+		  {
+		      xmlNode *text = attr->children;
+		      if (text != NULL)
+			{
+			    if (text->type == XML_TEXT_NODE)
+			      {
+				  const char *value =
+				      (const char *) (text->content);
+				  lyr->vector_style->text_alone = 0;
+				  if (value != NULL)
+				    {
+					if (strcmp (value, "true") == 0)
+					    lyr->vector_style->text_alone = 1;
+				    }
+			      }
+			}
+		  }
+		attr = attr->next;
+	    }
+      }
+
+    node = node->children;
     while (node)
       {
 	  if (node->type == XML_ELEMENT_NODE)
@@ -4320,7 +4325,7 @@ parse_map_layer (xmlNodePtr node, rl2MapConfigPtr map_config)
 		      rl2MapVectorLayerStylePtr style =
 			  do_add_vector_style (lyr);
 		      if (style != NULL)
-			  parse_vector_layer_style (node->children, lyr);
+			  parse_vector_layer_style (node, lyr);
 		  }
 		if (strcmp (name, "TopologyLayerStyle") == 0)
 		  {
@@ -4737,6 +4742,71 @@ parse_label_advanced_options (xmlNodePtr node, rl2MapConfigPtr map_config)
 }
 
 static void
+parse_map_bbox (xmlNodePtr node, rl2MapConfigPtr map_config)
+{
+/* parsing a <MapBoundingBox> tag */
+    struct _xmlAttr *attr;
+
+    if (map_config->bbox == NULL)
+	map_config->bbox = malloc (sizeof (rl2MapBoundingBox));
+    map_config->bbox->minx = 0.0;
+    map_config->bbox->miny = 0.0;
+    map_config->bbox->maxx = 0.0;
+    map_config->bbox->maxy = 0.0;
+
+    attr = node->properties;
+    while (attr != NULL)
+      {
+	  /* attributes */
+	  if (attr->type == XML_ATTRIBUTE_NODE)
+	    {
+		const char *nm = (const char *) (attr->name);
+		if (strcmp (nm, "MinX") == 0)
+		  {
+		      xmlNode *text = attr->children;
+		      if (text != NULL)
+			{
+			    if (text->type == XML_TEXT_NODE)
+				map_config->bbox->minx =
+				    atof ((const char *) text->content);
+			}
+		  }
+		if (strcmp (nm, "MinY") == 0)
+		  {
+		      xmlNode *text = attr->children;
+		      if (text != NULL)
+			{
+			    if (text->type == XML_TEXT_NODE)
+				map_config->bbox->miny =
+				    atof ((const char *) text->content);
+			}
+		  }
+		if (strcmp (nm, "MaxX") == 0)
+		  {
+		      xmlNode *text = attr->children;
+		      if (text != NULL)
+			{
+			    if (text->type == XML_TEXT_NODE)
+				map_config->bbox->maxx =
+				    atof ((const char *) text->content);
+			}
+		  }
+		if (strcmp (nm, "MaxY") == 0)
+		  {
+		      xmlNode *text = attr->children;
+		      if (text != NULL)
+			{
+			    if (text->type == XML_TEXT_NODE)
+				map_config->bbox->maxy =
+				    atof ((const char *) text->content);
+			}
+		  }
+	    }
+	  attr = attr->next;
+      }
+}
+
+static void
 parse_map_options (xmlNodePtr node, rl2MapConfigPtr map_config)
 {
 /* parsing a <MapOptions> tag */
@@ -4877,6 +4947,8 @@ parse_map_config (xmlNodePtr node, rl2MapConfigPtr map_config)
 		    parse_map_config_description (node->children, map_config);
 		if (strcmp (name, "MapOptions") == 0)
 		    parse_map_options (node->children, map_config);
+		if (strcmp (name, "MapBoundingBox") == 0)
+		    parse_map_bbox (node, map_config);
 		if (strcmp (name, "MapAttachedDatabases") == 0)
 		    parse_map_attached_databases (node->children, map_config);
 		if (strcmp (name, "MapLayer") == 0)
@@ -4944,4 +5016,1523 @@ rl2_parse_map_config_xml (const unsigned char *xml)
     if (map_config != NULL)
 	rl2_destroy_map_config ((rl2MapConfigPtr) map_config);
     return NULL;
+}
+
+static rl2MapChannelSelectionPtr
+clone_channel_selection (rl2MapChannelSelectionPtr old_cs)
+{
+/* cloning a Channel Selection */
+    rl2MapChannelSelectionPtr new_cs = malloc (sizeof (rl2MapChannelSelection));
+    new_cs->rgb = old_cs->rgb;
+    new_cs->red_channel = old_cs->red_channel;
+    new_cs->green_channel = old_cs->green_channel;
+    new_cs->blue_channel = old_cs->blue_channel;
+    new_cs->gray_channel = old_cs->gray_channel;
+    return new_cs;
+}
+
+static rl2MapColorRampPtr
+clone_color_ramp (rl2MapColorRampPtr old_cr)
+{
+/* cloning a Color Ramp */
+    int len;
+    rl2MapColorRampPtr new_cr = malloc (sizeof (rl2MapColorRamp));
+    new_cr->min_value = old_cr->min_value;
+    new_cr->max_value = old_cr->max_value;
+    if (old_cr->min_color == NULL)
+	new_cr->min_color = NULL;
+    else
+      {
+	  len = strlen (old_cr->min_color);
+	  new_cr->min_color = malloc (len + 1);
+	  strcpy (new_cr->min_color, old_cr->min_color);
+      }
+    if (old_cr->max_color == NULL)
+	new_cr->max_color = NULL;
+    else
+      {
+	  len = strlen (old_cr->max_color);
+	  new_cr->max_color = malloc (len + 1);
+	  strcpy (new_cr->max_color, old_cr->max_color);
+      }
+    return new_cr;
+}
+
+static rl2MapContrastEnhancementPtr
+clone_contrast_enhancement (rl2MapContrastEnhancementPtr old_ce)
+{
+/* cloning a Contrast Enhancement */
+    rl2MapContrastEnhancementPtr new_ce =
+	malloc (sizeof (rl2MapContrastEnhancement));
+    new_ce->normalize = old_ce->normalize;
+    new_ce->histogram = old_ce->histogram;
+    new_ce->gamma = old_ce->gamma;
+    new_ce->gamma_value = old_ce->gamma_value;
+    return new_ce;
+}
+
+static rl2MapRasterLayerStylePtr
+clone_raster_style (rl2MapRasterLayerStylePtr old_style)
+{
+/* cloning a Raster Style */
+    int len;
+    rl2MapRasterLayerStylePtr new_style =
+	malloc (sizeof (rl2MapRasterLayerStyle));
+    new_style->opacity = old_style->opacity;
+    if (old_style->channel_selection == NULL)
+	new_style->channel_selection = NULL;
+    else
+	new_style->channel_selection =
+	    clone_channel_selection (old_style->channel_selection);
+    if (old_style->color_map_name == NULL)
+	new_style->color_map_name = NULL;
+    else
+      {
+	  len = strlen (old_style->color_map_name);
+	  new_style->color_map_name = malloc (len + 1);
+	  strcpy (new_style->color_map_name, old_style->color_map_name);
+      }
+    if (old_style->color_ramp == NULL)
+	new_style->color_ramp = NULL;
+    else
+	new_style->color_ramp = clone_color_ramp (old_style->color_ramp);
+    if (old_style->contrast_enhancement == NULL)
+	new_style->contrast_enhancement = NULL;
+    else
+	new_style->contrast_enhancement =
+	    clone_contrast_enhancement (old_style->contrast_enhancement);
+    new_style->shaded_relief = old_style->shaded_relief;
+    new_style->relief_factor = old_style->relief_factor;
+    return new_style;
+}
+
+static rl2MapColorPtr
+clone_color_replacement (rl2MapColorPtr old_cr)
+{
+/* cloning a Color Replacement */
+    rl2MapColorPtr new_cr = malloc (sizeof (rl2MapColor));
+    new_cr->red = old_cr->red;
+    new_cr->green = old_cr->green;
+    new_cr->blue = old_cr->blue;
+    return new_cr;
+}
+
+static rl2MapGraphicFillPtr
+clone_graphic (rl2MapGraphicFillPtr old_graphic)
+{
+/* cloning a Graphic */
+    int len;
+    rl2MapGraphicFillPtr new_graphic = malloc (sizeof (rl2MapGraphicFill));
+    if (old_graphic->resource == NULL)
+	new_graphic->resource = NULL;
+    else
+      {
+	  len = strlen (old_graphic->resource);
+	  new_graphic->resource = malloc (len + 1);
+	  strcpy (new_graphic->resource, old_graphic->resource);
+      }
+    if (old_graphic->format == NULL)
+	new_graphic->format = NULL;
+    else
+      {
+	  len = strlen (old_graphic->format);
+	  new_graphic->format = malloc (len + 1);
+	  strcpy (new_graphic->format, old_graphic->format);
+      }
+    if (old_graphic->color == NULL)
+	new_graphic->color = NULL;
+    else
+	new_graphic->color = clone_color_replacement (old_graphic->color);
+    return new_graphic;
+}
+
+static rl2MapFillPtr
+clone_fill (rl2MapFillPtr old_fill)
+{
+/* cloning a Fill */
+    rl2MapFillPtr new_fill = malloc (sizeof (rl2MapFill));
+    if (old_fill->graphic == NULL)
+	new_fill->graphic = NULL;
+    else
+	new_fill->graphic = clone_graphic (old_fill->graphic);
+    new_fill->red = old_fill->red;
+    new_fill->green = old_fill->green;
+    new_fill->blue = old_fill->blue;
+    new_fill->opacity = old_fill->opacity;
+    return new_fill;
+}
+
+static rl2MapStrokePtr
+clone_stroke (rl2MapStrokePtr old_stroke)
+{
+/* cloning a Stroke */
+    rl2MapStrokePtr new_stroke = malloc (sizeof (rl2MapStroke));
+    new_stroke->red = old_stroke->red;
+    new_stroke->green = old_stroke->green;
+    new_stroke->blue = old_stroke->blue;
+    new_stroke->opacity = old_stroke->opacity;
+    new_stroke->width = old_stroke->width;
+    new_stroke->dot_style = old_stroke->dot_style;
+    return new_stroke;
+}
+
+static rl2MapMarkPtr
+clone_mark (rl2MapMarkPtr old_mark)
+{
+/* cloning a Mark (Point) */
+    rl2MapMarkPtr new_mark = malloc (sizeof (rl2MapMark));
+    new_mark->type = old_mark->type;
+    if (old_mark->fill == NULL)
+	new_mark->fill = NULL;
+    else
+	new_mark->fill = clone_fill (old_mark->fill);
+    if (old_mark->stroke == NULL)
+	new_mark->stroke = NULL;
+    else
+	new_mark->stroke = clone_stroke (old_mark->stroke);
+    return new_mark;
+}
+
+static rl2MapPointSymbolizerPtr
+clone_point_symbolizer (rl2MapPointSymbolizerPtr old_sym)
+{
+/* cloning a Point Symbolizer */
+    rl2MapPointSymbolizerPtr new_sym = malloc (sizeof (rl2MapPointSymbolizer));
+    if (old_sym->mark == NULL)
+	new_sym->mark = NULL;
+    else
+	new_sym->mark = clone_mark (old_sym->mark);
+    if (old_sym->graphic == NULL)
+	new_sym->graphic = NULL;
+    else
+	new_sym->graphic = clone_graphic (old_sym->graphic);
+    new_sym->opacity = old_sym->opacity;
+    new_sym->size = old_sym->size;
+    new_sym->anchor_x = old_sym->anchor_x;
+    new_sym->anchor_y = old_sym->anchor_y;
+    new_sym->displacement_x = old_sym->displacement_x;
+    new_sym->displacement_y = old_sym->displacement_y;
+    new_sym->rotation = old_sym->rotation;
+    return new_sym;
+}
+
+static rl2MapLineSymbolizerPtr
+clone_line_symbolizer (rl2MapLineSymbolizerPtr old_sym)
+{
+/* cloning a Line Symbolizer */
+    rl2MapLineSymbolizerPtr new_sym = malloc (sizeof (rl2MapLineSymbolizer));
+    if (old_sym->stroke == NULL)
+	new_sym->stroke = NULL;
+    else
+	new_sym->stroke = clone_stroke (old_sym->stroke);
+    new_sym->perpendicular_offset = old_sym->perpendicular_offset;
+    new_sym->next = NULL;
+    return new_sym;
+}
+
+static rl2MapPolygonSymbolizerPtr
+clone_polygon_symbolizer (rl2MapPolygonSymbolizerPtr old_sym)
+{
+/* cloning a Polygon Symbolizer */
+    rl2MapPolygonSymbolizerPtr new_sym =
+	malloc (sizeof (rl2MapPolygonSymbolizer));
+    if (old_sym->fill == NULL)
+	new_sym->fill = NULL;
+    else
+	new_sym->fill = clone_fill (old_sym->fill);
+    if (old_sym->stroke == NULL)
+	new_sym->stroke = NULL;
+    else
+	new_sym->stroke = clone_stroke (old_sym->stroke);
+    new_sym->displacement_x = old_sym->displacement_x;
+    new_sym->displacement_y = old_sym->displacement_y;
+    new_sym->perpendicular_offset = old_sym->perpendicular_offset;
+    return new_sym;
+}
+
+static rl2MapFontPtr
+clone_font (rl2MapFontPtr old_font)
+{
+/* cloning a Font */
+    int len;
+    rl2MapFontPtr new_font = malloc (sizeof (rl2MapFont));
+    if (old_font->family == NULL)
+	new_font->family = NULL;
+    else
+      {
+	  len = strlen (old_font->family);
+	  new_font->family = malloc (len + 1);
+	  strcpy (new_font->family, old_font->family);
+      }
+    new_font->style = old_font->style;
+    new_font->weight = old_font->weight;
+    new_font->size = old_font->size;
+    return new_font;
+}
+
+static rl2MapPointPlacementPtr
+clone_point_placement (rl2MapPointPlacementPtr old_pl)
+{
+/* cloning a Label Point Placement */
+    rl2MapPointPlacementPtr new_pl = malloc (sizeof (rl2MapPointPlacement));
+    new_pl->anchor_x = old_pl->anchor_x;
+    new_pl->anchor_y = old_pl->anchor_y;
+    new_pl->displacement_x = old_pl->displacement_x;
+    new_pl->displacement_y = old_pl->displacement_y;
+    new_pl->rotation = old_pl->rotation;
+    return new_pl;
+}
+
+static rl2MapLinePlacementPtr
+clone_line_placement (rl2MapLinePlacementPtr old_pl)
+{
+/* cloning a Label Line Placement */
+    rl2MapLinePlacementPtr new_pl = malloc (sizeof (rl2MapLinePlacement));
+    new_pl->perpendicular_offset = old_pl->perpendicular_offset;
+    new_pl->repeated = old_pl->repeated;
+    new_pl->initial_gap = old_pl->initial_gap;
+    new_pl->gap = old_pl->gap;
+    new_pl->aligned = old_pl->aligned;
+    new_pl->generalize = old_pl->generalize;
+    return new_pl;
+}
+
+static rl2MapPlacementPtr
+clone_label_placement (rl2MapPlacementPtr old_pl)
+{
+/* cloning a Label Placement */
+    rl2MapPlacementPtr new_pl = malloc (sizeof (rl2MapPlacement));
+    if (old_pl->point == NULL)
+	new_pl->point = NULL;
+    else
+	new_pl->point = clone_point_placement (old_pl->point);
+    if (old_pl->line == NULL)
+	new_pl->line = NULL;
+    else
+	new_pl->line = clone_line_placement (old_pl->line);
+    return new_pl;
+}
+
+static rl2MapHaloPtr
+clone_halo (rl2MapHaloPtr old_halo)
+{
+/* cloning a Halo */
+    rl2MapHaloPtr new_halo = malloc (sizeof (rl2MapHalo));
+    new_halo->radius = old_halo->radius;
+    if (old_halo->fill == NULL)
+	new_halo->fill = NULL;
+    else
+	new_halo->fill = clone_fill (old_halo->fill);
+    return new_halo;
+}
+
+static rl2MapTextSymbolizerPtr
+clone_text_symbolizer (rl2MapTextSymbolizerPtr old_sym)
+{
+/* cloning a Text Symbolizer */
+    int len;
+    rl2MapTextSymbolizerPtr new_sym = malloc (sizeof (rl2MapTextSymbolizer));
+    if (old_sym->label == NULL)
+	new_sym->label = NULL;
+    else
+      {
+	  len = strlen (old_sym->label);
+	  new_sym->label = malloc (len + 1);
+	  strcpy (new_sym->label, old_sym->label);
+      }
+    if (old_sym->font == NULL)
+	new_sym->font = NULL;
+    else
+	new_sym->font = clone_font (old_sym->font);
+    if (old_sym->placement == NULL)
+	new_sym->placement = NULL;
+    else
+	new_sym->placement = clone_label_placement (old_sym->placement);
+    if (old_sym->halo == NULL)
+	new_sym->halo = NULL;
+    else
+	new_sym->halo = clone_halo (old_sym->halo);
+    if (old_sym->fill == NULL)
+	new_sym->fill = NULL;
+    else
+	new_sym->fill = clone_fill (old_sym->fill);
+    return new_sym;
+}
+
+static rl2MapVectorLayerStylePtr
+clone_vector_style (rl2MapVectorLayerStylePtr old_style)
+{
+/* cloning a Vector Style */
+    rl2MapLineSymbolizerPtr line;
+    rl2MapVectorLayerStylePtr new_style =
+	malloc (sizeof (rl2MapVectorLayerStyle));
+    if (old_style->point_sym == NULL)
+	new_style->point_sym = NULL;
+    else
+	new_style->point_sym = clone_point_symbolizer (old_style->point_sym);
+    new_style->first_line_sym = NULL;
+    new_style->last_line_sym = NULL;
+    line = old_style->first_line_sym;
+    while (line != NULL)
+      {
+	  rl2MapLineSymbolizerPtr new_ln = clone_line_symbolizer (line);
+	  if (new_style->first_line_sym == NULL)
+	      new_style->first_line_sym = new_ln;
+	  if (new_style->last_line_sym != NULL)
+	      new_style->last_line_sym->next = new_ln;
+	  new_style->last_line_sym = new_ln;
+	  line = line->next;
+      }
+    if (old_style->polygon_sym == NULL)
+	new_style->polygon_sym = NULL;
+    else
+	new_style->polygon_sym =
+	    clone_polygon_symbolizer (old_style->polygon_sym);
+    if (old_style->text_sym == NULL)
+	new_style->text_sym = NULL;
+    else
+	new_style->text_sym = clone_text_symbolizer (old_style->text_sym);
+    new_style->text_alone = old_style->text_alone;
+    return new_style;
+}
+
+static rl2MapTopologyLayerStylePtr
+clone_topology_style (rl2MapTopologyLayerStylePtr old_style)
+{
+/* cloning a Topology Style */
+    rl2MapTopologyLayerStylePtr new_style =
+	malloc (sizeof (rl2MapTopologyLayerStyle));
+    new_style->show_faces = old_style->show_faces;
+    new_style->show_edges = old_style->show_edges;
+    new_style->show_nodes = old_style->show_nodes;
+    new_style->show_edge_seeds = old_style->show_edge_seeds;
+    new_style->show_face_seeds = old_style->show_face_seeds;
+    if (old_style->faces_sym == NULL)
+	new_style->faces_sym = NULL;
+    else
+	new_style->faces_sym = clone_polygon_symbolizer (old_style->faces_sym);
+    if (old_style->edges_sym == NULL)
+	new_style->edges_sym = NULL;
+    else
+	new_style->edges_sym = clone_line_symbolizer (old_style->edges_sym);
+    if (old_style->nodes_sym == NULL)
+	new_style->nodes_sym = NULL;
+    else
+	new_style->nodes_sym = clone_point_symbolizer (old_style->nodes_sym);
+    if (old_style->edge_seeds_sym == NULL)
+	new_style->edge_seeds_sym = NULL;
+    else
+	new_style->edge_seeds_sym =
+	    clone_point_symbolizer (old_style->edge_seeds_sym);
+    if (old_style->face_seeds_sym == NULL)
+	new_style->face_seeds_sym = NULL;
+    else
+	new_style->face_seeds_sym =
+	    clone_point_symbolizer (old_style->face_seeds_sym);
+    return new_style;
+}
+
+static rl2MapTopologyLayerInternalStylePtr
+clone_topology_internal_style (rl2MapTopologyLayerInternalStylePtr old_style)
+{
+/* cloning a Topology Internal Style */
+    int len;
+    rl2MapTopologyLayerInternalStylePtr new_style =
+	malloc (sizeof (rl2MapTopologyLayerInternalStyle));
+    if (old_style->style_internal_name == NULL)
+	new_style->style_internal_name = NULL;
+    else
+      {
+	  len = strlen (old_style->style_internal_name);
+	  new_style->style_internal_name = malloc (len + 1);
+	  strcpy (new_style->style_internal_name,
+		  old_style->style_internal_name);
+      }
+    new_style->show_faces = old_style->show_faces;
+    new_style->show_edges = old_style->show_edges;
+    new_style->show_nodes = old_style->show_nodes;
+    new_style->show_edge_seeds = old_style->show_edge_seeds;
+    new_style->show_face_seeds = old_style->show_face_seeds;
+    return new_style;
+}
+
+static rl2MapNetworkLayerStylePtr
+clone_network_style (rl2MapNetworkLayerStylePtr old_style)
+{
+/* cloning a Network Style */
+    rl2MapNetworkLayerStylePtr new_style =
+	malloc (sizeof (rl2MapNetworkLayerStyle));
+    new_style->show_links = old_style->show_links;
+    new_style->show_nodes = old_style->show_nodes;
+    new_style->show_link_seeds = old_style->show_link_seeds;
+    if (old_style->links_sym == NULL)
+	new_style->links_sym = NULL;
+    else
+	new_style->links_sym = clone_line_symbolizer (old_style->links_sym);
+    if (old_style->nodes_sym == NULL)
+	new_style->nodes_sym = NULL;
+    else
+	new_style->nodes_sym = clone_point_symbolizer (old_style->nodes_sym);
+    if (old_style->link_seeds_sym == NULL)
+	new_style->link_seeds_sym = NULL;
+    else
+	new_style->link_seeds_sym =
+	    clone_point_symbolizer (old_style->link_seeds_sym);
+    return new_style;
+}
+
+static rl2MapNetworkLayerInternalStylePtr
+clone_network_internal_style (rl2MapNetworkLayerInternalStylePtr old_style)
+{
+/* cloning a Network Internal Style */
+    int len;
+    rl2MapNetworkLayerInternalStylePtr new_style =
+	malloc (sizeof (rl2MapNetworkLayerInternalStyle));
+    if (old_style->style_internal_name == NULL)
+	new_style->style_internal_name = NULL;
+    else
+      {
+	  len = strlen (old_style->style_internal_name);
+	  new_style->style_internal_name = malloc (len + 1);
+	  strcpy (new_style->style_internal_name,
+		  old_style->style_internal_name);
+      }
+    new_style->show_links = old_style->show_links;
+    new_style->show_nodes = old_style->show_nodes;
+    new_style->show_link_seeds = old_style->show_link_seeds;
+    return new_style;
+}
+
+static rl2MapWmsLayerStylePtr
+clone_wms_style (rl2MapWmsLayerStylePtr old_style)
+{
+/* cloning a WMS Style */
+    int len;
+    rl2MapWmsLayerStylePtr new_style = malloc (sizeof (rl2MapWmsLayerStyle));
+    if (old_style->get_map_url == NULL)
+	new_style->get_map_url = NULL;
+    else
+      {
+	  len = strlen (old_style->get_map_url);
+	  new_style->get_map_url = malloc (len + 1);
+	  strcpy (new_style->get_map_url, old_style->get_map_url);
+      }
+    if (old_style->get_feature_info_url == NULL)
+	new_style->get_feature_info_url = NULL;
+    else
+      {
+	  len = strlen (old_style->get_feature_info_url);
+	  new_style->get_feature_info_url = malloc (len + 1);
+	  strcpy (new_style->get_feature_info_url,
+		  old_style->get_feature_info_url);
+      }
+    if (old_style->wms_protocol == NULL)
+	new_style->wms_protocol = NULL;
+    else
+      {
+	  len = strlen (old_style->wms_protocol);
+	  new_style->wms_protocol = malloc (len + 1);
+	  strcpy (new_style->wms_protocol, old_style->wms_protocol);
+      }
+    if (old_style->crs == NULL)
+	new_style->crs = NULL;
+    else
+      {
+	  len = strlen (old_style->crs);
+	  new_style->crs = malloc (len + 1);
+	  strcpy (new_style->crs, old_style->crs);
+      }
+    new_style->swap_xy = old_style->swap_xy;
+    if (old_style->style == NULL)
+	new_style->style = NULL;
+    else
+      {
+	  len = strlen (old_style->style);
+	  new_style->style = malloc (len + 1);
+	  strcpy (new_style->style, old_style->style);
+      }
+    if (old_style->image_format == NULL)
+	new_style->image_format = NULL;
+    else
+      {
+	  len = strlen (old_style->image_format);
+	  new_style->image_format = malloc (len + 1);
+	  strcpy (new_style->image_format, old_style->image_format);
+      }
+    new_style->opaque = old_style->opaque;
+    if (old_style->background_color == NULL)
+	new_style->background_color = NULL;
+    else
+      {
+	  len = strlen (old_style->background_color);
+	  new_style->background_color = malloc (len + 1);
+	  strcpy (new_style->background_color, old_style->background_color);
+      }
+    new_style->is_tiled = old_style->is_tiled;
+    new_style->tile_width = old_style->tile_width;
+    new_style->tile_height = old_style->tile_height;
+    return new_style;
+}
+
+static void
+clone_map_layer (rl2MapLayerPtr old_lyr, rl2MapConfigPtr new_conf)
+{
+/* cloning a MapLayer object */
+    int len;
+    rl2MapLayerPtr new_lyr;
+
+    if (old_lyr == NULL)
+	return;
+
+    new_lyr = malloc (sizeof (rl2MapLayer));
+    new_lyr->type = old_lyr->type;
+    if (old_lyr->prefix == NULL)
+	new_lyr->prefix = NULL;
+    else
+      {
+	  len = strlen (old_lyr->prefix);
+	  new_lyr->prefix = malloc (len + 1);
+	  strcpy (new_lyr->prefix, old_lyr->prefix);
+      }
+    if (old_lyr->name == NULL)
+	new_lyr->name = NULL;
+    else
+      {
+	  len = strlen (old_lyr->name);
+	  new_lyr->name = malloc (len + 1);
+	  strcpy (new_lyr->name, old_lyr->name);
+      }
+    new_lyr->visible = old_lyr->visible;
+    new_lyr->ok_min_scale = old_lyr->ok_min_scale;
+    new_lyr->min_scale = old_lyr->min_scale;
+    new_lyr->ok_max_scale = old_lyr->ok_max_scale;
+    new_lyr->max_scale = old_lyr->max_scale;
+    if (old_lyr->raster_style_internal_name == NULL)
+	new_lyr->raster_style_internal_name = NULL;
+    else
+      {
+	  len = strlen (old_lyr->raster_style_internal_name);
+	  new_lyr->raster_style_internal_name = malloc (len + 1);
+	  strcpy (new_lyr->raster_style_internal_name,
+		  old_lyr->raster_style_internal_name);
+      }
+    if (old_lyr->vector_style_internal_name == NULL)
+	new_lyr->vector_style_internal_name = NULL;
+    else
+      {
+	  len = strlen (old_lyr->vector_style_internal_name);
+	  new_lyr->vector_style_internal_name = malloc (len + 1);
+	  strcpy (new_lyr->vector_style_internal_name,
+		  old_lyr->vector_style_internal_name);
+      }
+    if (old_lyr->raster_style == NULL)
+	new_lyr->raster_style = NULL;
+    else
+	new_lyr->raster_style = clone_raster_style (old_lyr->raster_style);
+    if (old_lyr->vector_style == NULL)
+	new_lyr->vector_style = NULL;
+    else
+	new_lyr->vector_style = clone_vector_style (old_lyr->vector_style);
+    if (old_lyr->topology_style == NULL)
+	new_lyr->topology_style = NULL;
+    else
+	new_lyr->topology_style =
+	    clone_topology_style (old_lyr->topology_style);
+    if (old_lyr->topology_internal_style == NULL)
+	new_lyr->topology_internal_style = NULL;
+    else
+	new_lyr->topology_internal_style =
+	    clone_topology_internal_style (old_lyr->topology_internal_style);
+    if (old_lyr->network_style == NULL)
+	new_lyr->network_style = NULL;
+    else
+	new_lyr->network_style = clone_network_style (old_lyr->network_style);
+    if (old_lyr->network_internal_style == NULL)
+	new_lyr->network_internal_style = NULL;
+    else
+	new_lyr->network_internal_style =
+	    clone_network_internal_style (old_lyr->network_internal_style);
+    if (old_lyr->wms_style == NULL)
+	new_lyr->wms_style = NULL;
+    else
+	new_lyr->wms_style = clone_wms_style (old_lyr->wms_style);
+    new_lyr->next = NULL;
+
+    if (new_conf->first_lyr == NULL)
+	new_conf->first_lyr = new_lyr;
+    if (new_conf->last_lyr != NULL)
+	new_conf->last_lyr->next = new_lyr;
+    new_conf->last_lyr = new_lyr;
+}
+
+static void
+clone_map_attached_db (rl2MapAttachedDbPtr old_db, rl2MapConfigPtr new_conf)
+{
+/* cloning a MapAttachedDb object */
+    int len;
+    rl2MapAttachedDbPtr new_db;
+
+    if (old_db == NULL)
+	return;
+
+    new_db = malloc (sizeof (rl2MapAttachedDb));
+    if (old_db->prefix == NULL)
+	new_db->prefix = NULL;
+    else
+      {
+	  len = strlen (old_db->prefix);
+	  new_db->prefix = malloc (len + 1);
+	  strcpy (new_db->prefix, old_db->prefix);
+      }
+    if (old_db->path == NULL)
+	new_db->path = NULL;
+    else
+      {
+	  len = strlen (old_db->path);
+	  new_db->path = malloc (len + 1);
+	  strcpy (new_db->path, old_db->path);
+      }
+    new_db->next = NULL;
+
+    if (new_conf->first_db == NULL)
+	new_conf->first_db = new_db;
+    if (new_conf->last_db != NULL)
+	new_conf->last_db->next = new_db;
+    new_conf->last_db = new_db;
+}
+
+RL2_DECLARE rl2MapConfigPtr
+rl2_clone_map_config (rl2MapConfigPtr old_conf)
+{
+/* cloning a MapConfig object */
+    int len;
+    rl2MapConfigPtr new_conf;
+    rl2MapAttachedDbPtr db;
+    rl2MapLayerPtr lyr;
+
+    if (old_conf == NULL)
+	return NULL;
+
+    new_conf = malloc (sizeof (rl2MapConfig));
+    if (old_conf->name == NULL)
+	new_conf->name = NULL;
+    else
+      {
+	  len = strlen (old_conf->name);
+	  new_conf->name = malloc (len + 1);
+	  strcpy (new_conf->name, old_conf->name);
+      }
+    if (old_conf->title == NULL)
+	new_conf->title = NULL;
+    else
+      {
+	  len = strlen (old_conf->title);
+	  new_conf->title = malloc (len + 1);
+	  strcpy (new_conf->title, old_conf->title);
+      }
+    if (old_conf->abstract == NULL)
+	new_conf->abstract = NULL;
+    else
+      {
+	  len = strlen (old_conf->abstract);
+	  new_conf->abstract = malloc (len + 1);
+	  strcpy (new_conf->abstract, old_conf->abstract);
+      }
+    new_conf->multithread_enabled = old_conf->multithread_enabled;
+    new_conf->max_threads = old_conf->max_threads;
+    new_conf->srid = old_conf->srid;
+    new_conf->autotransform_enabled = old_conf->autotransform_enabled;
+    new_conf->dms = old_conf->dms;
+    new_conf->map_background_red = old_conf->map_background_red;
+    new_conf->map_background_green = old_conf->map_background_green;
+    new_conf->map_background_blue = old_conf->map_background_blue;
+    new_conf->map_background_transparent = old_conf->map_background_transparent;
+    new_conf->raster_wms_auto_switch = old_conf->raster_wms_auto_switch;
+    new_conf->label_anti_collision = old_conf->label_anti_collision;
+    new_conf->label_wrap_text = old_conf->label_wrap_text;
+    new_conf->label_auto_rotate = old_conf->label_auto_rotate;
+    new_conf->label_shift_position = old_conf->label_shift_position;
+    if (old_conf->bbox == NULL)
+	new_conf->bbox = NULL;
+    else
+      {
+	  new_conf->bbox = malloc (sizeof (rl2MapBoundingBox));
+	  new_conf->bbox->minx = old_conf->bbox->minx;
+	  new_conf->bbox->miny = old_conf->bbox->miny;
+	  new_conf->bbox->maxx = old_conf->bbox->maxx;
+	  new_conf->bbox->maxy = old_conf->bbox->maxy;
+      }
+    new_conf->first_db = NULL;
+    new_conf->last_db = NULL;
+    db = old_conf->first_db;
+    while (db != NULL)
+      {
+	  clone_map_attached_db (db, new_conf);
+	  db = db->next;
+      }
+    new_conf->first_lyr = NULL;
+    new_conf->last_lyr = NULL;
+    lyr = old_conf->first_lyr;
+    while (lyr != NULL)
+      {
+	  clone_map_layer (lyr, new_conf);
+	  lyr = lyr->next;
+      }
+    return new_conf;
+}
+
+static int
+cmp_strings (const char *str1, const char *str2)
+{
+/* generic comparison of two text strings */
+    if (str1 == NULL && str2 == NULL)
+	return 1;
+    if (str1 == NULL || str2 == NULL)
+	return 0;
+    if (strcmp (str1, str2) == 0)
+	return 1;
+    return 0;
+}
+
+static int
+cmp_bbox (rl2MapBoundingBoxPtr bbox1, rl2MapBoundingBoxPtr bbox2)
+{
+/*  comparison of two Map Bounding Boxes */
+    if (bbox1 == NULL && bbox2 == NULL)
+	return 1;
+    if (bbox1 == NULL || bbox2 == NULL)
+	return 0;
+    if (bbox1->minx != bbox2->minx)
+	return 0;
+    if (bbox1->miny != bbox2->miny)
+	return 0;
+    if (bbox1->maxx != bbox2->maxx)
+	return 0;
+    if (bbox1->maxy != bbox2->maxy)
+	return 0;
+    return 1;
+}
+
+static int
+cmp_attached_dbs (rl2MapAttachedDbPtr db1, rl2MapAttachedDbPtr db2)
+{
+/* comparison of two Attached Databases */
+    if (!cmp_strings (db1->prefix, db2->prefix))
+	return 0;
+    if (!cmp_strings (db1->path, db2->path))
+	return 0;
+    return 1;
+}
+
+static int
+cmp_channel_selections (rl2MapChannelSelectionPtr cs1,
+			rl2MapChannelSelectionPtr cs2)
+{
+/* comparing two Channel Selections */
+    if (cs1 == NULL && cs2 == NULL)
+	return 1;
+    if (cs1 == NULL || cs2 == NULL)
+	return 0;
+    if (cs1->rgb != cs2->rgb)
+	return 0;
+    if (cs1->red_channel != cs2->red_channel)
+	return 0;
+    if (cs1->green_channel != cs2->green_channel)
+	return 0;
+    if (cs1->blue_channel != cs2->blue_channel)
+	return 0;
+    if (cs1->gray_channel != cs2->gray_channel)
+	return 0;
+    return 1;
+}
+
+static int
+cmp_color_ramps (rl2MapColorRampPtr cr1, rl2MapColorRampPtr cr2)
+{
+/* comparing two Color Ramps */
+    if (cr1 == NULL && cr2 == NULL)
+	return 1;
+    if (cr1 == NULL || cr2 == NULL)
+	return 0;
+    if (cr1->min_value != cr2->min_value)
+	return 0;
+    if (cr1->max_value != cr2->max_value)
+	return 0;
+    if (!cmp_strings (cr1->min_color, cr2->min_color))
+	return 0;
+    if (!cmp_strings (cr1->max_color, cr2->max_color))
+	return 0;
+    return 1;
+}
+
+static int
+cmp_contrast_enhancements (rl2MapContrastEnhancementPtr ce1,
+			   rl2MapContrastEnhancementPtr ce2)
+{
+/* comparing two Contrast Enhancements */
+    if (ce1 == NULL && ce2 == NULL)
+	return 1;
+    if (ce1 == NULL || ce2 == NULL)
+	return 0;
+    if (ce1->normalize != ce2->normalize)
+	return 0;
+    if (ce1->histogram != ce2->histogram)
+	return 0;
+    if (ce1->gamma != ce2->gamma)
+	return 0;
+    if (ce1->gamma_value != ce2->gamma_value)
+	return 0;
+    return 1;
+}
+
+static int
+cmp_raster_styles (rl2MapRasterLayerStylePtr style1,
+		   rl2MapRasterLayerStylePtr style2)
+{
+/*  comparison of two Raster Styles */
+    if (style1 == NULL && style2 == NULL)
+	return 1;
+    if (style1 == NULL || style2 == NULL)
+	return 0;
+    if (style1->opacity != style2->opacity)
+	return 0;
+    if (!cmp_channel_selections
+	(style1->channel_selection, style2->channel_selection))
+	return 0;
+    if (!cmp_strings (style1->color_map_name, style2->color_map_name))
+	return 0;
+    if (!cmp_color_ramps (style1->color_ramp, style2->color_ramp))
+	return 0;
+    if (!cmp_contrast_enhancements
+	(style1->contrast_enhancement, style2->contrast_enhancement))
+	return 0;
+    if (style1->shaded_relief != style2->shaded_relief)
+	return 0;
+    if (style1->relief_factor != style2->relief_factor)
+	return 0;
+    return 1;
+}
+
+static int
+cmp_remap_colors (rl2MapColorPtr cr1, rl2MapColorPtr cr2)
+{
+/*  comparison of two Color Replacements */
+    if (cr1 == NULL && cr2 == NULL)
+	return 1;
+    if (cr1 == NULL || cr2 == NULL)
+	return 0;
+    if (cr1->red != cr2->red)
+	return 0;
+    if (cr1->green != cr2->green)
+	return 0;
+    if (cr1->blue != cr2->blue)
+	return 0;
+    return 1;
+}
+
+static int
+cmp_external_graphics (rl2MapGraphicFillPtr graphic1,
+		       rl2MapGraphicFillPtr graphic2)
+{
+/*  comparison of two External Graphics */
+    if (graphic1 == NULL && graphic2 == NULL)
+	return 1;
+    if (graphic1 == NULL || graphic2 == NULL)
+	return 0;
+    if (!cmp_strings (graphic1->resource, graphic2->resource))
+	return 0;
+    if (!cmp_strings (graphic1->format, graphic2->format))
+	return 0;
+    if (!cmp_remap_colors (graphic1->color, graphic2->color))
+	return 0;
+    return 1;
+}
+
+static int
+cmp_fills (rl2MapFillPtr fill1, rl2MapFillPtr fill2)
+{
+/*  comparison of two Fills */
+    if (fill1 == NULL && fill2 == NULL)
+	return 1;
+    if (fill1 == NULL || fill2 == NULL)
+	return 0;
+    if (!cmp_external_graphics (fill1->graphic, fill2->graphic))
+	return 0;
+    if (fill1->red != fill2->red)
+	return 0;
+    if (fill1->green != fill2->green)
+	return 0;
+    if (fill1->blue != fill2->blue)
+	return 0;
+    if (fill1->opacity != fill2->opacity)
+	return 0;
+    return 1;
+}
+
+static int
+cmp_strokes (rl2MapStrokePtr stroke1, rl2MapStrokePtr stroke2)
+{
+/*  comparison of two Strokes */
+    if (stroke1 == NULL && stroke2 == NULL)
+	return 1;
+    if (stroke1 == NULL || stroke2 == NULL)
+	return 0;
+    if (stroke1->red != stroke2->red)
+	return 0;
+    if (stroke1->green != stroke2->green)
+	return 0;
+    if (stroke1->blue != stroke2->blue)
+	return 0;
+    if (stroke1->opacity != stroke2->opacity)
+	return 0;
+    if (stroke1->opacity != stroke2->opacity)
+	return 0;
+    if (stroke1->width != stroke2->width)
+	return 0;
+    if (stroke1->dot_style != stroke2->dot_style)
+	return 0;
+    return 1;
+}
+
+static int
+cmp_marks (rl2MapMarkPtr mark1, rl2MapMarkPtr mark2)
+{
+/*  comparison of two Marks */
+    if (mark1 == NULL && mark2 == NULL)
+	return 1;
+    if (mark1 == NULL || mark2 == NULL)
+	return 0;
+    if (mark1->type != mark2->type)
+	return 0;
+    if (!cmp_fills (mark1->fill, mark2->fill))
+	return 0;
+    if (!cmp_strokes (mark1->stroke, mark2->stroke))
+	return 0;
+    return 1;
+}
+
+static int
+cmp_point_symbolizers (rl2MapPointSymbolizerPtr sym1,
+		       rl2MapPointSymbolizerPtr sym2)
+{
+/*  comparison of two Point Symbolizers */
+    if (sym1 == NULL && sym2 == NULL)
+	return 1;
+    if (sym1 == NULL || sym2 == NULL)
+	return 0;
+    if (!cmp_marks (sym1->mark, sym2->mark))
+	return 0;
+    if (!cmp_external_graphics (sym1->graphic, sym2->graphic))
+	return 0;
+    if (sym1->opacity != sym2->opacity)
+	return 0;
+    if (sym1->size != sym2->size)
+	return 0;
+    if (sym1->anchor_x != sym2->anchor_x)
+	return 0;
+    if (sym1->anchor_y != sym2->anchor_y)
+	return 0;
+    if (sym1->displacement_x != sym2->displacement_x)
+	return 0;
+    if (sym1->displacement_y != sym2->displacement_y)
+	return 0;
+    if (sym1->rotation != sym2->rotation)
+	return 0;
+    return 1;
+}
+
+static int
+cmp_line_symbolizers (rl2MapLineSymbolizerPtr sym1,
+		      rl2MapLineSymbolizerPtr sym2)
+{
+/*  comparison of two Line Symbolizers */
+    if (sym1 == NULL && sym2 == NULL)
+	return 1;
+    if (sym1 == NULL || sym2 == NULL)
+	return 0;
+    if (!cmp_strokes (sym1->stroke, sym2->stroke))
+	return 0;
+    if (sym1->perpendicular_offset != sym2->perpendicular_offset)
+	return 0;
+    return 1;
+}
+
+static int
+cmp_polygon_symbolizers (rl2MapPolygonSymbolizerPtr sym1,
+			 rl2MapPolygonSymbolizerPtr sym2)
+{
+/*  comparison of two Polygon Symbolizers */
+    if (sym1 == NULL && sym2 == NULL)
+	return 1;
+    if (sym1 == NULL || sym2 == NULL)
+	return 0;
+    if (!cmp_fills (sym1->fill, sym2->fill))
+	return 0;
+    if (!cmp_strokes (sym1->stroke, sym2->stroke))
+	return 0;
+    if (sym1->displacement_x != sym2->displacement_x)
+	return 0;
+    if (sym1->displacement_y != sym2->displacement_y)
+	return 0;
+    if (sym1->perpendicular_offset != sym2->perpendicular_offset)
+	return 0;
+    return 1;
+}
+
+static int
+cmp_fonts (rl2MapFontPtr font1, rl2MapFontPtr font2)
+{
+/*  comparison of two Fonts */
+    if (font1 == NULL && font2 == NULL)
+	return 1;
+    if (font1 == NULL || font2 == NULL)
+	return 0;
+    if (!cmp_strings (font1->family, font2->family))
+	return 0;
+    if (font1->style != font2->style)
+	return 0;
+    if (font1->weight != font2->weight)
+	return 0;
+    if (font1->size != font2->size)
+	return 0;
+    return 1;
+}
+
+static int
+cmp_point_placements (rl2MapPointPlacementPtr pl1, rl2MapPointPlacementPtr pl2)
+{
+/*  comparison of two Point Placements */
+    if (pl1 == NULL && pl2 == NULL)
+	return 1;
+    if (pl1 == NULL || pl2 == NULL)
+	return 0;
+    if (pl1->anchor_x != pl2->anchor_x)
+	return 0;
+    if (pl1->anchor_y != pl2->anchor_y)
+	return 0;
+    if (pl1->displacement_x != pl2->displacement_x)
+	return 0;
+    if (pl1->displacement_y != pl2->displacement_y)
+	return 0;
+    if (pl1->rotation != pl2->rotation)
+	return 0;
+    return 1;
+}
+
+static int
+cmp_line_placements (rl2MapLinePlacementPtr pl1, rl2MapLinePlacementPtr pl2)
+{
+/*  comparison of two Line Placements */
+    if (pl1 == NULL && pl2 == NULL)
+	return 1;
+    if (pl1 == NULL || pl2 == NULL)
+	return 0;
+    if (pl1->perpendicular_offset != pl2->perpendicular_offset)
+	return 0;
+    if (pl1->repeated != pl2->repeated)
+	return 0;
+    if (pl1->initial_gap != pl2->initial_gap)
+	return 0;
+    if (pl1->gap != pl2->gap)
+	return 0;
+    if (pl1->aligned != pl2->aligned)
+	return 0;
+    if (pl1->generalize != pl2->generalize)
+	return 0;
+    return 1;
+}
+
+static int
+cmp_placements (rl2MapPlacementPtr pl1, rl2MapPlacementPtr pl2)
+{
+/*  comparison of two Placements */
+    if (pl1 == NULL && pl2 == NULL)
+	return 1;
+    if (pl1 == NULL || pl2 == NULL)
+	return 0;
+    if (!cmp_point_placements (pl1->point, pl2->point))
+	return 0;
+    if (!cmp_line_placements (pl1->line, pl2->line))
+	return 0;
+    return 1;
+}
+
+static int
+cmp_halos (rl2MapHaloPtr halo1, rl2MapHaloPtr halo2)
+{
+/*  comparison of two Halos */
+    if (halo1 == NULL && halo2 == NULL)
+	return 1;
+    if (halo1 == NULL || halo2 == NULL)
+	return 0;
+    if (halo1->radius != halo2->radius)
+	return 0;
+    if (!cmp_fills (halo1->fill, halo2->fill))
+	return 0;
+    return 1;
+}
+
+static int
+cmp_text_symbolizers (rl2MapTextSymbolizerPtr sym1,
+		      rl2MapTextSymbolizerPtr sym2)
+{
+/*  comparison of two Text Symbolizers */
+    if (sym1 == NULL && sym2 == NULL)
+	return 1;
+    if (sym1 == NULL || sym2 == NULL)
+	return 0;
+    if (!cmp_strings (sym1->label, sym2->label))
+	return 0;
+    if (!cmp_fonts (sym1->font, sym2->font))
+	return 0;
+    if (!cmp_placements (sym1->placement, sym2->placement))
+	return 0;
+    if (!cmp_halos (sym1->halo, sym2->halo))
+	return 0;
+    if (!cmp_fills (sym1->fill, sym2->fill))
+	return 0;
+    return 1;
+}
+
+static int
+cmp_vector_styles (rl2MapVectorLayerStylePtr style1,
+		   rl2MapVectorLayerStylePtr style2)
+{
+/*  comparison of two Vector Styles */
+    int count1;
+    int count2;
+    rl2MapLineSymbolizerPtr line1;
+    rl2MapLineSymbolizerPtr line2;
+    if (style1 == NULL && style2 == NULL)
+	return 1;
+    if (style1 == NULL || style2 == NULL)
+	return 0;
+    if (!cmp_point_symbolizers (style1->point_sym, style2->point_sym))
+	return 0;
+    if (!cmp_polygon_symbolizers (style1->polygon_sym, style2->polygon_sym))
+	return 0;
+    if (!cmp_text_symbolizers (style1->text_sym, style2->text_sym))
+	return 0;
+    if (style1->text_alone != style2->text_alone)
+	return 0;
+
+/* checking Line Symbolyzers */
+    count1 = 0;
+    line1 = style1->first_line_sym;
+    while (line1 != NULL)
+      {
+	  count1++;
+	  line1 = line1->next;
+      }
+    count2 = 0;
+    line2 = style2->first_line_sym;
+    while (line2 != NULL)
+      {
+	  count2++;
+	  line2 = line2->next;
+      }
+    if (count1 != count2)
+	return 0;
+    line1 = style1->first_line_sym;
+    line2 = style2->first_line_sym;
+    while (line1 != NULL && line2 != NULL)
+      {
+	  if (!cmp_line_symbolizers (line1, line2))
+	      return 0;
+	  line1 = line1->next;
+	  line2 = line2->next;
+      }
+    return 1;
+}
+
+static int
+cmp_topology_styles (rl2MapTopologyLayerStylePtr style1,
+		     rl2MapTopologyLayerStylePtr style2)
+{
+/*  comparison of two Topology Styles */
+    if (style1 == NULL && style2 == NULL)
+	return 1;
+    if (style1 == NULL || style2 == NULL)
+	return 0;
+    if (style1->show_faces != style2->show_faces)
+	return 0;
+    if (style1->show_edges != style2->show_edges)
+	return 0;
+    if (style1->show_nodes != style2->show_nodes)
+	return 0;
+    if (style1->show_edge_seeds != style2->show_edge_seeds)
+	return 0;
+    if (style1->show_face_seeds != style2->show_face_seeds)
+	return 0;
+    if (!cmp_polygon_symbolizers (style1->faces_sym, style2->faces_sym))
+	return 0;
+    if (!cmp_line_symbolizers (style1->edges_sym, style2->edges_sym))
+	return 0;
+    if (!cmp_point_symbolizers (style1->nodes_sym, style2->nodes_sym))
+	return 0;
+    if (!cmp_point_symbolizers (style1->edge_seeds_sym, style2->edge_seeds_sym))
+	return 0;
+    if (!cmp_point_symbolizers (style1->face_seeds_sym, style2->face_seeds_sym))
+	return 0;
+    return 1;
+}
+
+static int
+cmp_topology_internal_styles (rl2MapTopologyLayerInternalStylePtr style1,
+			      rl2MapTopologyLayerInternalStylePtr style2)
+{
+/*  comparison of two Topology Internal Styles */
+    if (style1 == NULL && style2 == NULL)
+	return 1;
+    if (style1 == NULL || style2 == NULL)
+	return 0;
+    if (!cmp_strings (style1->style_internal_name, style2->style_internal_name))
+	return 0;
+    if (style1->show_faces != style2->show_faces)
+	return 0;
+    if (style1->show_edges != style2->show_edges)
+	return 0;
+    if (style1->show_nodes != style2->show_nodes)
+	return 0;
+    if (style1->show_edge_seeds != style2->show_edge_seeds)
+	return 0;
+    if (style1->show_face_seeds != style2->show_face_seeds)
+	return 0;
+    return 1;
+}
+
+static int
+cmp_network_styles (rl2MapNetworkLayerStylePtr style1,
+		    rl2MapNetworkLayerStylePtr style2)
+{
+/*  comparison of two Network Styles */
+    if (style1 == NULL && style2 == NULL)
+	return 1;
+    if (style1 == NULL || style2 == NULL)
+	return 0;
+    if (style1->show_links != style2->show_links)
+	return 0;
+    if (style1->show_nodes != style2->show_nodes)
+	return 0;
+    if (style1->show_link_seeds != style2->show_link_seeds)
+	return 0;
+    if (!cmp_line_symbolizers (style1->links_sym, style2->links_sym))
+	return 0;
+    if (!cmp_point_symbolizers (style1->nodes_sym, style2->nodes_sym))
+	return 0;
+    if (!cmp_point_symbolizers (style1->link_seeds_sym, style2->link_seeds_sym))
+	return 0;
+    return 1;
+}
+
+static int
+cmp_network_internal_styles (rl2MapNetworkLayerInternalStylePtr style1,
+			     rl2MapNetworkLayerInternalStylePtr style2)
+{
+/*  comparison of two Network Internal Styles */
+    if (style1 == NULL && style2 == NULL)
+	return 1;
+    if (style1 == NULL || style2 == NULL)
+	return 0;
+    if (!cmp_strings (style1->style_internal_name, style2->style_internal_name))
+	return 0;
+    if (style1->show_links != style2->show_links)
+	return 0;
+    if (style1->show_nodes != style2->show_nodes)
+	return 0;
+    if (style1->show_link_seeds != style2->show_link_seeds)
+	return 0;
+    return 1;
+}
+
+static int
+cmp_wms_styles (rl2MapWmsLayerStylePtr style1, rl2MapWmsLayerStylePtr style2)
+{
+/*  comparison of two WMS Styles */
+    if (style1 == NULL && style2 == NULL)
+	return 1;
+    if (style1 == NULL || style2 == NULL)
+	return 0;
+    if (!cmp_strings (style1->get_map_url, style2->get_map_url))
+	return 0;
+    if (!cmp_strings
+	(style1->get_feature_info_url, style2->get_feature_info_url))
+	return 0;
+    if (!cmp_strings (style1->wms_protocol, style2->wms_protocol))
+	return 0;
+    if (!cmp_strings (style1->crs, style2->crs))
+	return 0;
+    if (style1->swap_xy != style2->swap_xy)
+	return 0;
+    if (!cmp_strings (style1->style, style2->style))
+	return 0;
+    if (!cmp_strings (style1->image_format, style2->image_format))
+	return 0;
+    if (style1->opaque != style2->opaque)
+	return 0;
+    if (!cmp_strings (style1->background_color, style2->background_color))
+	return 0;
+    if (style1->is_tiled != style2->is_tiled)
+	return 0;
+    if (style1->tile_width != style2->tile_width)
+	return 0;
+    if (style1->tile_height != style2->tile_height)
+	return 0;
+    return 1;
+}
+
+static int
+cmp_layers (rl2MapLayerPtr lyr1, rl2MapLayerPtr lyr2)
+{
+/* comparison of two Layers */
+    if (lyr1->type != lyr2->type)
+	return 0;
+    if (!cmp_strings (lyr1->prefix, lyr2->prefix))
+	return 0;
+    if (!cmp_strings (lyr1->name, lyr2->name))
+	return 0;
+    if (lyr1->visible != lyr2->visible)
+	return 0;
+    if (lyr1->ok_min_scale != lyr2->ok_min_scale)
+	return 0;
+    if (lyr1->min_scale != lyr2->min_scale)
+	return 0;
+    if (lyr1->ok_max_scale != lyr2->ok_max_scale)
+	return 0;
+    if (lyr1->max_scale != lyr2->max_scale)
+	return 0;
+    if (!cmp_strings
+	(lyr1->raster_style_internal_name, lyr2->raster_style_internal_name))
+	return 0;
+    if (!cmp_strings
+	(lyr1->vector_style_internal_name, lyr2->vector_style_internal_name))
+	return 0;
+    if (!cmp_raster_styles (lyr1->raster_style, lyr2->raster_style))
+	return 0;
+    if (!cmp_vector_styles (lyr1->vector_style, lyr2->vector_style))
+	return 0;
+    if (!cmp_topology_styles (lyr1->topology_style, lyr2->topology_style))
+	return 0;
+    if (!cmp_topology_internal_styles
+	(lyr1->topology_internal_style, lyr2->topology_internal_style))
+	return 0;
+    if (!cmp_network_styles (lyr1->network_style, lyr2->network_style))
+	return 0;
+    if (!cmp_network_internal_styles
+	(lyr1->network_internal_style, lyr2->network_internal_style))
+	return 0;
+    if (!cmp_wms_styles (lyr1->wms_style, lyr2->wms_style))
+	return 0;
+    return 1;
+}
+
+RL2_DECLARE int
+rl2_compare_map_configs (rl2MapConfigPtr conf1, rl2MapConfigPtr conf2)
+{
+/* comparing two MapConfig objects for identity */
+    int count1;
+    int count2;
+    rl2MapAttachedDbPtr db1;
+    rl2MapAttachedDbPtr db2;
+    rl2MapLayerPtr lyr1;
+    rl2MapLayerPtr lyr2;
+
+    if (conf1 == NULL && conf2 == NULL)
+	return 1;
+    if (conf1 == NULL || conf2 == NULL)
+	return 0;
+
+/* checking MapConfiguration */
+    if (!cmp_strings (conf1->name, conf2->name))
+	return 0;
+    if (!cmp_strings (conf1->title, conf2->title))
+	return 0;
+    if (!cmp_strings (conf1->abstract, conf2->abstract))
+	return 0;
+    if (conf1->multithread_enabled != conf2->multithread_enabled)
+	return 0;
+    if (conf1->max_threads != conf2->max_threads)
+	return 0;
+    if (conf1->srid != conf2->srid)
+	return 0;
+    if (conf1->autotransform_enabled != conf2->autotransform_enabled)
+	return 0;
+    if (conf1->dms != conf2->dms)
+	return 0;
+    if (conf1->map_background_red != conf2->map_background_red)
+	return 0;
+    if (conf1->map_background_green != conf2->map_background_green)
+	return 0;
+    if (conf1->map_background_blue != conf2->map_background_blue)
+	return 0;
+    if (conf1->map_background_transparent != conf2->map_background_transparent)
+	return 0;
+    if (conf1->raster_wms_auto_switch != conf2->raster_wms_auto_switch)
+	return 0;
+    if (conf1->label_anti_collision != conf2->label_anti_collision)
+	return 0;
+    if (conf1->label_wrap_text != conf2->label_wrap_text)
+	return 0;
+    if (conf1->label_auto_rotate != conf2->label_auto_rotate)
+	return 0;
+    if (conf1->label_shift_position != conf2->label_shift_position)
+	return 0;
+    if (!cmp_bbox (conf1->bbox, conf2->bbox))
+	return 0;
+
+/* checking ATTACHED-DBs */
+    count1 = 0;
+    db1 = conf1->first_db;
+    while (db1 != NULL)
+      {
+	  count1++;
+	  db1 = db1->next;
+      }
+    count2 = 0;
+    db2 = conf2->first_db;
+    while (db2 != NULL)
+      {
+	  count2++;
+	  db2 = db2->next;
+      }
+    if (count1 != count2)
+	return 0;
+    db1 = conf1->first_db;
+    db2 = conf2->first_db;
+    while (db1 != NULL && db2 != NULL)
+      {
+	  if (!cmp_attached_dbs (db1, db2))
+	      return 0;
+	  db1 = db1->next;
+	  db2 = db2->next;
+      }
+
+/* checking Layers */
+    count1 = 0;
+    lyr1 = conf1->first_lyr;
+    while (lyr1 != NULL)
+      {
+	  count1++;
+	  lyr1 = lyr1->next;
+      }
+    count2 = 0;
+    lyr2 = conf2->first_lyr;
+    while (lyr2 != NULL)
+      {
+	  count2++;
+	  lyr2 = lyr2->next;
+      }
+    if (count1 != count2)
+	return 0;
+    lyr1 = conf1->first_lyr;
+    lyr2 = conf2->first_lyr;
+    while (lyr1 != NULL && lyr2 != NULL)
+      {
+	  if (!cmp_layers (lyr1, lyr2))
+	      return 0;
+	  lyr1 = lyr1->next;
+	  lyr2 = lyr2->next;
+      }
+
+    return 1;
 }

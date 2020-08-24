@@ -369,31 +369,44 @@ apply_color_map (double mono, unsigned char *p_out,
 }
 
 static unsigned char *
-ndvi_uint8_pixel_handler (const unsigned char *p_in, unsigned char *p_out,
-			  unsigned char red_band, unsigned char nir_band,
-			  rl2BandHandlingPtr ndvi_handling)
+syntetic_uint8_pixel_handler (const unsigned char *p_in, unsigned char *p_out,
+			      unsigned syntetic_band, unsigned char band_1,
+			      unsigned char band_2,
+			      rl2BandHandlingPtr syntetic_handling)
 {
-/* styling an opaque NDVI pixel - UINT8 */
-    unsigned char red = *(p_in + red_band);
-    unsigned char nir = *(p_in + nir_band);
-    double ndvi = ((double) nir - (double) red) / ((double) nir + (double) red);
+/* styling an opaque Syntetic/Calculated Band pixel - UINT8 */
+    double index;
+    if (syntetic_band == RL2_SYNTETIC_NDWI)
+      {
+	  unsigned char green = *(p_in + band_1);
+	  unsigned char nir = *(p_in + band_2);
+	  index =
+	      ((double) green - (double) nir) / ((double) green + (double) nir);
+      }
+    else
+      {
+	  unsigned char red = *(p_in + band_1);
+	  unsigned char nir = *(p_in + band_2);
+	  index = ((double) nir - (double) red) / ((double) nir + (double) red);
+      }
 /* applying the ColorMap */
-    return apply_color_map (ndvi, p_out, ndvi_handling);
+    return apply_color_map (index, p_out, syntetic_handling);
 }
 
 static void
-copy_uint8_ndvi_pixels (const unsigned char *buffer,
-			const unsigned char *mask, unsigned char *outbuf,
-			unsigned short width, unsigned short height,
-			unsigned char out_num_bands,
-			unsigned char num_bands, double x_res, double y_res,
-			double minx, double maxy, double tile_minx,
-			double tile_maxy, unsigned short tile_width,
-			unsigned short tile_height, rl2PixelPtr no_data,
-			unsigned char red_band, unsigned char nir_band,
-			rl2BandHandlingPtr ndvi_handling)
+copy_uint8_syntetic_pixels (const unsigned char *buffer,
+			    const unsigned char *mask, unsigned char *outbuf,
+			    unsigned short width, unsigned short height,
+			    unsigned char out_num_bands,
+			    unsigned char num_bands, double x_res, double y_res,
+			    double minx, double maxy, double tile_minx,
+			    double tile_maxy, unsigned short tile_width,
+			    unsigned short tile_height, rl2PixelPtr no_data,
+			    unsigned char syntetic_band, unsigned char band_1,
+			    unsigned char band_2,
+			    rl2BandHandlingPtr syntetic_handling)
 {
-/* copying UINT8 NDVI pixels from the DBMS tile into the output image */
+/* copying UINT8 Syntetic/Calculated Band pixels from the DBMS tile into the output image */
     int x;
     int y;
     int b;
@@ -476,9 +489,10 @@ copy_uint8_ndvi_pixels (const unsigned char *buffer,
 			{
 			    /* opaque pixel */
 			    p_out =
-				ndvi_uint8_pixel_handler (p_in, p_out,
-							  red_band, nir_band,
-							  ndvi_handling);
+				syntetic_uint8_pixel_handler (p_in, p_out,
+							      syntetic_band,
+							      band_1, band_2,
+							      syntetic_handling);
 			}
 		  }
 		else
@@ -497,9 +511,10 @@ copy_uint8_ndvi_pixels (const unsigned char *buffer,
 			{
 			    /* opaque pixel */
 			    p_out =
-				ndvi_uint8_pixel_handler (p_in, p_out,
-							  red_band, nir_band,
-							  ndvi_handling);
+				syntetic_uint8_pixel_handler (p_in, p_out,
+							      syntetic_band,
+							      band_1, band_2,
+							      syntetic_handling);
 			}
 		      else
 			{
@@ -514,22 +529,25 @@ copy_uint8_ndvi_pixels (const unsigned char *buffer,
 }
 
 static void
-copy_uint8_ndvi_pixels_transparent (const unsigned char *buffer,
-				    const unsigned char *mask,
-				    unsigned char *outbuf,
-				    unsigned char *outmask,
-				    unsigned short width, unsigned short height,
-				    unsigned char out_num_bands,
-				    unsigned char num_bands, double x_res,
-				    double y_res, double minx, double maxy,
-				    double tile_minx, double tile_maxy,
-				    unsigned short tile_width,
-				    unsigned short tile_height,
-				    rl2PixelPtr no_data, unsigned char red_band,
-				    unsigned char nir_band,
-				    rl2BandHandlingPtr ndvi_handling)
+copy_uint8_syntetic_pixels_transparent (const unsigned char *buffer,
+					const unsigned char *mask,
+					unsigned char *outbuf,
+					unsigned char *outmask,
+					unsigned short width,
+					unsigned short height,
+					unsigned char out_num_bands,
+					unsigned char num_bands, double x_res,
+					double y_res, double minx, double maxy,
+					double tile_minx, double tile_maxy,
+					unsigned short tile_width,
+					unsigned short tile_height,
+					rl2PixelPtr no_data,
+					unsigned char syntetic_band,
+					unsigned char band_1,
+					unsigned char band_2,
+					rl2BandHandlingPtr syntetic_handling)
 {
-/* copying UINT8 NDVI pixels from the DBMS tile into the output image */
+/* copying UINT8 Syntetic/Calculated Band pixels from the DBMS tile into the output image */
     int x;
     int y;
     int b;
@@ -615,9 +633,10 @@ copy_uint8_ndvi_pixels_transparent (const unsigned char *buffer,
 			{
 			    /* opaque pixel */
 			    p_out =
-				ndvi_uint8_pixel_handler (p_in, p_out,
-							  red_band, nir_band,
-							  ndvi_handling);
+				syntetic_uint8_pixel_handler (p_in, p_out,
+							      syntetic_band,
+							      band_1, band_2,
+							      syntetic_handling);
 			    *p_outmsk++ = 0;
 			}
 		  }
@@ -637,9 +656,10 @@ copy_uint8_ndvi_pixels_transparent (const unsigned char *buffer,
 			{
 			    /* opaque pixel */
 			    p_out =
-				ndvi_uint8_pixel_handler (p_in, p_out,
-							  red_band, nir_band,
-							  ndvi_handling);
+				syntetic_uint8_pixel_handler (p_in, p_out,
+							      syntetic_band,
+							      band_1, band_2,
+							      syntetic_handling);
 			    *p_outmsk++ = 0;
 			}
 		      else
@@ -656,32 +676,45 @@ copy_uint8_ndvi_pixels_transparent (const unsigned char *buffer,
 }
 
 static unsigned char *
-ndvi_uint16_pixel_handler (const unsigned short *p_in, unsigned char *p_out,
-			   unsigned char red_band, unsigned char nir_band,
-			   rl2BandHandlingPtr ndvi_handling)
+syntetic_uint16_pixel_handler (const unsigned short *p_in, unsigned char *p_out,
+			       unsigned syntetic_band, unsigned char band_1,
+			       unsigned char band_2,
+			       rl2BandHandlingPtr syntetic_handling)
 {
-/* styling an opaque NDVI pixel - UINT16 */
-    unsigned short red = *(p_in + red_band);
-    unsigned short nir = *(p_in + nir_band);
-    double ndvi = ((double) nir - (double) red) / ((double) nir + (double) red);
+/* styling an opaque Syntetic/Calculated Band pixel - UINT16 */
+    double index;
+    if (syntetic_band == RL2_SYNTETIC_NDWI)
+      {
+	  unsigned short green = *(p_in + band_1);
+	  unsigned short nir = *(p_in + band_2);
+	  index =
+	      ((double) green - (double) nir) / ((double) green + (double) nir);
+      }
+    else
+      {
+	  unsigned short red = *(p_in + band_1);
+	  unsigned short nir = *(p_in + band_2);
+	  index = ((double) nir - (double) red) / ((double) nir + (double) red);
+      }
 /* applying the ColorMap */
-    return apply_color_map (ndvi, p_out, ndvi_handling);
+    return apply_color_map (index, p_out, syntetic_handling);
 }
 
 static void
-copy_uint16_ndvi_pixels (const unsigned short *buffer,
-			 const unsigned char *mask, unsigned char *outbuf,
-			 unsigned short width, unsigned short height,
-			 unsigned char out_num_bands,
-			 unsigned char num_bands, double x_res,
-			 double y_res, double minx, double maxy,
-			 double tile_minx, double tile_maxy,
-			 unsigned short tile_width,
-			 unsigned short tile_height, rl2PixelPtr no_data,
-			 unsigned char red_band, unsigned char nir_band,
-			 rl2BandHandlingPtr ndvi_handling)
+copy_uint16_syntetic_pixels (const unsigned short *buffer,
+			     const unsigned char *mask, unsigned char *outbuf,
+			     unsigned short width, unsigned short height,
+			     unsigned char out_num_bands,
+			     unsigned char num_bands, double x_res,
+			     double y_res, double minx, double maxy,
+			     double tile_minx, double tile_maxy,
+			     unsigned short tile_width,
+			     unsigned short tile_height, rl2PixelPtr no_data,
+			     unsigned char syntetic_band, unsigned char band_1,
+			     unsigned char band_2,
+			     rl2BandHandlingPtr syntetic_handling)
 {
-/* copying UINT16 NDVI pixels from the DBMS tile into the output image */
+/* copying UINT16 Syntetic/Calculated Band pixels from the DBMS tile into the output image */
     int x;
     int y;
     int b;
@@ -764,9 +797,10 @@ copy_uint16_ndvi_pixels (const unsigned short *buffer,
 			{
 			    /* opaque pixel */
 			    p_out =
-				ndvi_uint16_pixel_handler (p_in, p_out,
-							   red_band, nir_band,
-							   ndvi_handling);
+				syntetic_uint16_pixel_handler (p_in, p_out,
+							       syntetic_band,
+							       band_1, band_2,
+							       syntetic_handling);
 			}
 		  }
 		else
@@ -785,9 +819,10 @@ copy_uint16_ndvi_pixels (const unsigned short *buffer,
 			{
 			    /* opaque pixel */
 			    p_out =
-				ndvi_uint16_pixel_handler (p_in, p_out,
-							   red_band, nir_band,
-							   ndvi_handling);
+				syntetic_uint16_pixel_handler (p_in, p_out,
+							       syntetic_band,
+							       band_1, band_2,
+							       syntetic_handling);
 			}
 		      else
 			{
@@ -802,24 +837,25 @@ copy_uint16_ndvi_pixels (const unsigned short *buffer,
 }
 
 static void
-copy_uint16_ndvi_pixels_transparent (const unsigned short *buffer,
-				     const unsigned char *mask,
-				     unsigned char *outbuf,
-				     unsigned char *outmask,
-				     unsigned short width,
-				     unsigned short height,
-				     unsigned char out_num_bands,
-				     unsigned char num_bands, double x_res,
-				     double y_res, double minx, double maxy,
-				     double tile_minx, double tile_maxy,
-				     unsigned short tile_width,
-				     unsigned short tile_height,
-				     rl2PixelPtr no_data,
-				     unsigned char red_band,
-				     unsigned char nir_band,
-				     rl2BandHandlingPtr ndvi_handling)
+copy_uint16_syntetic_pixels_transparent (const unsigned short *buffer,
+					 const unsigned char *mask,
+					 unsigned char *outbuf,
+					 unsigned char *outmask,
+					 unsigned short width,
+					 unsigned short height,
+					 unsigned char out_num_bands,
+					 unsigned char num_bands, double x_res,
+					 double y_res, double minx, double maxy,
+					 double tile_minx, double tile_maxy,
+					 unsigned short tile_width,
+					 unsigned short tile_height,
+					 rl2PixelPtr no_data,
+					 unsigned char syntetic_band,
+					 unsigned char band_1,
+					 unsigned char band_2,
+					 rl2BandHandlingPtr syntetic_handling)
 {
-/* copying UINT16 NDVI pixels from the DBMS tile into the output image */
+/* copying UINT16 Syntetic/Calculated Band pixels from the DBMS tile into the output image */
     int x;
     int y;
     int b;
@@ -905,9 +941,10 @@ copy_uint16_ndvi_pixels_transparent (const unsigned short *buffer,
 			{
 			    /* opaque pixel */
 			    p_out =
-				ndvi_uint16_pixel_handler (p_in, p_out,
-							   red_band, nir_band,
-							   ndvi_handling);
+				syntetic_uint16_pixel_handler (p_in, p_out,
+							       syntetic_band,
+							       band_1, band_2,
+							       syntetic_handling);
 			    *p_outmsk++ = 0;
 			}
 		  }
@@ -927,9 +964,10 @@ copy_uint16_ndvi_pixels_transparent (const unsigned short *buffer,
 			{
 			    /* opaque pixel */
 			    p_out =
-				ndvi_uint16_pixel_handler (p_in, p_out,
-							   red_band, nir_band,
-							   ndvi_handling);
+				syntetic_uint16_pixel_handler (p_in, p_out,
+							       syntetic_band,
+							       band_1, band_2,
+							       syntetic_handling);
 			    *p_outmsk++ = 0;
 			}
 		      else
@@ -6612,10 +6650,10 @@ destroy_mono_handling (rl2BandHandlingPtr mono)
 }
 
 static void
-build_ndvi_handling (rl2PrivRasterSymbolizerPtr style,
-		     rl2BandHandlingPtr * ndvi_handling)
+build_syntetic_handling (rl2PrivRasterSymbolizerPtr style,
+			 rl2BandHandlingPtr * syntetic_handling)
 {
-/* creating NDVI helper structs */
+/* creating Syntetic/Calculated Band helper structs */
     int i;
     rl2BandHandlingPtr g = NULL;
     rl2PrivColorMapPointPtr color;
@@ -6709,7 +6747,7 @@ build_ndvi_handling (rl2PrivRasterSymbolizerPtr style,
 		prev_color = color;
 		color = color->next;
 	    }
-	  *ndvi_handling = g;
+	  *syntetic_handling = g;
 	  return;
       }
     if (style->interpolate != NULL)
@@ -6761,26 +6799,26 @@ build_ndvi_handling (rl2PrivRasterSymbolizerPtr style,
 		prev_color = color;
 		color = color->next;
 	    }
-	  *ndvi_handling = g;
+	  *syntetic_handling = g;
 	  return;
       }
-    *ndvi_handling = g;
+    *syntetic_handling = g;
 }
 
 static void
-destroy_ndvi_handling (rl2BandHandlingPtr ndvi)
+destroy_syntetic_handling (rl2BandHandlingPtr syntetic)
 {
-/* memory cleanup - destroying an NDVI handler */
-    if (ndvi == NULL)
+/* memory cleanup - destroying a Syntetic/Calculated Band handler */
+    if (syntetic == NULL)
 	return;
-    if (ndvi->colorMap != NULL)
+    if (syntetic->colorMap != NULL)
       {
 	  int i;
 	  for (i = 0; i < 256; i++)
 	    {
 		rl2ColorMapRefPtr rule;
 		rl2ColorMapRefPtr n_rule;
-		rl2ColorMapItemPtr item = &(ndvi->colorMap->look_up[i]);
+		rl2ColorMapItemPtr item = &(syntetic->colorMap->look_up[i]);
 		rule = item->first;
 		while (rule != NULL)
 		  {
@@ -6789,9 +6827,9 @@ destroy_ndvi_handling (rl2BandHandlingPtr ndvi)
 		      rule = n_rule;
 		  }
 	    }
-	  free (ndvi->colorMap);
+	  free (syntetic->colorMap);
       }
-    free (ndvi);
+    free (syntetic);
 }
 
 static int
@@ -7234,101 +7272,108 @@ do_copy_raw_mono_pixels_transparent (rl2PrivRasterPtr rst,
 }
 
 static int
-do_auto_ndvi_pixels (rl2PrivRasterPtr rst, unsigned char *outbuf,
-		     unsigned int width, unsigned int height,
-		     unsigned char num_bands, double x_res, double y_res,
-		     double minx, double maxy, double tile_minx,
-		     double tile_maxy, unsigned int tile_width,
-		     unsigned int tile_height, rl2PixelPtr no_data,
-		     unsigned char red_band, unsigned char nir_band,
-		     rl2BandHandlingPtr ndvi_handling)
+do_auto_syntetic_pixels (rl2PrivRasterPtr rst, unsigned char *outbuf,
+			 unsigned int width, unsigned int height,
+			 unsigned char num_bands, double x_res, double y_res,
+			 double minx, double maxy, double tile_minx,
+			 double tile_maxy, unsigned int tile_width,
+			 unsigned int tile_height, rl2PixelPtr no_data,
+			 unsigned char syntetic_band, unsigned char band_1,
+			 unsigned char band_2,
+			 rl2BandHandlingPtr syntetic_handling)
 {
     switch (rst->sampleType)
       {
       case RL2_SAMPLE_UINT8:
-	  copy_uint8_ndvi_pixels ((const unsigned char
-				   *) (rst->rasterBuffer),
-				  (const unsigned char
-				   *) (rst->maskBuffer),
-				  (unsigned char *)
-				  outbuf, width, height,
-				  num_bands, rst->nBands,
-				  x_res, y_res, minx,
-				  maxy, tile_minx,
-				  tile_maxy, tile_width,
-				  tile_height, no_data,
-				  red_band, nir_band, ndvi_handling);
-	  if (ndvi_handling != NULL)
-	      destroy_ndvi_handling (ndvi_handling);
+	  copy_uint8_syntetic_pixels ((const unsigned char
+				       *) (rst->rasterBuffer),
+				      (const unsigned char
+				       *) (rst->maskBuffer),
+				      (unsigned char *)
+				      outbuf, width, height,
+				      num_bands, rst->nBands,
+				      x_res, y_res, minx,
+				      maxy, tile_minx,
+				      tile_maxy, tile_width,
+				      tile_height, no_data,
+				      syntetic_band, band_1, band_2,
+				      syntetic_handling);
+	  if (syntetic_handling != NULL)
+	      destroy_syntetic_handling (syntetic_handling);
 	  return 1;
       case RL2_SAMPLE_UINT16:
-	  copy_uint16_ndvi_pixels ((const unsigned short
-				    *)
-				   (rst->rasterBuffer),
-				   (const unsigned char
-				    *) (rst->maskBuffer),
-				   (unsigned char *)
-				   outbuf, width, height,
-				   num_bands, rst->nBands,
-				   x_res, y_res, minx,
-				   maxy, tile_minx,
-				   tile_maxy, tile_width,
-				   tile_height, no_data,
-				   red_band, nir_band, ndvi_handling);
-	  if (ndvi_handling != NULL)
-	      destroy_ndvi_handling (ndvi_handling);
+	  copy_uint16_syntetic_pixels ((const unsigned short
+					*)
+				       (rst->rasterBuffer),
+				       (const unsigned char
+					*) (rst->maskBuffer),
+				       (unsigned char *)
+				       outbuf, width, height,
+				       num_bands, rst->nBands,
+				       x_res, y_res, minx,
+				       maxy, tile_minx,
+				       tile_maxy, tile_width,
+				       tile_height, no_data,
+				       syntetic_band, band_1, band_2,
+				       syntetic_handling);
+	  if (syntetic_handling != NULL)
+	      destroy_syntetic_handling (syntetic_handling);
 	  return 1;
       };
     return 0;
 }
 
 static int
-do_auto_ndvi_pixels_transparent (rl2PrivRasterPtr rst, unsigned char *outbuf,
-				 unsigned char *outmask, unsigned int width,
-				 unsigned int height, unsigned char num_bands,
-				 double x_res, double y_res, double minx,
-				 double maxy, double tile_minx,
-				 double tile_maxy, unsigned int tile_width,
-				 unsigned int tile_height, rl2PixelPtr no_data,
-				 unsigned char red_band, unsigned char nir_band,
-				 rl2BandHandlingPtr ndvi_handling)
+do_auto_syntetic_pixels_transparent (rl2PrivRasterPtr rst,
+				     unsigned char *outbuf,
+				     unsigned char *outmask, unsigned int width,
+				     unsigned int height,
+				     unsigned char num_bands, double x_res,
+				     double y_res, double minx, double maxy,
+				     double tile_minx, double tile_maxy,
+				     unsigned int tile_width,
+				     unsigned int tile_height,
+				     rl2PixelPtr no_data,
+				     unsigned char syntetic_band,
+				     unsigned char band_1, unsigned char band_2,
+				     rl2BandHandlingPtr syntetic_handling)
 {
     switch (rst->sampleType)
       {
       case RL2_SAMPLE_UINT8:
-	  copy_uint8_ndvi_pixels_transparent ((const unsigned char
-					       *) (rst->rasterBuffer),
-					      (const unsigned char
-					       *) (rst->maskBuffer),
-					      (unsigned char *)
-					      outbuf, outmask, width, height,
-					      num_bands, rst->nBands,
-					      x_res, y_res, minx,
-					      maxy, tile_minx,
-					      tile_maxy, tile_width,
-					      tile_height, no_data,
-					      red_band, nir_band,
-					      ndvi_handling);
-	  if (ndvi_handling != NULL)
-	      destroy_ndvi_handling (ndvi_handling);
+	  copy_uint8_syntetic_pixels_transparent ((const unsigned char
+						   *) (rst->rasterBuffer),
+						  (const unsigned char
+						   *) (rst->maskBuffer),
+						  (unsigned char *)
+						  outbuf, outmask, width,
+						  height, num_bands,
+						  rst->nBands, x_res, y_res,
+						  minx, maxy, tile_minx,
+						  tile_maxy, tile_width,
+						  tile_height, no_data,
+						  syntetic_band, band_1, band_2,
+						  syntetic_handling);
+	  if (syntetic_handling != NULL)
+	      destroy_syntetic_handling (syntetic_handling);
 	  return 1;
       case RL2_SAMPLE_UINT16:
-	  copy_uint16_ndvi_pixels_transparent ((const unsigned short
-						*)
-					       (rst->rasterBuffer),
-					       (const unsigned char
-						*) (rst->maskBuffer),
-					       (unsigned char *)
-					       outbuf, outmask, width, height,
-					       num_bands, rst->nBands,
-					       x_res, y_res, minx,
-					       maxy, tile_minx,
-					       tile_maxy, tile_width,
-					       tile_height, no_data,
-					       red_band, nir_band,
-					       ndvi_handling);
-	  if (ndvi_handling != NULL)
-	      destroy_ndvi_handling (ndvi_handling);
+	  copy_uint16_syntetic_pixels_transparent ((const unsigned short
+						    *)
+						   (rst->rasterBuffer),
+						   (const unsigned char
+						    *) (rst->maskBuffer),
+						   (unsigned char *)
+						   outbuf, outmask, width,
+						   height, num_bands,
+						   rst->nBands, x_res, y_res,
+						   minx, maxy, tile_minx,
+						   tile_maxy, tile_width,
+						   tile_height, no_data,
+						   syntetic_band, band_1,
+						   band_2, syntetic_handling);
+	  if (syntetic_handling != NULL)
+	      destroy_syntetic_handling (syntetic_handling);
 	  return 1;
       };
     return 0;
@@ -7511,7 +7556,9 @@ rl2_copy_raw_pixels (rl2RasterPtr raster, unsigned char *outbuf,
 		     unsigned int width,
 		     unsigned int height, unsigned char sample_type,
 		     unsigned char num_bands, unsigned char auto_ndvi,
-		     unsigned char red_band_index,
+		     unsigned char syntetic_band, unsigned char red_band_index,
+		     unsigned char green_band_index,
+		     unsigned char blue_band_index,
 		     unsigned char nir_band_index, double x_res, double y_res,
 		     double minx, double maxy, double tile_minx,
 		     double tile_maxy, rl2PixelPtr no_data,
@@ -7588,48 +7635,65 @@ rl2_copy_raw_pixels (rl2RasterPtr raster, unsigned char *outbuf,
 		    && rst->pixelType == RL2_PIXEL_MULTIBAND && auto_ndvi
 		    && (categorize || interpolate))
 		  {
-		      /* applying Auto NDVI */
-		      rl2BandHandlingPtr ndvi_handling = NULL;
-		      build_ndvi_handling ((rl2PrivRasterSymbolizerPtr)
-					   style, &ndvi_handling);
-		      if (ndvi_handling == NULL)
-			  return 0;
-		      if (do_auto_ndvi_pixels
-			  (rst, outbuf, width, height, num_bands, x_res,
-			   y_res, minx, maxy, tile_minx, tile_maxy,
-			   tile_width, tile_height, no_data, red_band_index,
-			   nir_band_index, ndvi_handling))
-			  return 1;
-		      if (ndvi_handling != NULL)
-			  destroy_ndvi_handling (ndvi_handling);
-		  }
-		if (((rst->sampleType == RL2_SAMPLE_UINT8
-		      || rst->sampleType == RL2_SAMPLE_UINT16)
-		     || rst->pixelType == RL2_PIXEL_DATAGRID) && yes_no)
-		  {
-		      /* mono band selection - false color Grayscale */
-		      unsigned char mono_band;
-		      rl2BandHandlingPtr mono_handling = NULL;
-		      if (rl2_get_raster_symbolizer_mono_band_selection
-			  (style, &mono_band) != RL2_OK)
-			  return 0;
-		      if (mono_band >= rst->nBands)
-			  return 0;
-		      build_mono_band_handling ((rl2PrivRasterSymbolizerPtr)
-						style,
-						(rl2PrivRasterStatisticsPtr)
-						stats, mono_band,
-						&mono_handling);
-		      if (mono_handling == NULL)
-			  return 0;
-		      if (do_copy_raw_mono_pixels
-			  (rst, outbuf, width, height, num_bands, x_res,
-			   y_res, minx, maxy, tile_minx, tile_maxy,
-			   tile_width, tile_height, no_data, mono_band,
-			   mono_handling))
-			  return 1;
-		      if (mono_handling != NULL)
-			  destroy_mono_handling (mono_handling);
+		      /* applying Syntetic/Computed Band */
+		      if (syntetic_band == RL2_SYNTETIC_NDWI)
+			{
+			    /* computing NDWI band */
+			    rl2BandHandlingPtr syntetic_handling = NULL;
+			    build_syntetic_handling ((rl2PrivRasterSymbolizerPtr) style, &syntetic_handling);
+			    if (syntetic_handling == NULL)
+				return 0;
+			    if (syntetic_band == RL2_SYNTETIC_NDWI)
+			      {
+				  /* computing NDWI band */
+				  if (do_auto_syntetic_pixels
+				      (rst, outbuf, width, height, num_bands,
+				       x_res, y_res, minx, maxy, tile_minx,
+				       tile_maxy, tile_width, tile_height,
+				       no_data, RL2_SYNTETIC_NDWI,
+				       green_band_index, nir_band_index,
+				       syntetic_handling))
+				      return 1;
+			      }
+			    else
+			      {
+				  /* computing NDVI band */
+				  if (do_auto_syntetic_pixels
+				      (rst, outbuf, width, height, num_bands,
+				       x_res, y_res, minx, maxy, tile_minx,
+				       tile_maxy, tile_width, tile_height,
+				       no_data, RL2_SYNTETIC_NDVI,
+				       red_band_index, nir_band_index,
+				       syntetic_handling))
+				      return 1;
+			      }
+			    if (syntetic_handling != NULL)
+				destroy_syntetic_handling (syntetic_handling);
+			}
+		      if (((rst->sampleType == RL2_SAMPLE_UINT8
+			    || rst->sampleType == RL2_SAMPLE_UINT16)
+			   || rst->pixelType == RL2_PIXEL_DATAGRID) && yes_no)
+			{
+			    /* mono band selection - false color Grayscale */
+			    unsigned char mono_band;
+			    rl2BandHandlingPtr mono_handling = NULL;
+			    if (rl2_get_raster_symbolizer_mono_band_selection
+				(style, &mono_band) != RL2_OK)
+				return 0;
+			    if (mono_band >= rst->nBands)
+				return 0;
+			    build_mono_band_handling ((rl2PrivRasterSymbolizerPtr) style, (rl2PrivRasterStatisticsPtr) stats, mono_band, &mono_handling);
+			    if (mono_handling == NULL)
+				return 0;
+			    if (do_copy_raw_mono_pixels
+				(rst, outbuf, width, height, num_bands, x_res,
+				 y_res, minx, maxy, tile_minx, tile_maxy,
+				 tile_width, tile_height, no_data, mono_band,
+				 mono_handling))
+				return 1;
+			    if (mono_handling != NULL)
+				destroy_mono_handling (mono_handling);
+			}
 		  }
 	    }
       }
@@ -7649,7 +7713,10 @@ rl2_copy_raw_pixels_transparent (rl2RasterPtr raster, unsigned char *outbuf,
 				 unsigned int height, unsigned char sample_type,
 				 unsigned char num_bands,
 				 unsigned char auto_ndvi,
+				 unsigned char syntetic_band,
 				 unsigned char red_band_index,
+				 unsigned char green_band_index,
+				 unsigned char blue_band_index,
 				 unsigned char nir_band_index, double x_res,
 				 double y_res, double minx, double maxy,
 				 double tile_minx, double tile_maxy,
@@ -7701,8 +7768,8 @@ rl2_copy_raw_pixels_transparent (rl2RasterPtr raster, unsigned char *outbuf,
 	  int yes_no;
 	  int categorize;
 	  int interpolate;
-	  if (rl2_is_raster_symbolizer_triple_band_selected (style, &yes_no)
-	      == RL2_OK)
+	  if (rl2_is_raster_symbolizer_triple_band_selected (style, &yes_no) ==
+	      RL2_OK)
 	    {
 		if ((rst->sampleType == RL2_SAMPLE_UINT8
 		     || rst->sampleType == RL2_SAMPLE_UINT16)
@@ -7748,7 +7815,6 @@ rl2_copy_raw_pixels_transparent (rl2RasterPtr raster, unsigned char *outbuf,
 			  free (green_handling);
 		      if (blue_handling != NULL)
 			  free (blue_handling);
-
 		  }
 	    }
 	  if (rl2_is_raster_symbolizer_mono_band_selected
@@ -7759,20 +7825,36 @@ rl2_copy_raw_pixels_transparent (rl2RasterPtr raster, unsigned char *outbuf,
 		    && rst->pixelType == RL2_PIXEL_MULTIBAND && auto_ndvi
 		    && (categorize || interpolate))
 		  {
-		      /* applying Auto NDVI */
-		      rl2BandHandlingPtr ndvi_handling = NULL;
-		      build_ndvi_handling ((rl2PrivRasterSymbolizerPtr)
-					   style, &ndvi_handling);
-		      if (ndvi_handling == NULL)
+		      /* applying Auto Syntetic/Calculated Band */
+		      rl2BandHandlingPtr syntetic_handling = NULL;
+		      build_syntetic_handling ((rl2PrivRasterSymbolizerPtr)
+					       style, &syntetic_handling);
+		      if (syntetic_handling == NULL)
 			  return 0;
-		      if (do_auto_ndvi_pixels_transparent
-			  (rst, outbuf, outmask, width, height, num_bands,
-			   x_res, y_res, minx, maxy, tile_minx, tile_maxy,
-			   tile_width, tile_height, no_data, red_band_index,
-			   nir_band_index, ndvi_handling))
-			  return 1;
-		      if (ndvi_handling != NULL)
-			  destroy_ndvi_handling (ndvi_handling);
+		      if (syntetic_band == RL2_SYNTETIC_NDWI)
+			{
+			    /* computing NDWI band */
+			    if (do_auto_syntetic_pixels_transparent
+				(rst, outbuf, outmask, width, height, num_bands,
+				 x_res, y_res, minx, maxy, tile_minx, tile_maxy,
+				 tile_width, tile_height, no_data,
+				 RL2_SYNTETIC_NDWI, green_band_index,
+				 nir_band_index, syntetic_handling))
+				return 1;
+			}
+		      else
+			{
+			    /* computing NDVI band */
+			    if (do_auto_syntetic_pixels_transparent
+				(rst, outbuf, outmask, width, height, num_bands,
+				 x_res, y_res, minx, maxy, tile_minx, tile_maxy,
+				 tile_width, tile_height, no_data,
+				 RL2_SYNTETIC_NDVI, red_band_index,
+				 nir_band_index, syntetic_handling))
+				return 1;
+			}
+		      if (syntetic_handling != NULL)
+			  destroy_syntetic_handling (syntetic_handling);
 		  }
 		if (((rst->sampleType == RL2_SAMPLE_UINT8
 		      || rst->sampleType == RL2_SAMPLE_UINT16)
@@ -8626,9 +8708,9 @@ rl2_build_shaded_relief_mask (sqlite3 * handle, int max_threads,
     void_raw_buffer (rawbuf, width + 2, height + 2, sample_type, 1, no_data);
     if (!rl2_load_dbms_tiles
 	(handle, max_threads, stmt_tiles, stmt_data, rawbuf, width + 2,
-	 height + 2, sample_type, 1, 0, 0, 0, xx_res, yy_res, minx - xx_res,
-	 miny - yy_res, maxx + xx_res, maxy + yy_res, level, scale, NULL,
-	 no_data, NULL, NULL))
+	 height + 2, sample_type, 1, 0, RL2_SYNTETIC_NONE, 0, 0, 0, 0, xx_res,
+	 yy_res, minx - xx_res, miny - yy_res, maxx + xx_res, maxy + yy_res,
+	 level, scale, NULL, no_data, NULL, NULL))
 	goto error;
     sqlite3_finalize (stmt_tiles);
     sqlite3_finalize (stmt_data);

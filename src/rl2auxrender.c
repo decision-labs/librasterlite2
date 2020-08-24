@@ -1400,8 +1400,9 @@ rl2_get_raw_raster_data_mixed_resolutions (sqlite3 * handle, int max_threads,
 
 		if (rl2_get_raw_raster_data_common
 		    (handle, max_threads, cvg, 1, section_id, w, h, mnx, mny,
-		     mxx, mxy, xx_res, yy_res, &bufpix, &bufpix_size, palette,
-		     *out_pixel, no_data, xstyle, stats) != RL2_OK)
+		     mxx, mxy, xx_res, yy_res, &bufpix, &bufpix_size,
+		     RL2_SYNTETIC_NONE, palette, *out_pixel, no_data, xstyle,
+		     stats) != RL2_OK)
 		    goto error;
 
 		w2 = (unsigned int) ((mxx - mnx) / img_res_x);
@@ -1667,8 +1668,8 @@ rl2_get_raw_raster_data_mixed_resolutions_transparent (sqlite3 * handle,
 		if (rl2_get_raw_raster_data_common_transparent
 		    (handle, max_threads, cvg, 1, section_id, w, h, mnx, mny,
 		     mxx, mxy, xx_res, yy_res, &bufpix, &bufpix_size, &bufmask,
-		     &bufmask_size, palette, *out_pixel, no_data, xstyle,
-		     stats) != RL2_OK)
+		     &bufmask_size, RL2_SYNTETIC_NONE, palette, *out_pixel,
+		     no_data, xstyle, stats) != RL2_OK)
 		    goto error;
 
 		w2 = (unsigned int) ((mxx - mnx) / img_res_x);
@@ -3724,7 +3725,7 @@ create_line_array_from_ring (sqlite3 * handle, rl2RingPtr ring,
 			     int height, double minx, double miny, double x_res,
 			     double y_res)
 {
-/* creating the X and Y arrays required by rl2_graph_draw_warped_text() */  
+/* creating the X and Y arrays required by rl2_graph_draw_warped_text() */
     rl2GeometryPtr geom = NULL;
     rl2GeometryPtr geom2 = NULL;
     rl2PolygonPtr pg = NULL;
@@ -3823,10 +3824,10 @@ static char *
 do_multiline_label (const char *label, int lines)
 {
 /* attempting to split a label in multiple lines */
-	if (lines == 2)
-	{
-	}
-	return NULL;
+    if (lines == 2)
+      {
+      }
+    return NULL;
 }
 
 static void
