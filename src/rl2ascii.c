@@ -50,6 +50,10 @@ the terms of any one of the MPL, the GPL or the LGPL.
 
 #include "config.h"
 
+#ifdef _WIN32
+#include <Windows.h>
+#endif
+
 #include "rasterlite2/rasterlite2.h"
 #include "rasterlite2/rl2tiff.h"
 #include "rasterlite2_private.h"
@@ -305,7 +309,11 @@ rl2_create_ascii_grid_origin (const char *path, int srid,
 	  return NULL;
       };
 
+#ifdef _WIN32
+    in = rl2_win_fopen (path, "r");
+#else
     in = fopen (path, "r");
+#endif
     if (in == NULL)
       {
 	  fprintf (stderr, "ASCII Origin: Unable to open %s\n", path);
@@ -1164,7 +1172,11 @@ rl2_create_ascii_grid_destination (const char *path, unsigned int width,
 	return NULL;
 
 /* creating the output File */
+#ifdef _WIN32
+    out = rl2_win_fopen (path, "w");
+#else
     out = fopen (path, "w");
+#endif
     if (out == NULL)
       {
 	  fprintf (stderr, "ASCII Destination: Unable to open %s\n", path);
@@ -1559,3 +1571,34 @@ rl2_build_ascii_xml_summary (rl2AsciiGridOriginPtr ascii)
     sqlite3_free (prev);
     return xml;
 }
+
+#ifdef _WIN32
+RL2_DECLARE FILE *
+rl2_win_fopen (const char *path, const char *mode)
+{
+/* only for Windows: opening a file with an UTF16 path */
+    wchar_t *path16;
+    wchar_t *mode16;
+    int len;
+    FILE *fl;
+
+/* converting the PATH from UTF-8 to UNICODE UTF-16 */
+    len = MultiByteToWideChar (CP_UTF8, 0, path, -1, NULL, 0);
+    path16 = malloc ((len + 1) * 2);
+    len = MultiByteToWideChar (CP_UTF8, 0, path, -1, path16, len);
+
+/* converting the MODE from UTF-8 to UNICODE UTF-16 */
+    len = MultiByteToWideChar (CP_UTF8, 0, mode, -1, NULL, 0);
+    mode16 = malloc ((len + 1) * 2);
+    MultiByteToWideChar (CP_UTF8, 0, mode, -1, mode16, len);
+
+/* calling the UTF-16 version of fopen() */
+    fl = _wfopen (path16, mode16);
+
+/* memory cleanup */
+    free (path16);
+    free (mode16);
+
+    return fl;
+}
+#endif

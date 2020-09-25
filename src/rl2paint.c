@@ -2686,7 +2686,8 @@ static int
 do_check_collision (struct rl2_advanced_labeling *labeling, sqlite3_stmt * stmt,
 		    double x, double y, double angle, double anchor_point_x,
 		    double anchor_point_y, double pre_x, double pre_y,
-		    double width, double height, double post_x, double post_y)
+		    double width, double height, double post_x, double post_y,
+		    int add_to_list, int pre_checked)
 {
 /* checking for an eventual collision between labels */
     int ret;
@@ -2794,33 +2795,41 @@ do_check_collision (struct rl2_advanced_labeling *labeling, sqlite3_stmt * stmt,
 			     y3, &blob_size);
     bbox.blob_size = blob_size;
 
-/* handling the anti-collision list */
-    ret = do_eval_collision (labeling, stmt, &bbox);
-    if (ret)
+    if (!pre_checked)
       {
-	  free (bbox.blob);
-	  return 1;		/* collision detected */
+	  /* handling the anti-collision list */
+	  ret = do_eval_collision (labeling, stmt, &bbox);
+	  if (ret)
+	    {
+		free (bbox.blob);
+		return 1;	/* collision detected */
+	    }
       }
 
-/* updating the list of obstacles */
-    ptr = malloc (sizeof (struct rl2_label_rect));
-    ptr->blob = bbox.blob;
-    ptr->blob_size = bbox.blob_size;
-    ptr->next = NULL;
-    if (labeling->first_rect == NULL)
-	labeling->first_rect = ptr;
-    if (labeling->last_rect != NULL)
-	labeling->last_rect->next = ptr;
-    labeling->last_rect = ptr;
+    if (add_to_list)
+      {
+	  /* updating the list of obstacles */
+	  ptr = malloc (sizeof (struct rl2_label_rect));
+	  ptr->blob = bbox.blob;
+	  ptr->blob_size = bbox.blob_size;
+	  ptr->next = NULL;
+	  if (labeling->first_rect == NULL)
+	      labeling->first_rect = ptr;
+	  if (labeling->last_rect != NULL)
+	      labeling->last_rect->next = ptr;
+	  labeling->last_rect = ptr;
+      }
+    else
+	free (bbox.blob);
     return 0;
 }
 
-RL2_DECLARE int
-rl2_graph_draw_text (rl2GraphicsContextPtr context, const char *text,
-		     double x, double y, double angle, double anchor_point_x,
-		     double anchor_point_y)
+static int
+draw_text_common (rl2GraphicsContextPtr context, const char *text,
+		  double x, double y, double angle, double anchor_point_x,
+		  double anchor_point_y, int pre_checked)
 {
-/* drawing a text string (using the current font) */
+/* drawing a text string (common implementation) */
     double rads;
     double pre_x;
     double pre_y;
@@ -2862,8 +2871,9 @@ rl2_graph_draw_text (rl2GraphicsContextPtr context, const char *text,
 	      return 0;
 	  real_intersection =
 	      do_check_collision (ctx->labeling, stmt, x, y, angle,
-				  anchor_point_x, anchor_point_y, pre_x, pre_y,
-				  width, height, post_x, post_y);
+				  anchor_point_x, anchor_point_y, pre_x,
+				  pre_y, width, height, post_x, post_y,
+				  1, pre_checked);
 	  sqlite3_finalize (stmt);
 	  if (real_intersection)
 	      return 1;
@@ -2910,6 +2920,98 @@ rl2_graph_draw_text (rl2GraphicsContextPtr context, const char *text,
     return 1;
 }
 
+RL2_DECLARE int
+rl2_graph_draw_text (rl2GraphicsContextPtr context, const char *text,
+		     double x, double y, double angle, double anchor_point_x,
+		     double anchor_point_y)
+{
+/* drawing a text string (using the current font) */
+    return draw_text_common (context, text, x, y, angle, anchor_point_x,
+			     anchor_point_y, 0);
+}
+
+RL2_DECLARE int
+rl2_graph_draw_prechecked_text (rl2GraphicsContextPtr context, const char *text,
+				double x, double y, double angle,
+				double anchor_point_x, double anchor_point_y)
+{
+/* drawing a text string (using the current font) */
+    return draw_text_common (context, text, x, y, angle, anchor_point_x,
+			     anchor_point_y, 1);
+}
+
+RL2_PRIVATE int
+rl2_pre_check_collision (const void *context, double xl,
+			 double yl, const char *label_left,
+			 double xr, double yr,
+			 const char *label_right,
+			 double angle,
+			 double anchor_point_x, double anchor_point_y)
+{
+/* anticipating label collision check for labels split in two lines */
+    double rads;
+    double pre_x;
+    double pre_y;
+    double width;
+    double height;
+    double post_x;
+    double post_y;
+    double center_x;
+    double center_y;
+    double cx;
+    double cy;
+    int ret;
+    int real_intersection;
+    sqlite3_stmt *stmt;
+    sqlite3 *sqlite;
+    const char *sql = "SELECT ST_Intersects(?, ?)";
+    RL2GraphContextPtr ctx = (RL2GraphContextPtr) context;
+
+    if (ctx == NULL)
+	return 0;
+    if (ctx->labeling == NULL)
+	return 1;
+    if (ctx->labeling->no_colliding_labels == 0)
+	return 1;
+    if (label_left == NULL)
+	return 1;
+    sqlite = ctx->labeling->sqlite;
+
+    ret = sqlite3_prepare_v2 (sqlite, sql, strlen (sql), &stmt, NULL);
+    if (ret != SQLITE_OK)
+	return 0;
+
+/* testing the left half - first line of the label */
+    rl2_graph_get_text_extent (ctx, label_left, &pre_x, &pre_y, &width, &height,
+			       &post_x, &post_y);
+    real_intersection =
+	do_check_collision (ctx->labeling, stmt, xl, yl, angle,
+			    anchor_point_x, anchor_point_y, pre_x, pre_y,
+			    width, height, post_x, post_y, 0, 0);
+    if (real_intersection)
+	goto colliding;
+
+    if (label_right != NULL)
+      {
+	  /* testing the right half - second line of the label */
+	  rl2_graph_get_text_extent (ctx, label_right, &pre_x, &pre_y, &width,
+				     &height, &post_x, &post_y);
+	  real_intersection =
+	      do_check_collision (ctx->labeling, stmt, xr, yr, angle,
+				  anchor_point_x, anchor_point_y, pre_x, pre_y,
+				  width, height, post_x, post_y, 0, 0);
+	  if (real_intersection)
+	      goto colliding;
+      }
+
+    sqlite3_finalize (stmt);
+    return 1;
+
+  colliding:
+    sqlite3_finalize (stmt);
+    return 0;
+}
+
 RL2_PRIVATE void
 rl2_estimate_text_length (void *context, const char *text, double *length,
 			  double *extra)
@@ -2942,6 +3044,42 @@ rl2_estimate_text_length (void *context, const char *text, double *length,
 	      (extents.height * extents.height)) / 2.0;
     *length = radius * count;
     *extra = radius;
+}
+
+RL2_PRIVATE void
+rl2_estimate_text_length_height (void *context, const char *text,
+				 double *length, double *extra, double *height)
+{
+/* estimating the text length */
+    RL2GraphContextPtr ctx = (RL2GraphContextPtr) context;
+    cairo_t *cairo;
+    const char *p = text;
+    int count = 0;
+    double radius = 0.0;
+    cairo_font_extents_t extents;
+
+    *length = 0.0;
+    *extra = 0.0;
+    *height = 0.0;
+
+    if (ctx == NULL)
+	return;
+    if (text == NULL)
+	return;
+    if (ctx->type == RL2_SURFACE_PDF)
+	cairo = ctx->clip_cairo;
+    else
+	cairo = ctx->cairo;
+
+    while (*p++ != '\0')
+	count++;
+    cairo_font_extents (cairo, &extents);
+    radius =
+	sqrt ((extents.max_x_advance * extents.max_x_advance) +
+	      (extents.height * extents.height)) / 2.0;
+    *length = radius * count;
+    *extra = radius;
+    *height = extents.height;
 }
 
 static void

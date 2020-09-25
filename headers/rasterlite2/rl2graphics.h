@@ -1330,13 +1330,41 @@ extern "C"
  \return 0 (false) on error, any other value on success.
  
  \sa rl2_graph_set_font, rl2_graph_get_text_extent,
- rl2_graph_draw_warped_text
+ rl2_graph_draw_prechecked_text, rl2_graph_draw_warped_text
  */
     RL2_DECLARE int rl2_graph_draw_text (rl2GraphicsContextPtr context,
 					 const char *text, double x, double y,
 					 double angle,
 					 double anchor_point_x,
 					 double anchor_point_y);
+
+/**
+ Draws a text into the Canvas using the currently set Font
+ The text is assumed to be already checked against possible collisions
+
+ \param context the pointer to a valid Graphics Context (aka Canvas).
+ \param text string to be printed into the canvas.
+ \param x the X coordinate of the top left corner of the text.
+ \param y the Y coordinate of the top left corner of the text.
+ \param angle an angle (in decimal degrees) to rotate the text.
+ \param anchor_point_x relative X position of the Anchor Point
+  expressed as a percent position within the text bounding box
+  (expected to be a value between 0.0 and 1.0)
+ \param anchor_point_y relative Y position of the Anchor Point
+  expressed as a percent position within the text bounding box
+  (expected to be a value between 0.0 and 1.0)
+
+ \return 0 (false) on error, any other value on success.
+ 
+ \sa rl2_graph_set_font, rl2_graph_get_text_extent,
+ rl2_graph_draw_warped_text, rl2_graph_draw_text
+ */
+    RL2_DECLARE int rl2_graph_draw_prechecked_text (rl2GraphicsContextPtr
+						    context, const char *text,
+						    double x, double y,
+						    double angle,
+						    double anchor_point_x,
+						    double anchor_point_y);
 
 /**
  Draws a text warped along a curve using the currently set Font

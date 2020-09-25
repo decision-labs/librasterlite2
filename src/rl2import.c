@@ -1087,7 +1087,11 @@ read_jgw_worldfile (const char *src_path, double *minx, double *maxy,
     jgw_path = rl2_build_worldfile_path (src_path, ".jgw");
     if (jgw_path == NULL)
 	goto error;
+#ifdef _WIN32
+    jgw = rl2_win_fopen (jgw_path, "r");
+#else
     jgw = fopen (jgw_path, "r");
+#endif
     free (jgw_path);
     jgw_path = NULL;
     if (jgw == NULL)
@@ -1096,7 +1100,11 @@ read_jgw_worldfile (const char *src_path, double *minx, double *maxy,
 	  jgw_path = rl2_build_worldfile_path (src_path, ".jpgw");
 	  if (jgw_path == NULL)
 	      goto error;
+#ifdef _WIN32
+	  jgw = rl2_win_fopen (jgw_path, "r");
+#else
 	  jgw = fopen (jgw_path, "r");
+#endif
 	  free (jgw_path);
       }
     if (jgw == NULL)
@@ -1105,7 +1113,11 @@ read_jgw_worldfile (const char *src_path, double *minx, double *maxy,
 	  jgw_path = rl2_build_worldfile_path (src_path, ".wld");
 	  if (jgw_path == NULL)
 	      goto error;
+#ifdef _WIN32
+	  jgw = rl2_win_fopen (jgw_path, "r");
+#else
 	  jgw = fopen (jgw_path, "r");
+#endif
 	  free (jgw_path);
       }
     if (jgw == NULL)
@@ -1138,7 +1150,11 @@ write_jgw_worldfile (const char *path, double minx, double maxy, double x_res,
     jgw_path = rl2_build_worldfile_path (path, ".jgw");
     if (jgw_path == NULL)
 	goto error;
+#ifdef _WIN32
+    jgw = rl2_win_fopen (jgw_path, "w");
+#else
     jgw = fopen (jgw_path, "w");
+#endif
     free (jgw_path);
     jgw_path = NULL;
     if (jgw == NULL)
@@ -1569,7 +1585,11 @@ read_j2w_worldfile (const char *src_path, double *minx, double *maxy,
     j2w_path = rl2_build_worldfile_path (src_path, ".j2w");
     if (j2w_path == NULL)
 	goto error;
+#ifdef _WIN32
+    j2w = rl2_win_fopen (j2w_path, "r");
+#else
     j2w = fopen (j2w_path, "r");
+#endif
     free (j2w_path);
     j2w_path = NULL;
     if (j2w == NULL)
@@ -1578,7 +1598,11 @@ read_j2w_worldfile (const char *src_path, double *minx, double *maxy,
 	  j2w_path = rl2_build_worldfile_path (src_path, ".wld");
 	  if (j2w_path == NULL)
 	      goto error;
+#ifdef _WIN32
+	  j2w = rl2_win_fopen (j2w_path, "r");
+#else
 	  j2w = fopen (j2w_path, "r");
+#endif
 	  free (j2w_path);
       }
     if (j2w == NULL)

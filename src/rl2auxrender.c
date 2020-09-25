@@ -3820,14 +3820,71 @@ do_eval_size_fit (rl2PolygonPtr polyg, double x_res, double y_res,
     return 1;
 }
 
-static char *
-do_multiline_label (const char *label, int lines)
+static int
+do_split_label (const char *label, char **label_left, char **label_right)
 {
-/* attempting to split a label in multiple lines */
-    if (lines == 2)
+/* attempting to split a label in two lines */
+    int whites[1024];
+    int w;
+    int len = 0;
+    int diff;
+    int min_diff;
+    int cut;
+    const char *in;
+    char *new_label;
+    if (label == NULL)
+	return 0;
+    for (w = 0; w < 1024; w++)
       {
+	  /* initializing the Whitespaces array */
+	  whites[w] = -1;
       }
-    return NULL;
+
+    w = 0;
+    in = label;
+    while (*in != '\0')
+      {
+	  /* searching for WhiteSpaces */
+	  if (*in == ' ' || *in == '\t' || *in == '\n')
+	      whites[w++] = in - label;
+	  in++;
+	  len++;
+      }
+
+    if (whites[0] == -1)
+	return 0;		/* no WhiteSpaces found */
+
+    min_diff = len;
+    cut = 0;
+    for (w = 0; w < 1014; w++)
+      {
+	  /* identifying the optimal cut point */
+	  if (whites[w] == -1)
+	      continue;
+	  diff = abs (whites[w] - (len - whites[w]));
+	  if (diff < min_diff)
+	    {
+		cut = whites[w];
+		min_diff = diff;
+	    }
+      }
+
+    if (cut == 0)
+	return 0;
+
+/* preparing label-left */
+    new_label = malloc (cut + 1);
+    memcpy (new_label, label, cut);
+    *(new_label + cut) = '\0';
+    *label_left = new_label;
+
+/* preparing label-right */
+    new_label = malloc (len - cut + 1);
+    memcpy (new_label, label + cut + 1, len - cut);
+    *(new_label + len - cut) = '\0';
+    *label_right = new_label;
+
+    return 1;
 }
 
 static void
@@ -4028,41 +4085,81 @@ draw_labels (rl2GraphicsContextPtr ctx, sqlite3 * handle,
 		else
 		  {
 		      /* trying alternative placements, if possible */
+		      int size_fit_2 = 0;
 		      struct rl2_advanced_labeling *labeling =
 			  rl2_get_labeling_ref (ctx);
 		      if (labeling != NULL)
 			{
-			    if (labeling->polygon_labels_multiline)
+			    double label_height;
+			    if (labeling->label_wrap_text && rotation == 0.0)
 			      {
-				  char *alt_label =
-				      do_multiline_label (label, 2);
-				  if (alt_label != NULL)
+				  /* if WrapText is enabled and the label has no rotation
+				   * we'll attempt to split the label in two lines */
+				  char *label_left;
+				  char *label_right;
+				  if (do_split_label
+				      (label, &label_left, &label_right))
 				    {
-					rl2_estimate_text_length (ctx,
-								  alt_label,
-								  &length,
-								  &extra);
+					rl2_estimate_text_length_height (ctx,
+									 label_left,
+									 &length,
+									 &extra,
+									 &label_height);
 					size_fit =
 					    do_eval_size_fit (polyg, x_res,
 							      y_res, length,
 							      extra);
-					if (point_bbox_matches
-					    (&pt, minx, miny, maxx, maxy)
-					    && size_fit)
+					rl2_estimate_text_length (ctx,
+								  label_right,
+								  &length,
+								  &extra);
+					size_fit_2 =
+					    do_eval_size_fit (polyg, x_res,
+							      y_res, length,
+							      extra);
+					if (size_fit && size_fit_2)
 					  {
-					      /* adopting a two-lines placement */
-					      x = (cx - minx) / x_res;
-					      y = (double) height -
-						  ((cy - miny) / y_res);
-					      rl2_graph_draw_text (ctx, label,
-								   x +
-								   displacement_x,
-								   y -
-								   displacement_y,
-								   rotation,
-								   anchor_point_x,
-								   anchor_point_y);
+					      if (point_bbox_matches
+						  (&pt, minx, miny, maxx, maxy))
+						{
+						    double xl =
+							(cx - minx) / x_res;
+						    double yl =
+							(double) height -
+							((cy - miny) / y_res);
+						    double xr =
+							(cx - minx) / x_res;
+						    double yr =
+							(double) height -
+							((cy - miny) / y_res);
+						    xl += displacement_x;
+						    xr += displacement_x;
+						    yl -= label_height / 2.0;
+						    yr += label_height / 2.0;
+						    if (rl2_pre_check_collision
+							(ctx, xl, yl,
+							 label_left, xr, yr,
+							 label_right, rotation,
+							 anchor_point_x,
+							 anchor_point_y))
+						      {
+							  /* printing the left half (first line) */
+							  rl2_graph_draw_prechecked_text
+							      (ctx, label_left,
+							       xl, yl, rotation,
+							       anchor_point_x,
+							       anchor_point_y);
+							  /* printing the right half (second line) */
+							  rl2_graph_draw_prechecked_text
+							      (ctx, label_right,
+							       xr, yr, rotation,
+							       anchor_point_x,
+							       anchor_point_y);
+						      }
+						}
 					  }
+					free (label_left);
+					free (label_right);
 				    }
 			      }
 			}
@@ -4094,11 +4191,92 @@ draw_labels (rl2GraphicsContextPtr ctx, sqlite3 * handle,
 		/* drawing a POINT-based text label */
 		if (point_bbox_matches (point, minx, miny, maxx, maxy))
 		  {
+		      int label_done = 0;
+		      int autorotate = 0;
+		      int shift_position = 0;
 		      double x = (point->x - minx) / x_res;
 		      double y = (double) height - ((point->y - miny) / y_res);
-		      rl2_graph_draw_text (ctx, label, x + displacement_x,
-					   y - displacement_y, rotation,
-					   anchor_point_x, anchor_point_y);
+		      struct rl2_advanced_labeling *labeling =
+			  rl2_get_labeling_ref (ctx);
+		      if (labeling != NULL)
+			{
+			    if (labeling->label_autorotate)
+				autorotate = 1;
+			    if (labeling->label_shift_position)
+				shift_position = 1;
+			}
+		      if (autorotate)
+			{
+			    /* alternative placement: trying to rotate the label */
+			    int a;
+			    double preset_angles[13];
+			    preset_angles[0] = 0.0;
+			    preset_angles[1] = -15.0;
+			    preset_angles[2] = 15.0;
+			    preset_angles[3] = -30.0;
+			    preset_angles[4] = 30.0;
+			    preset_angles[5] = -45.0;
+			    preset_angles[6] = 45.0;
+			    preset_angles[7] = -60.0;
+			    preset_angles[8] = 60.0;
+			    preset_angles[9] = -75.0;
+			    preset_angles[10] = 75.0;
+			    preset_angles[11] = -90.0;
+			    preset_angles[12] = 90.0;
+			    for (a = 0; a < 12; a++)
+			      {
+				  if (rl2_pre_check_collision
+				      (ctx, x, y, label, 0.0, 0.0, NULL,
+				       preset_angles[a], anchor_point_x,
+				       anchor_point_y))
+				    {
+					rl2_graph_draw_text (ctx, label,
+							     x + displacement_x,
+							     y - displacement_y,
+							     preset_angles[a],
+							     anchor_point_x,
+							     anchor_point_y);
+					break;
+				    }
+			      }
+			}
+		      if (shift_position && !label_done)
+			{
+			    int s;
+			    double shift_x[6];
+			    double shift_y[6];
+			    shift_x[0] = anchor_point_x;
+			    shift_y[0] = anchor_point_y;
+			    shift_x[1] = 0.0;
+			    shift_y[1] = 0.5;
+			    shift_x[2] = 1.0;
+			    shift_y[2] = 0.5;
+			    shift_x[3] = 0.5;
+			    shift_y[3] = 0.0;
+			    shift_x[4] = 0.5;
+			    shift_y[4] = 1.0;
+			    shift_x[5] = 0.5;
+			    shift_y[5] = 0.5;
+			    for (s = 0; s < 5; s++)
+			      {
+				  if (rl2_pre_check_collision
+				      (ctx, x, y, label, 0.0, 0.0, NULL,
+				       rotation, shift_x[s], shift_y[s]))
+				    {
+					rl2_graph_draw_text (ctx, label,
+							     x + displacement_x,
+							     y - displacement_y,
+							     rotation,
+							     shift_x[s],
+							     shift_y[s]);
+					break;
+				    }
+			      }
+			}
+		      if (!label_done)
+			  rl2_graph_draw_text (ctx, label, x + displacement_x,
+					       y - displacement_y, rotation,
+					       anchor_point_x, anchor_point_y);
 		  }
 		point = point->next;
 	    }
@@ -4381,7 +4559,7 @@ rl2_draw_vector_feature (void *p_ctx, void *p_ctx_labels, sqlite3 * handle,
 			 rl2VectorSymbolizerPtr symbolizer, int height,
 			 double minx, double miny, double maxx, double maxy,
 			 double x_res, double y_res, rl2GeometryPtr geom,
-			 rl2VariantArrayPtr variant)
+			 rl2VariantArrayPtr variant, int *has_labels)
 {
 /* drawing a vector feature on the current canvas */
     rl2PrivVectorSymbolizerItemPtr item;
@@ -4391,6 +4569,7 @@ rl2_draw_vector_feature (void *p_ctx, void *p_ctx_labels, sqlite3 * handle,
     rl2PrivVectorSymbolizerPtr default_symbolizer = NULL;
     rl2PrivVectorSymbolizerPtr dyn_symbolizer = NULL;
 
+    *has_labels = 0;
     if (ctx == NULL || geom == NULL)
 	return;
 
@@ -4501,10 +4680,13 @@ rl2_draw_vector_feature (void *p_ctx, void *p_ctx_labels, sqlite3 * handle,
 		      rl2PrivTextSymbolizerPtr text =
 			  (rl2PrivTextSymbolizerPtr) (item->symbolizer);
 		      if (text->label != NULL)
-			  draw_labels (ctx_labels, handle,
-				       priv_data, text, height,
-				       minx, miny, maxx, maxy,
-				       x_res, y_res, geom);
+			{
+			    draw_labels (ctx_labels, handle,
+					 priv_data, text, height,
+					 minx, miny, maxx, maxy,
+					 x_res, y_res, geom);
+			    *has_labels = 1;
+			}
 		  }
 		item = item->next;
 	    }

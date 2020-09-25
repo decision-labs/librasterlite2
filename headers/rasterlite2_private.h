@@ -420,8 +420,9 @@ extern "C"
     {
 	sqlite3 *sqlite;
 	int no_colliding_labels;
-	int polygon_labels_multiline;
-	int polygon_labels_autorotate;
+	int label_wrap_text;
+	int label_autorotate;
+	int label_shift_position;
 	struct rl2_label_rect *first_rect;
 	struct rl2_label_rect *last_rect;
     };
@@ -2744,7 +2745,8 @@ extern "C"
 					      double miny, double maxx,
 					      double maxy, double x_res,
 					      double y_res, rl2GeometryPtr geom,
-					      rl2VariantArrayPtr variant);
+					      rl2VariantArrayPtr variant,
+					      int *has_labels);
 
     RL2_PRIVATE rl2GeometryPtr
 	rl2_geometry_from_blob (const unsigned char *blob, int blob_sz);
@@ -2814,6 +2816,12 @@ extern "C"
 
     RL2_PRIVATE void rl2_estimate_text_length (void *ctx, const char *text,
 					       double *length, double *extra);
+
+    RL2_PRIVATE void rl2_estimate_text_length_height (void *ctx,
+						      const char *text,
+						      double *length,
+						      double *extra,
+						      double *height);
 
     RL2_PRIVATE int
 	rl2_find_cached_raster (const void *data, const char *db_prefix,
@@ -2990,6 +2998,14 @@ extern "C"
 
     RL2_PRIVATE struct rl2_advanced_labeling *rl2_get_labeling_ref (const void
 								    *ctx);
+
+    RL2_PRIVATE int rl2_pre_check_collision (const void *ctx, double xl,
+					     double yl, const char *label_left,
+					     double xr, double yr,
+					     const char *label_right,
+					     double rotation,
+					     double anchor_point_x,
+					     double anchor_point_y);
 
 #ifdef __cplusplus
 }

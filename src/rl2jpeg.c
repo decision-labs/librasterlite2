@@ -669,7 +669,11 @@ rl2_blob_from_file (const char *path, unsigned char **p_blob, int *p_blob_size)
     *p_blob = NULL;
     *p_blob_size = 0;
 /* attempting to open the file */
+#ifdef _WIN32
+    in = rl2_win_fopen (path, "rb");
+#else
     in = fopen (path, "rb");
+#endif
     if (in == NULL)
 	return RL2_ERROR;
 
@@ -709,7 +713,11 @@ rl2_blob_to_file (const char *path, unsigned char *blob, int blob_size)
     if (blob == NULL || blob_size < 1)
 	return RL2_ERROR;
 /* attempting to open the file */
+#ifdef _WIN32
+    out = rl2_win_fopen (path, "wb");
+#else
     out = fopen (path, "wb");
+#endif
     if (out == NULL)
 	return RL2_ERROR;
 

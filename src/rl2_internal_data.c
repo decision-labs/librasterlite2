@@ -112,8 +112,9 @@ rl2_alloc_private (void)
     labeling = &(priv_data->labeling);
     labeling->sqlite = NULL;
     labeling->no_colliding_labels = 0;
-    labeling->polygon_labels_multiline = 0;
-    labeling->polygon_labels_autorotate = 0;
+    labeling->label_wrap_text = 0;
+    labeling->label_autorotate = 0;
+    labeling->label_shift_position = 0;
     labeling->first_rect = NULL;
     labeling->last_rect = NULL;
     return priv_data;
@@ -156,6 +157,8 @@ do_cleanup_advanced_labeling (struct rl2_advanced_labeling *ptr)
     while (pLR)
       {
 	  pLRn = pLR->next;
+	  if (pLR->blob != NULL)
+		free(pLR->blob);
 	  free (pLR);
 	  pLR = pLRn;
       }

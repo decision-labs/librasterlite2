@@ -6392,41 +6392,151 @@ cmp_layers (rl2MapLayerPtr lyr1, rl2MapLayerPtr lyr2)
     if (!cmp_strings (lyr1->name, lyr2->name))
 	return 0;
     if (lyr1->visible != lyr2->visible)
-	return 0;
+	return -1;
     if (lyr1->ok_min_scale != lyr2->ok_min_scale)
-	return 0;
+	return -2;
     if (lyr1->min_scale != lyr2->min_scale)
-	return 0;
+	return -2;
     if (lyr1->ok_max_scale != lyr2->ok_max_scale)
-	return 0;
+	return -2;
     if (lyr1->max_scale != lyr2->max_scale)
-	return 0;
+	return -2;
     if (!cmp_strings
 	(lyr1->raster_style_internal_name, lyr2->raster_style_internal_name))
-	return 0;
+	return -3;
     if (!cmp_strings
 	(lyr1->vector_style_internal_name, lyr2->vector_style_internal_name))
-	return 0;
+	return -3;
     if (!cmp_raster_styles (lyr1->raster_style, lyr2->raster_style))
-	return 0;
+	return -3;
     if (!cmp_vector_styles (lyr1->vector_style, lyr2->vector_style))
-	return 0;
+	return -3;
     if (!cmp_topology_styles (lyr1->topology_style, lyr2->topology_style))
-	return 0;
+	return -3;
     if (!cmp_topology_internal_styles
 	(lyr1->topology_internal_style, lyr2->topology_internal_style))
-	return 0;
+	return -3;
     if (!cmp_network_styles (lyr1->network_style, lyr2->network_style))
-	return 0;
+	return -3;
     if (!cmp_network_internal_styles
 	(lyr1->network_internal_style, lyr2->network_internal_style))
-	return 0;
+	return -3;
     if (!cmp_wms_styles (lyr1->wms_style, lyr2->wms_style))
-	return 0;
+	return -3;
     return 1;
 }
 
+static rl2MapConfigChangesPtr
+alloc_changes ()
+{
+/* allocating an empty list of Changed Items */
+    rl2MapConfigChangesPtr list = malloc (sizeof (rl2MapConfigChanges));
+    list->first = NULL;
+    list->last = NULL;
+    list->count = 0;
+    list->array = NULL;
+    return list;
+}
+
+RL2_DECLARE void
+rl2_destroy_map_config_changes (rl2MapConfigChangesPtr list)
+{
+/* memory cleanup: destroying a list of MapConfig Changes */
+    rl2MapConfigChangedItem *p;
+    rl2MapConfigChangedItem *pn;
+    if (list == NULL)
+	return;
+
+    p = list->first;
+    while (p != NULL)
+      {
+	  pn = p->next;
+	  if (p->description != NULL)
+	      free (p->description);
+	  p = pn;
+      }
+    free (list);
+}
+
 RL2_DECLARE int
+rl2_map_config_changes_get_count (rl2MapConfigChangesPtr list)
+{
+/* will return the number of items into the array */
+    if (list == NULL)
+	return 0;
+    return list->count;
+}
+
+RL2_DECLARE const char *
+rl2_map_config_changes_get_item (rl2MapConfigChangesPtr list, int idx)
+{
+/* will return the description for the Nth item */
+    rl2MapConfigChangedItem *p;
+    if (list == NULL)
+	return NULL;
+    if (idx < 0 || idx >= list->count)
+	return NULL;
+    p = *(list->array + idx);
+    return p->description;
+}
+
+static void
+add_change (rl2MapConfigChangesPtr list, const char *desc)
+{
+/* adding a changed item to the list */
+    rl2MapConfigChangedItemPtr item;
+    int len;
+    if (list == NULL)
+	return;
+
+    item = malloc (sizeof (rl2MapConfigChangedItem));
+    len = strlen (desc);
+    item->description = malloc (len + 1);
+    strcpy (item->description, desc);
+    item->next = NULL;
+
+    if (list->first == NULL)
+	list->first = item;
+    if (list->last != NULL)
+	list->last->next = item;
+    list->last = item;
+}
+
+static void
+prepare_changes (rl2MapConfigChangesPtr list)
+{
+/* preparing the array of changes */
+    int i;
+    rl2MapConfigChangedItem *p;
+    if (list == NULL)
+	return;
+
+    list->count = 0;
+    p = list->first;
+    while (p != NULL)
+      {
+	  list->count += 1;
+	  p = p->next;
+      }
+    if (list->array != NULL)
+	free (list->array);
+    if (list->count == 0)
+      {
+	  list->array = NULL;
+	  return;
+      }
+    list->array = malloc (sizeof (rl2MapConfigChangedItemPtr) * list->count);
+    p = list->first;
+    i = 0;
+    while (p != NULL)
+      {
+	  *(list->array + i) = p;
+	  i++;
+	  p = p->next;
+      }
+}
+
+RL2_DECLARE rl2MapConfigChangesPtr
 rl2_compare_map_configs (rl2MapConfigPtr conf1, rl2MapConfigPtr conf2)
 {
 /* comparing two MapConfig objects for identity */
@@ -6436,49 +6546,51 @@ rl2_compare_map_configs (rl2MapConfigPtr conf1, rl2MapConfigPtr conf2)
     rl2MapAttachedDbPtr db2;
     rl2MapLayerPtr lyr1;
     rl2MapLayerPtr lyr2;
+    rl2MapConfigChangesPtr changes = alloc_changes ();
 
     if (conf1 == NULL && conf2 == NULL)
-	return 1;
+	return NULL;
     if (conf1 == NULL || conf2 == NULL)
-	return 0;
+      {
+	  add_change (changes, "*** CRITICAL: found a NULL Map Configuration");
+	  return changes;
+      }
 
 /* checking MapConfiguration */
     if (!cmp_strings (conf1->name, conf2->name))
-	return 0;
+	add_change (changes, "MapConfig Name");
     if (!cmp_strings (conf1->title, conf2->title))
-	return 0;
+	add_change (changes, "MapConfig Title");
     if (!cmp_strings (conf1->abstract, conf2->abstract))
-	return 0;
+	add_change (changes, "MapConfig Abstract");
     if (conf1->multithread_enabled != conf2->multithread_enabled)
-	return 0;
+	add_change (changes, "MapConfig MultithreadEnabled");
     if (conf1->max_threads != conf2->max_threads)
-	return 0;
+	add_change (changes, "MapConfig MaxThreads");
     if (conf1->srid != conf2->srid)
-	return 0;
+	add_change (changes, "MapConfig SRID");
     if (conf1->autotransform_enabled != conf2->autotransform_enabled)
-	return 0;
+	add_change (changes, "MapConfig AutoTransformEnabled");
     if (conf1->dms != conf2->dms)
-	return 0;
-    if (conf1->map_background_red != conf2->map_background_red)
-	return 0;
-    if (conf1->map_background_green != conf2->map_background_green)
-	return 0;
-    if (conf1->map_background_blue != conf2->map_background_blue)
-	return 0;
+	add_change (changes, "MapConfig DD/DMS");
+    if ((conf1->map_background_red != conf2->map_background_red)
+	|| (conf1->map_background_green != conf2->map_background_green)
+	|| (conf1->map_background_blue != conf2->map_background_blue))
+	add_change (changes, "MapConfig BgColor");
     if (conf1->map_background_transparent != conf2->map_background_transparent)
-	return 0;
+	add_change (changes, "MapConfig BgColorTransparent");
     if (conf1->raster_wms_auto_switch != conf2->raster_wms_auto_switch)
-	return 0;
+	add_change (changes, "MapConfig RasterWmsAutoSwitch");
     if (conf1->label_anti_collision != conf2->label_anti_collision)
-	return 0;
+	add_change (changes, "MapConfig LabelAntiCollision");
     if (conf1->label_wrap_text != conf2->label_wrap_text)
-	return 0;
+	add_change (changes, "MapConfig LabelWrapText");
     if (conf1->label_auto_rotate != conf2->label_auto_rotate)
-	return 0;
+	add_change (changes, "MapConfig LabelAutoRotate");
     if (conf1->label_shift_position != conf2->label_shift_position)
-	return 0;
+	add_change (changes, "MapConfig LabelAutoShift");
     if (!cmp_bbox (conf1->bbox, conf2->bbox))
-	return 0;
+	add_change (changes, "MapConfig BBOX");
 
 /* checking ATTACHED-DBs */
     count1 = 0;
@@ -6496,15 +6608,18 @@ rl2_compare_map_configs (rl2MapConfigPtr conf1, rl2MapConfigPtr conf2)
 	  db2 = db2->next;
       }
     if (count1 != count2)
-	return 0;
-    db1 = conf1->first_db;
-    db2 = conf2->first_db;
-    while (db1 != NULL && db2 != NULL)
+	add_change (changes, "MapConfig AttachedDB");
+    else
       {
-	  if (!cmp_attached_dbs (db1, db2))
-	      return 0;
-	  db1 = db1->next;
-	  db2 = db2->next;
+	  db1 = conf1->first_db;
+	  db2 = conf2->first_db;
+	  while (db1 != NULL && db2 != NULL)
+	    {
+		if (!cmp_attached_dbs (db1, db2))
+		    add_change (changes, "MapConfig AttachedDB");
+		db1 = db1->next;
+		db2 = db2->next;
+	    }
       }
 
 /* checking Layers */
@@ -6523,16 +6638,41 @@ rl2_compare_map_configs (rl2MapConfigPtr conf1, rl2MapConfigPtr conf2)
 	  lyr2 = lyr2->next;
       }
     if (count1 != count2)
-	return 0;
-    lyr1 = conf1->first_lyr;
-    lyr2 = conf2->first_lyr;
-    while (lyr1 != NULL && lyr2 != NULL)
+	add_change (changes, "MapConfig Layer");
+    else
       {
-	  if (!cmp_layers (lyr1, lyr2))
-	      return 0;
-	  lyr1 = lyr1->next;
-	  lyr2 = lyr2->next;
+	  lyr1 = conf1->first_lyr;
+	  lyr2 = conf2->first_lyr;
+	  while (lyr1 != NULL && lyr2 != NULL)
+	    {
+		int ret = cmp_layers (lyr1, lyr2);
+		if (ret == 0)
+		    add_change (changes, "MapConfig Layer");
+		else if (ret < 0)
+		  {
+		      char *str2;
+		      char *str = sqlite3_mprintf ("MapConfig Layer %s.%s",
+						   lyr1->prefix, lyr1->name);
+		      if (ret == -1)
+			  str2 = sqlite3_mprintf ("%s Visibility", str);
+		      else if (ret == -2)
+			  str2 = sqlite3_mprintf ("%s ScaleLimits", str);
+		      else
+			  str2 = sqlite3_mprintf ("%s Style", str);
+		      add_change (changes, str2);
+		      sqlite3_free (str);
+		      sqlite3_free (str2);
+		  }
+		lyr1 = lyr1->next;
+		lyr2 = lyr2->next;
+	    }
       }
 
-    return 1;
+    if (changes->first == NULL)
+      {
+	  rl2_destroy_map_config_changes (changes);
+	  return NULL;
+      }
+    prepare_changes (changes);
+    return changes;
 }

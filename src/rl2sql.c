@@ -658,32 +658,32 @@ fnct_DisableAntiLabelCollision (sqlite3_context * context, int argc,
 }
 
 static void
-fnct_IsPolygonLabelsMultilineEnabled (sqlite3_context * context, int argc,
+fnct_IsLabelWrapTextEnabled (sqlite3_context * context, int argc,
 				  sqlite3_value ** argv)
 {
 /* SQL function:
-/ RL2_IsPolygonLabelsMultilineEnabled()
+/ RL2_IsLabelWrapTextEnabled()
 /
-/ return if PolygonLabelsMultiline is enabled or not
+/ return if LabelWrapText is enabled or not
 */
     int anti = 0;
     struct rl2_private_data *priv_data = sqlite3_user_data (context);
     RL2_UNUSED ();		/* LCOV_EXCL_LINE */
     if (priv_data != NULL)
-	anti = priv_data->labeling.polygon_labels_multiline;
+	anti = priv_data->labeling.label_wrap_text;
     if (anti != 0)
 	anti = 1;
     sqlite3_result_int (context, anti);
 }
 
 static void
-fnct_EnablePolygonLabelsMultiline (sqlite3_context * context, int argc,
+fnct_EnableLabelWrapText (sqlite3_context * context, int argc,
 			       sqlite3_value ** argv)
 {
 /* SQL function:
-/ RL2_EnablePolygonLabelsMultiline(void)
+/ RL2_EnableLabelWrapText(void)
 /
-/ return if PolygonLabelsMultiline has been enabled or not
+/ return if LabelWrapText has been enabled or not
 */
     int anti = 0;
     struct rl2_private_data *priv_data = sqlite3_user_data (context);
@@ -691,18 +691,18 @@ fnct_EnablePolygonLabelsMultiline (sqlite3_context * context, int argc,
 
     if (priv_data != NULL)
       {
-	  priv_data->labeling.polygon_labels_multiline = 1;
-	  anti = priv_data->labeling.polygon_labels_multiline;
+	  priv_data->labeling.label_wrap_text = 1;
+	  anti = priv_data->labeling.label_wrap_text;
       }
     sqlite3_result_int (context, anti);
 }
 
 static void
-fnct_DisablePolygonLabelsMultiline (sqlite3_context * context, int argc,
+fnct_DisableLabelWrapText (sqlite3_context * context, int argc,
 				sqlite3_value ** argv)
 {
 /* SQL function:
-/ RL2_DisablePolygonLabelsMultiline(void)
+/ RL2_DisableLabelWrapText(void)
 /
 / return zero
 */
@@ -710,37 +710,37 @@ fnct_DisablePolygonLabelsMultiline (sqlite3_context * context, int argc,
     RL2_UNUSED ();		/* LCOV_EXCL_LINE */
 
     if (priv_data != NULL)
-	priv_data->labeling.polygon_labels_multiline = 0;
+	priv_data->labeling.label_wrap_text = 0;
     sqlite3_result_int (context, 0);
 }
 
 static void
-fnct_IsPolygonLabelsAutorotateEnabled (sqlite3_context * context, int argc,
+fnct_IsLabelAutorotateEnabled (sqlite3_context * context, int argc,
 				  sqlite3_value ** argv)
 {
 /* SQL function:
-/ RL2_IsPolygonLabelsAutorotateEnabled()
+/ RL2_IsLabelAutorotateEnabled()
 /
-/ return if PolygonLabelsAutorotate is enabled or not
+/ return if LabelAutorotate is enabled or not
 */
     int anti = 0;
     struct rl2_private_data *priv_data = sqlite3_user_data (context);
     RL2_UNUSED ();		/* LCOV_EXCL_LINE */
     if (priv_data != NULL)
-	anti = priv_data->labeling.polygon_labels_autorotate;
+	anti = priv_data->labeling.label_autorotate;
     if (anti != 0)
 	anti = 1;
     sqlite3_result_int (context, anti);
 }
 
 static void
-fnct_EnablePolygonLabelsAutorotate (sqlite3_context * context, int argc,
+fnct_EnableLabelAutorotate (sqlite3_context * context, int argc,
 			       sqlite3_value ** argv)
 {
 /* SQL function:
-/ RL2_EnablePolygonLabelsAutorotate(void)
+/ RL2_EnableLabelAutorotate(void)
 /
-/ return if PolygonLabelsAutorotate has been enabled or not
+/ return if LabelAutorotate has been enabled or not
 */
     int anti = 0;
     struct rl2_private_data *priv_data = sqlite3_user_data (context);
@@ -748,18 +748,18 @@ fnct_EnablePolygonLabelsAutorotate (sqlite3_context * context, int argc,
 
     if (priv_data != NULL)
       {
-	  priv_data->labeling.polygon_labels_autorotate = 1;
-	  anti = priv_data->labeling.polygon_labels_autorotate;
+	  priv_data->labeling.label_autorotate = 1;
+	  anti = priv_data->labeling.label_autorotate;
       }
     sqlite3_result_int (context, anti);
 }
 
 static void
-fnct_DisablePolygonLabelsAutorotate (sqlite3_context * context, int argc,
+fnct_DisableLabelAutorotate (sqlite3_context * context, int argc,
 				sqlite3_value ** argv)
 {
 /* SQL function:
-/ RL2_DisablePolygonLabelsAutorotate(void)
+/ RL2_DisableLabelAutorotate(void)
 /
 / return zero
 */
@@ -767,7 +767,64 @@ fnct_DisablePolygonLabelsAutorotate (sqlite3_context * context, int argc,
     RL2_UNUSED ();		/* LCOV_EXCL_LINE */
 
     if (priv_data != NULL)
-	priv_data->labeling.polygon_labels_autorotate = 0;
+	priv_data->labeling.label_autorotate = 0;
+    sqlite3_result_int (context, 0);
+}
+
+static void
+fnct_IsLabelShiftPositionEnabled (sqlite3_context * context, int argc,
+				  sqlite3_value ** argv)
+{
+/* SQL function:
+/ RL2_IsLabelShiftPositionEnabled()
+/
+/ return if LabelShiftPosition is enabled or not
+*/
+    int anti = 0;
+    struct rl2_private_data *priv_data = sqlite3_user_data (context);
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+    if (priv_data != NULL)
+	anti = priv_data->labeling.label_shift_position;
+    if (anti != 0)
+	anti = 1;
+    sqlite3_result_int (context, anti);
+}
+
+static void
+fnct_EnableLabelShiftPosition (sqlite3_context * context, int argc,
+			       sqlite3_value ** argv)
+{
+/* SQL function:
+/ RL2_EnableLabelShiftPosition(void)
+/
+/ return if LabelShiftPosition has been enabled or not
+*/
+    int anti = 0;
+    struct rl2_private_data *priv_data = sqlite3_user_data (context);
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+
+    if (priv_data != NULL)
+      {
+	  priv_data->labeling.label_shift_position = 1;
+	  anti = priv_data->labeling.label_shift_position;
+      }
+    sqlite3_result_int (context, anti);
+}
+
+static void
+fnct_DisableLabelShiftPosition (sqlite3_context * context, int argc,
+				sqlite3_value ** argv)
+{
+/* SQL function:
+/ RL2_DisableLabelShiftPosition(void)
+/
+/ return zero
+*/
+    struct rl2_private_data *priv_data = sqlite3_user_data (context);
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+
+    if (priv_data != NULL)
+	priv_data->labeling.label_shift_position = 0;
     sqlite3_result_int (context, 0);
 }
 
@@ -3471,7 +3528,11 @@ fnct_LoadFontFromFile (sqlite3_context * context, int argc,
     font_path = (const char *) sqlite3_value_text (argv[0]);
 
 /* loading the font from the external file */
+#ifdef _WIN32
+    in = rl2_win_fopen (font_path, "rb");
+#else
     in = fopen (font_path, "rb");
+#endif
     if (in == NULL)
       {
 	  sqlite3_result_int (context, 0);
@@ -3557,7 +3618,11 @@ fnct_ExportFontToFile (sqlite3_context * context, int argc,
       }
 
 /* creating/opening the external output file */
+#ifdef _WIN32
+    out = rl2_win_fopen (font_path, "wb");
+#else
     out = fopen (font_path, "wb");
+#endif
     if (out == NULL)
       {
 	  free (buffer);
@@ -11395,24 +11460,33 @@ register_rl2_sql_functions (void *p_db, const void *p_data)
     sqlite3_create_function (db, "RL2_IsAntiLabelCollisionEnabled", 0,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
 			     fnct_IsAntiLabelCollisionEnabled, 0, 0);
-    sqlite3_create_function (db, "RL2_EnablePolygonLabelsMultiline", 0,
+    sqlite3_create_function (db, "RL2_EnableLabelWrapText", 0,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
-			     fnct_EnablePolygonLabelsMultiline, 0, 0);
-    sqlite3_create_function (db, "RL2_DisablePolygonLabelsMultiline", 0,
+			     fnct_EnableLabelWrapText, 0, 0);
+    sqlite3_create_function (db, "RL2_DisableLabelWrapText", 0,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
-			     fnct_DisablePolygonLabelsMultiline, 0, 0);
-    sqlite3_create_function (db, "RL2_IsPolygonLabelsMultilineEnabled", 0,
+			     fnct_DisableLabelWrapText, 0, 0);
+    sqlite3_create_function (db, "RL2_IsLabelWrapTextEnabled", 0,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
-			     fnct_IsPolygonLabelsMultilineEnabled, 0, 0);
-    sqlite3_create_function (db, "RL2_EnablePolygonLabelsAutorotate", 0,
+			     fnct_IsLabelWrapTextEnabled, 0, 0);
+    sqlite3_create_function (db, "RL2_EnableLabelAutorotate", 0,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
-			     fnct_EnablePolygonLabelsAutorotate, 0, 0);
-    sqlite3_create_function (db, "RL2_DisablePolygonLabelsAutorotate", 0,
+			     fnct_EnableLabelAutorotate, 0, 0);
+    sqlite3_create_function (db, "RL2_DisableLabelAutorotate", 0,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
-			     fnct_DisablePolygonLabelsAutorotate, 0, 0);
-    sqlite3_create_function (db, "RL2_IsPolygonLabelsAutorotateEnabled", 0,
+			     fnct_DisableLabelAutorotate, 0, 0);
+    sqlite3_create_function (db, "RL2_IsLabelAutorotateEnabled", 0,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
-			     fnct_IsPolygonLabelsAutorotateEnabled, 0, 0);
+			     fnct_IsLabelAutorotateEnabled, 0, 0);
+    sqlite3_create_function (db, "RL2_EnableLabelShiftPosition", 0,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_EnableLabelShiftPosition, 0, 0);
+    sqlite3_create_function (db, "RL2_DisableLabelShiftPosition", 0,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_DisableLabelShiftPosition, 0, 0);
+    sqlite3_create_function (db, "RL2_IsLabelShiftPositionEnabled", 0,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_IsLabelShiftPositionEnabled, 0, 0);
     sqlite3_create_function (db, "IsValidPixel", 3,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, 0,
 			     fnct_IsValidPixel, 0, 0);

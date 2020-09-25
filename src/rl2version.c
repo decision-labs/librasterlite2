@@ -42,6 +42,9 @@ the terms of any one of the MPL, the GPL or the LGPL.
  
 */
 
+#include <stdlib.h>
+#include <stdio.h>
+
 #include "config.h"
 
 #ifdef LOADABLE_EXTENSION

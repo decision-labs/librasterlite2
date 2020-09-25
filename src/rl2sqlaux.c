@@ -128,6 +128,7 @@ struct aux_vector_render
     int with_faces;
     int with_edge_or_link_seeds;
     int with_face_seeds;
+    int has_labels;
     struct aux_raster_image *output;
 };
 
@@ -1088,7 +1089,11 @@ rl2_compute_file_md5_checksum (const char *src_path)
     unsigned char *buf;
     void *p_md5;
     char *md5;
+#ifdef _WIN32
+    FILE *in = rl2_win_fopen (src_path, "rb");
+#else
     FILE *in = fopen (src_path, "rb");
+#endif
     if (in == NULL)
 	return NULL;
     buf = malloc (blk);
@@ -6559,8 +6564,8 @@ do_get_raw_raster_data (struct aux_renderer *aux, int by_section)
 	  if (rl2_get_raw_raster_data_transparent
 	      (sqlite, max_threads, coverage, base_width, base_height,
 	       minx, miny, maxx, maxy, xx_res, yy_res,
-	       &outbuf, &outbuf_size, &mask, &mask_size, syntetic_band, &palette, &out_pixel,
-	       no_data, symbolizer, stats) != RL2_OK)
+	       &outbuf, &outbuf_size, &mask, &mask_size, syntetic_band,
+	       &palette, &out_pixel, no_data, symbolizer, stats) != RL2_OK)
 	      goto error;
 	  if (was_monochrome
 	      && (out_pixel == RL2_PIXEL_GRAYSCALE
@@ -7908,7 +7913,8 @@ rl2_map_image_paint_from_raster (sqlite3 * sqlite, const void *data,
 				 const char *cvg_name,
 				 const unsigned char *blob, int blob_sz,
 				 const char *style_name,
-				 unsigned char *xml_style, unsigned char syntetic_band)
+				 unsigned char *xml_style,
+				 unsigned char syntetic_band)
 {
 /* rendering a Map Image from a Raster Coverage - Graphics Context */
     struct aux_raster_render aux;
@@ -8744,6 +8750,7 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
 		      if (geom != NULL)
 			{
 			    /* drawing a styled Feature */
+			    int has_labels;
 			    int scale_forbidden = 0;
 			    symbolizer = NULL;
 			    if (lyr_stl != NULL)
@@ -8756,7 +8763,9 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
 							 symbolizer, height,
 							 minx, miny, maxx, maxy,
 							 x_res, y_res, geom,
-							 variant);
+							 variant, &has_labels);
+			    if (has_labels)
+				aux->has_labels = 1;
 			    rl2_destroy_geometry (geom);
 			}
 		  }
@@ -9111,6 +9120,7 @@ rl2_map_image_blob_from_vector (sqlite3 * sqlite, const void *data,
     aux.with_faces = 0;
     aux.with_edge_or_link_seeds = 1;
     aux.with_face_seeds = 1;
+    aux.has_labels = 0;
     aux.output = malloc (sizeof (struct aux_raster_image));
     aux.output->bg_red = 255;
     aux.output->bg_green = 255;
@@ -9325,6 +9335,7 @@ rl2_styled_map_image_blob_from_vector (sqlite3 * sqlite, const void *data,
     aux.with_faces = 0;
     aux.with_edge_or_link_seeds = 1;
     aux.with_face_seeds = 1;
+    aux.has_labels = 0;
     aux.output = malloc (sizeof (struct aux_raster_image));
     aux.output->bg_red = 255;
     aux.output->bg_green = 255;
@@ -9500,13 +9511,15 @@ rl2_map_image_paint_from_vector (sqlite3 * sqlite, const void *data,
 				 const char *cvg_name,
 				 const unsigned char *blob, int blob_sz,
 				 int reaspect, const char *style_name,
-				 const unsigned char *xml_style)
+				 const unsigned char *xml_style,
+				 int *has_labels)
 {
 /* rendering a Map Image from a Vector Coverage - Graphics Context */
     struct aux_vector_render aux;
     rl2GraphicsContextPtr ctx;
     int width;
     int height;
+    int ret;
 
     if (canvas == NULL)
 	return RL2_ERROR;
@@ -9552,7 +9565,13 @@ rl2_map_image_paint_from_vector (sqlite3 * sqlite, const void *data,
     aux.with_faces = 0;
     aux.with_edge_or_link_seeds = 1;
     aux.with_face_seeds = 1;
-    return do_paint_map_from_vector (&aux);
+    aux.has_labels = 0;
+    ret = do_paint_map_from_vector (&aux);
+    if (aux.has_labels)
+	*has_labels = 1;
+    else
+	*has_labels = 0;
+    return ret;
 }
 
 RL2_DECLARE int
@@ -9564,13 +9583,14 @@ rl2_map_image_paint_from_vector_ex (sqlite3 * sqlite, const void *data,
 				    const unsigned char *xml_style,
 				    int with_nodes, int with_edges_or_links,
 				    int with_faces, int with_edge_or_link_seeds,
-				    int with_face_seeds)
+				    int with_face_seeds, int *has_labels)
 {
 /* rendering a Map Image from a Vector Coverage - Graphics Context - extended */
     struct aux_vector_render aux;
     rl2GraphicsContextPtr ctx;
     int width;
     int height;
+    int ret;
 
     if (canvas == NULL)
 	return RL2_ERROR;
@@ -9616,7 +9636,13 @@ rl2_map_image_paint_from_vector_ex (sqlite3 * sqlite, const void *data,
     aux.with_faces = with_faces;
     aux.with_edge_or_link_seeds = with_edge_or_link_seeds;
     aux.with_face_seeds = with_face_seeds;
-    return do_paint_map_from_vector (&aux);
+    aux.has_labels = 0;
+    ret = do_paint_map_from_vector (&aux);
+    if (aux.has_labels)
+	*has_labels = 1;
+    else
+	*has_labels = 0;
+    return ret;
 }
 
 RL2_DECLARE int

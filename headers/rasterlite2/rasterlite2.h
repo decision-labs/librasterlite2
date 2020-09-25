@@ -4040,7 +4040,8 @@ extern "C"
 					     unsigned char **buffer,
 					     int *buf_size,
 					     unsigned char **mask,
-					     int *mask_size, unsigned char syntetic_band,
+					     int *mask_size,
+					     unsigned char syntetic_band,
 					     rl2PalettePtr * palette,
 					     unsigned char *out_pixel,
 					     rl2PixelPtr no_data,
@@ -6142,7 +6143,9 @@ extern "C"
 						     const unsigned char *blob,
 						     int blob_sz,
 						     const char *style_name,
-						     unsigned char *xml_style, unsigned char syntetic_band);
+						     unsigned char *xml_style,
+						     unsigned char
+						     syntetic_band);
 
     RL2_DECLARE int rl2_map_image_blob_from_vector (sqlite3 * sqlite,
 						    const void *data,
@@ -6188,7 +6191,8 @@ extern "C"
 						     int reaspect,
 						     const char *style_name,
 						     const unsigned char
-						     *xml_style);
+						     *xml_style,
+						     int *has_labels);
 
     RL2_DECLARE int rl2_map_image_paint_from_vector_ex (sqlite3 * sqlite,
 							const void *data,
@@ -6206,7 +6210,8 @@ extern "C"
 							int with_faces,
 							int
 							with_edge_or_link_seeds,
-							int with_face_seeds);
+							int with_face_seeds,
+							int *has_labels);
 
     RL2_DECLARE unsigned char *rl2_map_image_from_wms (sqlite3 * sqlite,
 						       const char *db_prefix,
@@ -6288,6 +6293,10 @@ extern "C"
     RL2_DECLARE int rl2_serialize_map_config (rl2MapConfigPtr map_config_obj,
 					      unsigned char **blob,
 					      int *blob_sz);
+	
+#ifdef _WIN32				      
+	RL2_DECLARE FILE * rl2_win_fopen(const char *path, const char *mode);
+#endif
 
 #ifdef __cplusplus
 }

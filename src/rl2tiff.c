@@ -455,18 +455,30 @@ worldfile_tiff_origin (const char *path, rl2PrivTiffOriginPtr origin, int srid)
     double y;
 
     origin_set_tfw_path (path, ".tfw", origin);
+#ifdef _WIN32
+    tfw = rl2_win_fopen (origin->tfw_path, "r");
+#else
     tfw = fopen (origin->tfw_path, "r");
+#endif
     if (tfw == NULL)
       {
 	  /* trying the ".tifw" suffix */
 	  origin_set_tfw_path (path, ".tifw", origin);
+#ifdef _WIN32
+	  tfw = rl2_win_fopen (origin->tfw_path, "r");
+#else
 	  tfw = fopen (origin->tfw_path, "r");
+#endif
       }
     if (tfw == NULL)
       {
 	  /* trying the ".wld" suffix */
 	  origin_set_tfw_path (path, ".wld", origin);
+#ifdef _WIN32
+	  tfw = rl2_win_fopen (origin->tfw_path, "r");
+#else
 	  tfw = fopen (origin->tfw_path, "r");
+#endif
       }
     if (tfw == NULL)
 	goto error;
@@ -6636,7 +6648,11 @@ rl2_write_tiff_worldfile (rl2TiffDestinationPtr tiff)
     if (destination->tfw_path == NULL)
 	return RL2_ERROR;
 
+#ifdef _WIN32
+    tfw = rl2_win_fopen (destination->tfw_path, "w");
+#else
     tfw = fopen (destination->tfw_path, "w");
+#endif
     if (tfw == NULL)
       {
 	  fprintf (stderr,

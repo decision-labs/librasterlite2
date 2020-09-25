@@ -700,7 +700,6 @@ extern "C"
  */
     typedef rl2MapBoundingBox *rl2MapBoundingBoxPtr;
 
-
 /**
  Container for Map Config
  */
@@ -752,11 +751,47 @@ extern "C"
 	rl2MapLayerPtr last_lyr;
     } rl2MapConfig;
 /**
- Typedef for MapC onfig
+ Typedef for MapConfig
 
  \sa rl2MapLayer
  */
     typedef rl2MapConfig *rl2MapConfigPtr;
+
+/**
+ Container for Map Config Changed Item
+ */
+    typedef struct rl2_map_config_changed_item
+    {
+/** text description */
+	char *description;
+/** pointer to next item [linked list] */
+	struct rl2_map_config_changed_item *next;
+    } rl2MapConfigChangedItem;
+/**
+ Typedef for MapConfigChangedItem
+
+ */
+    typedef rl2MapConfigChangedItem *rl2MapConfigChangedItemPtr;
+
+/**
+ Container for Map Config Changes
+ */
+    typedef struct rl2_map_config_changes
+    {
+/** pointer to first MapConfigChangedItem [linked list] */
+	rl2MapConfigChangedItemPtr first;
+/** pointer to last MapConfigChangedItem [linked list] */
+	rl2MapConfigChangedItemPtr last;
+/** total count of changed items */
+	int count;
+/** array of MapConfigChangedItems */
+	rl2MapConfigChangedItemPtr *array;
+    } rl2MapConfigChanges;
+/**
+ Typedef for MapConfigChange
+
+ */
+    typedef rl2MapConfigChanges *rl2MapConfigChangesPtr;
 
     RL2_DECLARE rl2MapConfigPtr rl2_parse_map_config_xml (const unsigned char
 							  *xml);
@@ -766,8 +801,19 @@ extern "C"
 
     RL2_DECLARE void rl2_destroy_map_config (rl2MapConfigPtr map_config);
 
-    RL2_DECLARE int rl2_compare_map_configs (rl2MapConfigPtr conf1,
-					     rl2MapConfigPtr conf2);
+    RL2_DECLARE rl2MapConfigChangesPtr rl2_compare_map_configs (rl2MapConfigPtr
+								conf1,
+								rl2MapConfigPtr
+								conf2);
+
+    RL2_DECLARE void rl2_destroy_map_config_changes (rl2MapConfigChangesPtr
+						     list);
+
+    RL2_DECLARE int rl2_map_config_changes_get_count (rl2MapConfigChangesPtr
+						      list);
+
+    RL2_DECLARE const char
+	*rl2_map_config_changes_get_item (rl2MapConfigChangesPtr list, int idx);
 
 #ifdef __cplusplus
 }
