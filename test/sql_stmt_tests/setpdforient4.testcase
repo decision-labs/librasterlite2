@@ -1,0 +1,7 @@
+RL2_SetPdfOrientation - INTEGER
+:memory: #use in-memory database
+SELECT RL2_SetPdfOrientation(300)
+1 # rows (not including the header row)
+1 # columns
+RL2_SetPdfOrientation(300)
+(NULL)

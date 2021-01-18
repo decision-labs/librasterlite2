@@ -1,0 +1,7 @@
+RL2_SetPdfMarginVert - DOUBLE
+:memory: #use in-memory database
+SELECT RL2_SetPdfMarginVert(0.75)
+1 # rows (not including the header row)
+1 # columns
+RL2_SetPdfMarginVert(0.75)
+0.75

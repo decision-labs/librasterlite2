@@ -57,6 +57,8 @@ the terms of any one of the MPL, the GPL or the LGPL.
 #include "rasterlite2/rl2graphics.h"
 #include "rasterlite2_private.h"
 
+#include "spatialite/gaiaaux.h"
+
 #define RL2_UNUSED() if (argc || argv) argc = argc;
 
 static void
@@ -243,6 +245,8 @@ do_create_map_config ()
     map_config->map_background_blue = 255;
     map_config->map_background_transparent = 0;
     map_config->raster_wms_auto_switch = 0;
+    map_config->max_wms_retries = 5;
+    map_config->wms_pause = 1000;
     map_config->label_anti_collision = 0;
     map_config->label_wrap_text = 0;
     map_config->label_auto_rotate = 0;
@@ -499,6 +503,8 @@ do_destroy_wms_style (rl2MapWmsLayerStylePtr stl)
 /* memory cleanup - destroying a Map WMS Layer Style object */
     if (stl == NULL)
 	return;
+    if (stl->http_proxy != NULL)
+	free (stl->http_proxy);
     if (stl->get_map_url != NULL)
 	free (stl->get_map_url);
     if (stl->get_feature_info_url != NULL)
@@ -811,6 +817,7 @@ do_add_wms_style (rl2MapLayerPtr lyr)
     style = malloc (sizeof (rl2MapWmsLayerStyle));
     if (style == NULL)
 	return NULL;
+    style->http_proxy = NULL;
     style->get_map_url = NULL;
     style->get_feature_info_url = NULL;
     style->wms_protocol = NULL;
@@ -2336,8 +2343,7 @@ parse_graphic_fill_color_replacement (xmlNodePtr node,
 							  const char *value =
 							      (const char
 							       *)
-							      (grandchild2->
-							       content);
+							      (grandchild2->content);
 							  if (parse_hex_color
 							      (value, &red,
 							       &green, &blue))
@@ -3421,22 +3427,19 @@ parse_topology_internal_style (xmlNodePtr node, rl2MapLayerPtr lyr)
 			    const char *name;
 			    if (text->type == XML_TEXT_NODE)
 				name = (const char *) (text->content);
-			    if (lyr->
-				topology_internal_style->style_internal_name !=
-				NULL)
-				free (lyr->
-				      topology_internal_style->style_internal_name);
+			    if (lyr->topology_internal_style->
+				style_internal_name != NULL)
+				free (lyr->topology_internal_style->
+				      style_internal_name);
 			    lyr->topology_internal_style->style_internal_name =
 				NULL;
 			    if (name != NULL)
 			      {
 				  len = strlen (name);
-				  lyr->
-				      topology_internal_style->style_internal_name
-				      = malloc (len + 1);
-				  strcpy (lyr->
-					  topology_internal_style->style_internal_name,
-					  name);
+				  lyr->topology_internal_style->
+				      style_internal_name = malloc (len + 1);
+				  strcpy (lyr->topology_internal_style->
+					  style_internal_name, name);
 			      }
 			}
 		  }
@@ -3499,9 +3502,8 @@ parse_topology_internal_style (xmlNodePtr node, rl2MapLayerPtr lyr)
 				  if (strcmp
 				      ((const char *) (text->content),
 				       "true") == 0)
-				      lyr->
-					  topology_internal_style->show_edge_seeds
-					  = 1;
+				      lyr->topology_internal_style->
+					  show_edge_seeds = 1;
 			      }
 			}
 		  }
@@ -3516,9 +3518,8 @@ parse_topology_internal_style (xmlNodePtr node, rl2MapLayerPtr lyr)
 				  if (strcmp
 				      ((const char *) (text->content),
 				       "true") == 0)
-				      lyr->
-					  topology_internal_style->show_face_seeds
-					  = 1;
+				      lyr->topology_internal_style->
+					  show_face_seeds = 1;
 			      }
 			}
 		  }
@@ -3696,22 +3697,19 @@ parse_network_internal_style (xmlNodePtr node, rl2MapLayerPtr lyr)
 			    const char *name;
 			    if (text->type == XML_TEXT_NODE)
 				name = (const char *) (text->content);
-			    if (lyr->
-				network_internal_style->style_internal_name !=
-				NULL)
-				free (lyr->
-				      network_internal_style->style_internal_name);
+			    if (lyr->network_internal_style->
+				style_internal_name != NULL)
+				free (lyr->network_internal_style->
+				      style_internal_name);
 			    lyr->network_internal_style->style_internal_name =
 				NULL;
 			    if (name != NULL)
 			      {
 				  len = strlen (name);
-				  lyr->
-				      network_internal_style->style_internal_name
-				      = malloc (len + 1);
-				  strcpy (lyr->
-					  network_internal_style->style_internal_name,
-					  name);
+				  lyr->network_internal_style->
+				      style_internal_name = malloc (len + 1);
+				  strcpy (lyr->network_internal_style->
+					  style_internal_name, name);
 			      }
 			}
 		  }
@@ -3758,9 +3756,48 @@ parse_network_internal_style (xmlNodePtr node, rl2MapLayerPtr lyr)
 				  if (strcmp
 				      ((const char *) (text->content),
 				       "true") == 0)
-				      lyr->
-					  network_internal_style->show_link_seeds
-					  = 1;
+				      lyr->network_internal_style->
+					  show_link_seeds = 1;
+			      }
+			}
+		  }
+	    }
+	  attr = attr->next;
+      }
+}
+
+static void
+parse_http_proxy (xmlNodePtr node, rl2MapWmsLayerStylePtr style)
+{
+/* parsing a <WmsLayerStyle><HttpProxy> tag */
+    int len;
+    struct _xmlAttr *attr = node->properties;
+    while (attr != NULL)
+      {
+	  /* attributes */
+	  if (attr->type == XML_ATTRIBUTE_NODE)
+	    {
+		const char *name = (const char *) (attr->name);
+		if (strcmp (name, "URL") == 0)
+		  {
+		      xmlNode *text = attr->children;
+		      if (style->http_proxy != NULL)
+			{
+			    free (style->http_proxy);
+			    style->http_proxy = NULL;
+			}
+		      if (text != NULL)
+			{
+			    if (text->type == XML_TEXT_NODE)
+			      {
+				  const char *value =
+				      (const char *) (text->content);
+				  if (value != NULL)
+				    {
+					len = strlen (value);
+					style->http_proxy = malloc (len + 1);
+					strcpy (style->http_proxy, value);
+				    }
 			      }
 			}
 		  }
@@ -4118,8 +4155,8 @@ parse_wms_style (xmlNodePtr node, rl2MapLayerPtr lyr)
 					if (lyr->wms_style->background_color !=
 					    NULL)
 					  {
-					      free (lyr->
-						    wms_style->background_color);
+					      free (lyr->wms_style->
+						    background_color);
 					      lyr->wms_style->background_color =
 						  NULL;
 					  }
@@ -4128,19 +4165,20 @@ parse_wms_style (xmlNodePtr node, rl2MapLayerPtr lyr)
 				    {
 					if (lyr->wms_style->background_color !=
 					    NULL)
-					    free (lyr->
-						  wms_style->background_color);
+					    free (lyr->wms_style->
+						  background_color);
 					len = strlen (value);
 					lyr->wms_style->background_color =
 					    malloc (len + 1);
-					strcpy (lyr->
-						wms_style->background_color,
-						value);
+					strcpy (lyr->wms_style->
+						background_color, value);
 				    }
 			      }
 			    text = text->next;
 			}
 		  }
+		if (strcmp (name, "HttpProxy") == 0)
+		    parse_http_proxy (node, lyr->wms_style);
 		if (strcmp (name, "GetMap") == 0)
 		    parse_wms_get_map (node, lyr->wms_style);
 		if (strcmp (name, "GetFeatureInfo") == 0)
@@ -4608,8 +4646,8 @@ parse_map_background (xmlNodePtr node, rl2MapConfigPtr map_config)
 				  if (value != NULL)
 				    {
 					if (strcmp (value, "true") == 0)
-					    map_config->
-						map_background_transparent = 1;
+					    map_config->map_background_transparent
+						= 1;
 				    }
 			      }
 			}
@@ -4645,6 +4683,64 @@ parse_raster_wms_auto_switch (xmlNodePtr node, rl2MapConfigPtr map_config)
 					if (strcmp (value, "true") == 0)
 					    map_config->raster_wms_auto_switch =
 						1;
+				    }
+			      }
+			}
+		  }
+		attr = attr->next;
+	    }
+      }
+}
+
+static void
+parse_wms (xmlNodePtr node, rl2MapConfigPtr map_config)
+{
+/* parsing a <WMS> tag */
+    const char *value;
+    struct _xmlAttr *attr = node->properties;
+    while (attr != NULL)
+      {
+	  /* attributes */
+	  if (attr->type == XML_ATTRIBUTE_NODE)
+	    {
+		const char *name = (const char *) (attr->name);
+		if (strcmp (name, "MaxRetries") == 0)
+		  {
+		      xmlNode *text = attr->children;
+		      map_config->max_wms_retries = 5;
+		      if (text != NULL)
+			{
+			    if (text->type == XML_TEXT_NODE)
+			      {
+				  value = (const char *) (text->content);
+				  if (value != NULL)
+				    {
+					map_config->max_wms_retries =
+					    atoi (value);
+					if (map_config->max_wms_retries < 1)
+					    map_config->max_wms_retries = 1;
+					if (map_config->max_wms_retries > 10)
+					    map_config->max_wms_retries = 10;
+				    }
+			      }
+			}
+		  }
+		if (strcmp (name, "WmsPause") == 0)
+		  {
+		      xmlNode *text = attr->children;
+		      map_config->wms_pause = 1000;
+		      if (text != NULL)
+			{
+			    if (text->type == XML_TEXT_NODE)
+			      {
+				  value = (const char *) (text->content);
+				  if (value != NULL)
+				    {
+					map_config->wms_pause = atoi (value);
+					if (map_config->wms_pause < 1)
+					    map_config->wms_pause = 1;
+					if (map_config->wms_pause > 30000)
+					    map_config->wms_pause = 30000;
 				    }
 			      }
 			}
@@ -4825,6 +4921,8 @@ parse_map_options (xmlNodePtr node, rl2MapConfigPtr map_config)
 		    parse_map_background (node, map_config);
 		if (strcmp (name, "RasterWmsAutoSwitch") == 0)
 		    parse_raster_wms_auto_switch (node, map_config);
+		if (strcmp (name, "WMS") == 0)
+		    parse_wms (node, map_config);
 		if (strcmp (name, "LabelAdvancedOptions") == 0)
 		    parse_label_advanced_options (node, map_config);
 	    }
@@ -5509,6 +5607,14 @@ clone_wms_style (rl2MapWmsLayerStylePtr old_style)
 /* cloning a WMS Style */
     int len;
     rl2MapWmsLayerStylePtr new_style = malloc (sizeof (rl2MapWmsLayerStyle));
+    if (old_style->http_proxy == NULL)
+	new_style->http_proxy = NULL;
+    else
+      {
+	  len = strlen (old_style->http_proxy);
+	  new_style->http_proxy = malloc (len + 1);
+	  strcpy (new_style->http_proxy, old_style->http_proxy);
+      }
     if (old_style->get_map_url == NULL)
 	new_style->get_map_url = NULL;
     else
@@ -5748,6 +5854,8 @@ rl2_clone_map_config (rl2MapConfigPtr old_conf)
     new_conf->map_background_blue = old_conf->map_background_blue;
     new_conf->map_background_transparent = old_conf->map_background_transparent;
     new_conf->raster_wms_auto_switch = old_conf->raster_wms_auto_switch;
+    new_conf->max_wms_retries = old_conf->max_wms_retries;
+    new_conf->wms_pause = old_conf->wms_pause;
     new_conf->label_anti_collision = old_conf->label_anti_collision;
     new_conf->label_wrap_text = old_conf->label_wrap_text;
     new_conf->label_auto_rotate = old_conf->label_auto_rotate;
@@ -6353,6 +6461,8 @@ cmp_wms_styles (rl2MapWmsLayerStylePtr style1, rl2MapWmsLayerStylePtr style2)
 	return 1;
     if (style1 == NULL || style2 == NULL)
 	return 0;
+    if (!cmp_strings (style1->http_proxy, style2->http_proxy))
+	return 0;
     if (!cmp_strings (style1->get_map_url, style2->get_map_url))
 	return 0;
     if (!cmp_strings
@@ -6453,8 +6563,11 @@ rl2_destroy_map_config_changes (rl2MapConfigChangesPtr list)
 	  pn = p->next;
 	  if (p->description != NULL)
 	      free (p->description);
+	  free (p);
 	  p = pn;
       }
+    if (list->array != NULL)
+	free (list->array);
     free (list);
 }
 
@@ -6581,6 +6694,10 @@ rl2_compare_map_configs (rl2MapConfigPtr conf1, rl2MapConfigPtr conf2)
 	add_change (changes, "MapConfig BgColorTransparent");
     if (conf1->raster_wms_auto_switch != conf2->raster_wms_auto_switch)
 	add_change (changes, "MapConfig RasterWmsAutoSwitch");
+    if (conf1->max_wms_retries != conf2->max_wms_retries)
+	add_change (changes, "MapConfig MaxWmsRetries");
+    if (conf1->wms_pause != conf2->wms_pause)
+	add_change (changes, "MapConfig WmsPause");
     if (conf1->label_anti_collision != conf2->label_anti_collision)
 	add_change (changes, "MapConfig LabelAntiCollision");
     if (conf1->label_wrap_text != conf2->label_wrap_text)
@@ -6675,4 +6792,1262 @@ rl2_compare_map_configs (rl2MapConfigPtr conf1, rl2MapConfigPtr conf2)
       }
     prepare_changes (changes);
     return changes;
+}
+
+RL2_DECLARE unsigned char *
+rl2_xml_from_registered_map_config (sqlite3 * sqlite, const char *mapconf_name)
+{
+/* attemping to read a registered MapConfiguratio */
+    int ret;
+    sqlite3_stmt *stmt = NULL;
+    char *sql;
+    unsigned char *xml = NULL;
+    int count = 0;
+
+    sql = sqlite3_mprintf ("SELECT XB_GetDocument(config) "
+			   "FROM rl2map_configurations WHERE name = %Q",
+			   mapconf_name);
+    ret = sqlite3_prepare_v2 (sqlite, sql, strlen (sql), &stmt, NULL);
+    sqlite3_free (sql);
+    if (ret != SQLITE_OK)
+	goto error;
+    while (1)
+      {
+	  // scrolling the result set rows
+	  ret = sqlite3_step (stmt);
+	  if (ret == SQLITE_DONE)
+	      break;		// end of result set
+	  if (ret == SQLITE_ROW)
+	    {
+		const unsigned char *docxml = sqlite3_column_text (stmt, 0);
+		int bytes = sqlite3_column_bytes (stmt, 0);
+		if (xml != NULL)
+		    free (xml);
+		xml = (unsigned char *) malloc (bytes + 1);
+		memset (xml, '\0', bytes + 1);
+		memcpy (xml, docxml, bytes);
+		count++;
+	    }
+      }
+    sqlite3_finalize (stmt);
+
+    if (count == 1)
+	return xml;
+
+  error:
+    if (xml != NULL)
+	free (xml);
+    return NULL;
+}
+
+static int
+do_check_prefix (rl2PrivMapConfigAuxPtr aux, const char *prefix,
+		 const char **alias)
+{
+/* checking if some DB Prefix is valid (may be by adopting an alias name) */
+    rl2PrivMapAttachedDbPtr aux_db;
+    *alias = NULL;
+
+    if (strcasecmp (prefix, "main") == 0)
+      {
+	  /* MAIN db - never requires remapping */
+	  *alias = prefix;
+	  return 1;
+      }
+
+    aux_db = aux->first_db;
+    while (aux_db != NULL)
+      {
+	  if (strcasecmp (aux_db->attached->prefix, prefix) == 0)
+	    {
+		if (aux_db->valid == 0)
+		    return 0;
+		if (aux_db->remapped == NULL)
+		    *alias = aux_db->attached->prefix;
+		else
+		    *alias = aux_db->remapped;
+		return 1;
+	    }
+	  aux_db = aux_db->next;
+      }
+    return 0;
+}
+
+static char *
+rl2DoubleQuotedSql (const char *value)
+{
+/*
+/ returns a well formatted TEXT value for SQL
+/ 1] strips trailing spaces
+/ 2] masks any DOUBLE-QUOTE inside the string, appending another DOUBLE-QUOTE
+*/
+    const char *p_in;
+    const char *p_end;
+    char qt = '"';
+    char *out;
+    char *p_out;
+    int len = 0;
+    int i;
+
+    if (!value)
+	return NULL;
+
+    p_end = value;
+    for (i = (strlen (value) - 1); i >= 0; i--)
+      {
+	  /* stripping trailing spaces */
+	  p_end = value + i;
+	  if (value[i] != ' ')
+	      break;
+      }
+
+    p_in = value;
+    while (p_in <= p_end)
+      {
+	  /* computing the output length */
+	  len++;
+	  if (*p_in == qt)
+	      len++;
+	  p_in++;
+      }
+    if (len == 1 && *value == ' ')
+      {
+	  /* empty string */
+	  len = 0;
+      }
+
+    out = malloc (len + 1);
+    if (!out)
+	return NULL;
+
+    if (len == 0)
+      {
+	  /* empty string */
+	  *out = '\0';
+	  return out;
+      }
+
+    p_out = out;
+    p_in = value;
+    while (p_in <= p_end)
+      {
+	  /* creating the output string */
+	  if (*p_in == qt)
+	      *p_out++ = qt;
+	  *p_out++ = *p_in++;
+      }
+    *p_out = '\0';
+    return out;
+}
+
+static void
+do_check_layer_raster (sqlite3 * sqlite, const char *prefix,
+		       rl2PrivMapLayerPtr aux_lyr)
+{
+/* verifying a Raster Layer configuration */
+    char *sql;
+    char *qprefix;
+    int ret;
+    int i;
+    char **results;
+    int rows;
+    int columns;
+    char *errMsg = NULL;
+    char *value;
+    int valid = 0;
+
+    if (prefix == NULL)
+	aux_lyr->prefix = "MAIN";
+    else
+	aux_lyr->prefix = prefix;
+    qprefix = rl2DoubleQuotedSql (aux_lyr->prefix);
+    sql = sqlite3_mprintf ("SELECT Count(*), "
+			   "RL2_GetBandStatistics_Min(statistics, 0), RL2_GetBandStatistics_Max(statistics, 0) "
+			   "FROM \"%s\".raster_coverages AS r "
+			   "JOIN \"%s\".data_licenses AS l ON (r.license = l.id) "
+			   "WHERE  Upper(r.coverage_name) = Upper(%Q) AND "
+			   "r.geo_minx IS NOT NULL AND r.geo_miny IS NOT NULL AND "
+			   "r.geo_maxx IS NOT NULL AND r.geo_maxy IS NOT NULL AND "
+			   "r.extent_minx IS NOT NULL AND r.extent_miny IS NOT NULL AND "
+			   "r.extent_maxx IS NOT NULL AND r.extent_maxy IS NOT NULL",
+			   qprefix, qprefix, aux_lyr->layer->name);
+    free (qprefix);
+    ret = sqlite3_get_table (sqlite, sql, &results, &rows, &columns, &errMsg);
+    sqlite3_free (sql);
+    if (ret != SQLITE_OK)
+      {
+	  fprintf (stderr, "CheckLayerRaster error: %s\n", errMsg);
+	  sqlite3_free (errMsg);
+	  aux_lyr->valid = 0;
+	  return;
+      }
+    if (rows < 1)
+	;
+    else
+      {
+	  for (i = 1; i <= rows; i++)
+	    {
+		value = results[(i * columns) + 0];
+		if (atoi (value) == 1)
+		    valid = 1;
+		if (results[(i * columns) + 1] != NULL)
+		    aux_lyr->min_value = atof (results[(i * columns) + 1]);
+		if (results[(i * columns) + 2] != NULL)
+		    aux_lyr->max_value = atof (results[(i * columns) + 2]);
+	    }
+      }
+    sqlite3_free_table (results);
+    aux_lyr->valid = valid;
+}
+
+static void
+do_check_layer_WMS (sqlite3 * sqlite, const char *prefix,
+		    rl2PrivMapLayerPtr aux_lyr)
+{
+/* verifying a WMW Layer configuration */
+    char *sql;
+    char *qprefix;
+    int ret;
+    int i;
+    char **results;
+    int rows;
+    int columns;
+    char *errMsg = NULL;
+    char *value;
+    int valid = 0;
+
+    if (prefix == NULL)
+	qprefix = rl2DoubleQuotedSql ("MAIN");
+    else
+	qprefix = rl2DoubleQuotedSql (prefix);
+    sql = sqlite3_mprintf ("SELECT Count(*) "
+			   "FROM \"%s\".wms_getmap AS w "
+			   "JOIN \"%s\".data_licenses AS l ON (w.license = l.id)"
+			   "LEFT JOIN \"%s\".wms_ref_sys AS g ON (w.id = g.parent_id AND g.srs = 'EPSG:4326') "
+			   "LEFT JOIN \"%s\".wms_ref_sys AS d ON (w.id = d.parent_id AND d.is_default = 1) "
+			   "WHERE Upper(w.layer_name) = Upper(%Q)",
+			   qprefix, qprefix, qprefix, qprefix,
+			   aux_lyr->layer->name);
+    free (qprefix);
+    ret = sqlite3_get_table (sqlite, sql, &results, &rows, &columns, &errMsg);
+    sqlite3_free (sql);
+    if (ret != SQLITE_OK)
+      {
+	  fprintf (stderr, "CheckLayerWMS error: %s\n", errMsg);
+	  sqlite3_free (errMsg);
+	  aux_lyr->valid = 0;
+	  return;
+      }
+    if (rows < 1)
+	;
+    else
+      {
+	  for (i = 1; i <= rows; i++)
+	    {
+		value = results[(i * columns) + 0];
+		if (atoi (value) == 1)
+		    valid = 1;
+	    }
+      }
+    sqlite3_free_table (results);
+    aux_lyr->valid = valid;
+}
+
+static void
+do_check_layer_vector (sqlite3 * sqlite, const char *prefix,
+		       rl2PrivMapLayerPtr aux_lyr)
+{
+/* verifying a Vector Layer configuration */
+    char *sql;
+    char *qprefix;
+    int ret;
+    int i;
+    char **results;
+    int rows;
+    int columns;
+    char *errMsg = NULL;
+    char *value;
+    int valid = 0;
+
+    if (prefix == NULL)
+	qprefix = rl2DoubleQuotedSql ("MAIN");
+    else
+	qprefix = rl2DoubleQuotedSql (prefix);
+    sql = sqlite3_mprintf ("SELECT Count(*) "
+			   "FROM \"%s\".vector_coverages AS v "
+			   "JOIN \"%s\".geometry_columns AS g ON (v.f_table_name = g.f_table_name AND "
+			   "v.f_geometry_column = g.f_geometry_column) "
+			   "JOIN \"%s\".data_licenses AS l ON (v.license = l.id) "
+			   "WHERE Upper(v.coverage_name) = Upper(%Q) AND "
+			   "v.topology_name IS NULL AND v.network_name IS NULL AND "
+			   "v.geo_minx IS NOT NULL AND v.geo_miny IS NOT NULL AND "
+			   "v.geo_maxx IS NOT NULL AND v.geo_maxy IS NOT NULL AND "
+			   "v.extent_minx IS NOT NULL AND v.extent_miny IS NOT NULL AND "
+			   "v.extent_maxx IS NOT NULL AND v.extent_maxy IS NOT NULL",
+			   qprefix, qprefix, qprefix, aux_lyr->layer->name);
+    free (qprefix);
+    ret = sqlite3_get_table (sqlite, sql, &results, &rows, &columns, &errMsg);
+    sqlite3_free (sql);
+    if (ret != SQLITE_OK)
+      {
+	  fprintf (stderr, "CheckLayerVector error: %s\n", errMsg);
+	  sqlite3_free (errMsg);
+	  aux_lyr->valid = 0;
+	  return;
+      }
+    if (rows < 1)
+	;
+    else
+      {
+	  for (i = 1; i <= rows; i++)
+	    {
+		value = results[(i * columns) + 0];
+		if (atoi (value) == 1)
+		    valid = 1;
+	    }
+      }
+    sqlite3_free_table (results);
+    aux_lyr->valid = valid;
+}
+
+static void
+do_check_layer_vector_view (sqlite3 * sqlite, const char *prefix,
+			    rl2PrivMapLayerPtr aux_lyr)
+{
+/* verifying a VectorView Layer configuration */
+    char *sql;
+    char *qprefix;
+    int ret;
+    int i;
+    char **results;
+    int rows;
+    int columns;
+    char *errMsg = NULL;
+    char *value;
+    int valid = 0;
+
+    if (prefix == NULL)
+	qprefix = rl2DoubleQuotedSql ("MAIN");
+    else
+	qprefix = rl2DoubleQuotedSql (prefix);
+    sql = sqlite3_mprintf ("SELECT Count(*) "
+			   "FROM \"%s\".vector_coverages AS v "
+			   "JOIN \"%s\".views_geometry_columns AS x ON (v.view_name = x.view_name "
+			   "AND v.view_geometry = x.view_geometry) "
+			   "JOIN \"%s\".geometry_columns AS g ON (x.f_table_name = g.f_table_name "
+			   "AND x.f_geometry_column = g.f_geometry_column) "
+			   "JOIN \"%s\".data_licenses AS l ON (v.license = l.id) "
+			   "WHERE Upper(v.coverage_name) = Upper(%Q) AND "
+			   "v.view_name IS NOT NULL AND v.view_geometry IS NOT NULL AND "
+			   "v.geo_minx IS NOT NULL AND v.geo_miny IS NOT NULL AND "
+			   "v.geo_maxx IS NOT NULL AND v.geo_maxy IS NOT NULL AND "
+			   "v.extent_minx IS NOT NULL AND v.extent_miny IS NOT NULL AND "
+			   "v.extent_maxx IS NOT NULL AND v.extent_maxy IS NOT NULL",
+			   qprefix, qprefix, qprefix, qprefix,
+			   aux_lyr->layer->name);
+    free (qprefix);
+    ret = sqlite3_get_table (sqlite, sql, &results, &rows, &columns, &errMsg);
+    sqlite3_free (sql);
+    if (ret != SQLITE_OK)
+      {
+	  fprintf (stderr, "CheckLayerVectorView error: %s\n", errMsg);
+	  sqlite3_free (errMsg);
+	  aux_lyr->valid = 0;
+	  return;
+      }
+    if (rows < 1)
+	;
+    else
+      {
+	  for (i = 1; i <= rows; i++)
+	    {
+		value = results[(i * columns) + 0];
+		if (atoi (value) == 1)
+		    valid = 1;
+	    }
+      }
+    sqlite3_free_table (results);
+    aux_lyr->valid = valid;
+}
+
+static void
+do_check_layer_vector_virtual (sqlite3 * sqlite, const char *prefix,
+			       rl2PrivMapLayerPtr aux_lyr)
+{
+/* verifying a VectorVirtual Layer configuration */
+    char *sql;
+    char *qprefix;
+    int ret;
+    int i;
+    char **results;
+    int rows;
+    int columns;
+    char *errMsg = NULL;
+    char *value;
+    int valid = 0;
+
+    if (prefix == NULL)
+	qprefix = rl2DoubleQuotedSql ("MAIN");
+    else
+	qprefix = rl2DoubleQuotedSql (prefix);
+    sql = sqlite3_mprintf ("SELECT Count(*) "
+			   "FROM \"%s\".vector_coverages AS v "
+			   "JOIN \"%s\".virts_geometry_columns AS s ON (v.virt_name = s.virt_name "
+			   "AND v.virt_geometry = s.virt_geometry) "
+			   "JOIN \"%s\".data_licenses AS l ON (v.license = l.id) "
+			   "WHERE Upper(v.coverage_name) = Upper(%Q) AND "
+			   "v.virt_name IS NOT NULL AND v.virt_geometry IS NOT NULL AND "
+			   "v.geo_minx IS NOT NULL AND v.geo_miny IS NOT NULL AND "
+			   "v.geo_maxx IS NOT NULL AND v.geo_maxy IS NOT NULL AND "
+			   "v.extent_minx IS NOT NULL AND v.extent_miny IS NOT NULL AND "
+			   "v.extent_maxx IS NOT NULL AND v.extent_maxy IS NOT NULL",
+			   qprefix, qprefix, qprefix, aux_lyr->layer->name);
+    free (qprefix);
+    ret = sqlite3_get_table (sqlite, sql, &results, &rows, &columns, &errMsg);
+    sqlite3_free (sql);
+    if (ret != SQLITE_OK)
+      {
+	  fprintf (stderr, "CheckLayerVectorVirtual error: %s\n", errMsg);
+	  sqlite3_free (errMsg);
+	  aux_lyr->valid = 0;
+	  return;
+      }
+    if (rows < 1)
+	;
+    else
+      {
+	  for (i = 1; i <= rows; i++)
+	    {
+		value = results[(i * columns) + 0];
+		if (atoi (value) == 1)
+		    valid = 1;
+	    }
+      }
+    sqlite3_free_table (results);
+    aux_lyr->valid = valid;
+}
+
+static void
+do_check_layer_topology (sqlite3 * sqlite, const char *prefix,
+			 rl2PrivMapLayerPtr aux_lyr)
+{
+/* verifying a Topology Layer configuration */
+    char *sql;
+    char *qprefix;
+    int ret;
+    int i;
+    char **results;
+    int rows;
+    int columns;
+    char *errMsg = NULL;
+    char *value;
+    int valid = 0;
+
+    if (prefix == NULL)
+	qprefix = rl2DoubleQuotedSql ("MAIN");
+    else
+	qprefix = rl2DoubleQuotedSql (prefix);
+    sql = sqlite3_mprintf ("SELECT Count(*) "
+			   "FROM \"%s\".vector_coverages AS v "
+			   "JOIN \"%s\".topologies AS t ON (v.topology_name = t.topology_name) "
+			   "JOIN \"%s\".data_licenses AS l ON (v.license = l.id) "
+			   "WHERE Upper(v.coverage_name) = Upper(%Q) AND "
+			   "v.topology_name IS NOT NULL AND "
+			   "v.geo_minx IS NOT NULL AND v.geo_miny IS NOT NULL AND "
+			   "v.geo_maxx IS NOT NULL AND v.geo_maxy IS NOT NULL AND "
+			   "v.extent_minx IS NOT NULL AND v.extent_miny IS NOT NULL AND "
+			   "v.extent_maxx IS NOT NULL AND v.extent_maxy IS NOT NULL",
+			   qprefix, qprefix, qprefix, aux_lyr->layer->name);
+    free (qprefix);
+    ret = sqlite3_get_table (sqlite, sql, &results, &rows, &columns, &errMsg);
+    sqlite3_free (sql);
+    if (ret != SQLITE_OK)
+      {
+	  fprintf (stderr, "CheckLayerTopology error: %s\n", errMsg);
+	  sqlite3_free (errMsg);
+	  aux_lyr->valid = 0;
+	  return;
+      }
+    if (rows < 1)
+	;
+    else
+      {
+	  for (i = 1; i <= rows; i++)
+	    {
+		value = results[(i * columns) + 0];
+		if (atoi (value) == 1)
+		    valid = 1;
+	    }
+      }
+    sqlite3_free_table (results);
+    aux_lyr->valid = valid;
+}
+
+static void
+do_check_layer_network (sqlite3 * sqlite, const char *prefix,
+			rl2PrivMapLayerPtr aux_lyr)
+{
+/* completing a Network Layer configuration */
+    char *sql;
+    char *qprefix;
+    int ret;
+    int i;
+    char **results;
+    int rows;
+    int columns;
+    char *errMsg = NULL;
+    char *value;
+    int valid = 0;
+
+    if (prefix == NULL)
+	qprefix = rl2DoubleQuotedSql ("MAIN");
+    else
+	qprefix = rl2DoubleQuotedSql (prefix);
+    sql = sqlite3_mprintf ("SELECT Count(*) "
+			   "FROM \"%s\".vector_coverages AS v "
+			   "JOIN \"%s\".networks AS n ON (v.network_name = n.network_name) "
+			   "JOIN \"%s\".data_licenses AS l ON (v.license = l.id) "
+			   "WHERE Upper(v.coverage_name) = Upper(%Q) AND "
+			   "v.network_name IS NOT NULL AND "
+			   "v.geo_minx IS NOT NULL AND v.geo_miny IS NOT NULL AND "
+			   "v.geo_maxx IS NOT NULL AND v.geo_maxy IS NOT NULL AND "
+			   "v.extent_minx IS NOT NULL AND v.extent_miny IS NOT NULL AND "
+			   "v.extent_maxx IS NOT NULL AND v.extent_maxy IS NOT NULL",
+			   qprefix, qprefix, qprefix, aux_lyr->layer->name);
+    free (qprefix);
+    ret = sqlite3_get_table (sqlite, sql, &results, &rows, &columns, &errMsg);
+    sqlite3_free (sql);
+    if (ret != SQLITE_OK)
+      {
+	  fprintf (stderr, "CheckLayerNetwork error: %s\n", errMsg);
+	  sqlite3_free (errMsg);
+	  aux_lyr->valid = 0;
+	  return;
+      }
+    if (rows < 1)
+	;
+    else
+      {
+	  for (i = 1; i <= rows; i++)
+	    {
+		value = results[(i * columns) + 0];
+		if (atoi (value) == 1)
+		    valid = 1;
+	    }
+      }
+    sqlite3_free_table (results);
+    aux_lyr->valid = valid;
+}
+
+static void
+do_fetch_minmax_values (sqlite3 * sqlite, rl2PrivMapLayerPtr lyr)
+{
+/* Fetching Min/Max values from Raster Statistics */
+    char *sql;
+    char *qprefix;
+    int ret;
+    int i;
+    char **results;
+    int rows;
+    int columns;
+    char *errMsg = NULL;
+
+    if (lyr->prefix == NULL)
+	lyr->prefix = "MAIN";
+    qprefix = rl2DoubleQuotedSql (lyr->prefix);
+    sql =
+	sqlite3_mprintf
+	("SELECT RL2_GetBandStatistics_Min(statistics, 0), RL2_GetBandStatistics_Max(statistics, 0) "
+	 "FROM \"%s\".raster_coverages "
+	 "WHERE  Upper(coverage_name) = Upper(%Q)", qprefix, lyr->layer->name);
+    free (qprefix);
+    ret = sqlite3_get_table (sqlite, sql, &results, &rows, &columns, &errMsg);
+    sqlite3_free (sql);
+    if (ret != SQLITE_OK)
+      {
+	  fprintf (stderr, "Fetch Raster MinMax error: %s\n", errMsg);
+	  sqlite3_free (errMsg);
+	  return;
+      }
+    if (rows < 1)
+	;
+    else
+      {
+	  for (i = 1; i <= rows; i++)
+	    {
+		if (results[(i * columns) + 0] != NULL)
+		    lyr->min_value = atof (results[(i * columns) + 0]);
+		if (results[(i * columns) + 1] != NULL)
+		    lyr->max_value = atof (results[(i * columns) + 1]);
+	    }
+      }
+    sqlite3_free_table (results);
+}
+
+static int
+is_already_attached_db (sqlite3 * sqlite, const char *prefix, const char *path)
+{
+/* testing for an already attached DB */
+    int ret;
+    const char *sql;
+    int i;
+    char **results;
+    int rows;
+    int columns;
+    int found = 0;
+
+    sql = "PRAGMA database_list";
+    ret = sqlite3_get_table (sqlite, sql, &results, &rows, &columns, NULL);
+    if (ret != SQLITE_OK)
+	return 0;
+    if (rows < 1)
+	;
+    else
+      {
+	  for (i = 1; i <= rows; i++)
+	    {
+		const char *db_prefix = results[(i * columns) + 1];
+		const char *db_path = results[(i * columns) + 2];
+		if (strcasecmp (db_prefix, prefix) == 0
+		    && strcasecmp (db_path, path) == 0)
+		    found = 1;
+	    }
+      }
+    sqlite3_free_table (results);
+    return found;
+}
+
+static int
+check_valid_db_file (const char *path)
+{
+/* testing if the given DB-file do really exists and is accessible */
+    int ret;
+    sqlite3 *sqlite;
+    ret = sqlite3_open_v2 (path, &sqlite, SQLITE_OPEN_READWRITE, NULL);
+    if (ret != SQLITE_OK)
+	return 0;
+    sqlite3_close (sqlite);
+    return 1;
+}
+
+static int
+not_already_attached (sqlite3 * sqlite, const char *alias)
+{
+/* testing for an unused DB Prefix */
+    int ret;
+    const char *sql;
+    int i;
+    char **results;
+    int rows;
+    int columns;
+    int not_used = 1;
+
+    sql = "PRAGMA database_list";
+    ret = sqlite3_get_table (sqlite, sql, &results, &rows, &columns, NULL);
+    if (ret != SQLITE_OK)
+	return 1;
+    if (rows < 1)
+	;
+    else
+      {
+	  for (i = 1; i <= rows; i++)
+	    {
+		const char *db_prefix = results[(i * columns) + 1];
+		if (strcasecmp (db_prefix, alias) == 0)
+		    not_used = 0;
+	    }
+      }
+    sqlite3_free_table (results);
+    return not_used;
+}
+
+static void
+validate_attached_db (sqlite3 * sqlite, rl2PrivMapAttachedDbPtr aux_db)
+{
+/* attempting to validate an Attached DB */
+    char *sql;
+    const char *prefix = aux_db->attached->prefix;
+    const char *db_path = aux_db->attached->path;
+    const char *real_prefix;
+    char *qprefix;
+    char *qpath;
+    char alias[64];
+    int ret;
+
+    if (is_already_attached_db (sqlite, prefix, db_path))
+      {
+	  /* already attached */
+	  aux_db->valid = 1;
+	  return;
+      }
+    if (!check_valid_db_file (db_path))
+      {
+	  /* not existing (or not accessible) DB-file */
+	  aux_db->valid = 0;
+	  return;
+      }
+
+    if (not_already_attached (sqlite, prefix))
+	real_prefix = prefix;
+    else
+      {
+	  int idx = 0;
+	  while (1)
+	    {
+		/* searching a free Alias Prefix */
+		sprintf (alias, "alias_#%d", ++idx);
+		if (not_already_attached (sqlite, alias))
+		  {
+		      real_prefix = alias;
+		      break;
+		  }
+	    }
+      }
+    qpath = rl2DoubleQuotedSql (db_path);
+    qprefix = rl2DoubleQuotedSql (real_prefix);
+    sql = sqlite3_mprintf ("ATTACH DATABASE \"%s\" AS \"%s\"", qpath, qprefix);
+    free (qpath);
+    free (qprefix);
+    ret = sqlite3_exec (sqlite, sql, NULL, NULL, NULL);
+    sqlite3_free (sql);
+    if (ret != SQLITE_OK)
+      {
+	  aux_db->valid = 0;
+	  return;
+      }
+    aux_db->valid = 1;
+    if (aux_db->remapped != NULL)
+	free (aux_db->remapped);
+    aux_db->remapped = NULL;
+    if (strcasecmp (real_prefix, prefix) != 0)
+      {
+	  int len = strlen (real_prefix);
+	  aux_db->remapped = (char *) malloc (len + 1);
+	  strcpy (aux_db->remapped, real_prefix);
+      }
+}
+
+static void
+raster_wms_auto_switch (rl2MapLayerPtr first_layer, double scale)
+{
+/* auto switching on/off Raster and WMS Layers */
+    rl2MapLayerPtr lyr = first_layer;
+    while (lyr != NULL)
+      {
+	  /* switching off Layers forbidden by current Scale */
+	  if (lyr->type == RL2_MAP_LAYER_WMS
+	      || lyr->type == RL2_MAP_LAYER_RASTER)
+	    {
+		/* evaluating a WMS or Raster Layer */
+		if (lyr->visible)
+		  {
+		      if (lyr->ok_min_scale)
+			{
+			    if (scale < lyr->min_scale)
+				lyr->visible = 0;
+			}
+		      if (lyr->ok_max_scale)
+			{
+			    if (scale > lyr->max_scale)
+				lyr->visible = 0;
+			}
+		  }
+	    }
+	  lyr = lyr->next;
+      }
+
+    lyr = first_layer;
+    while (lyr != NULL)
+      {
+	  /* testing for at least one visible WMS or Raster Layer */
+	  if (lyr->type == RL2_MAP_LAYER_RASTER
+	      || lyr->type == RL2_MAP_LAYER_WMS)
+	    {
+		if (lyr->visible)
+		    return;
+	    }
+	  lyr = lyr->next;
+      }
+
+    lyr = first_layer;
+    while (lyr != NULL)
+      {
+	  /* attemtping to set a visible WMS or Raster Layer */
+	  if (lyr->type == RL2_MAP_LAYER_WMS
+	      || lyr->type == RL2_MAP_LAYER_RASTER)
+	    {
+		/* evaluating a WMS or Raster Layer */
+		int visible = 1;
+		if (lyr->ok_min_scale)
+		  {
+		      if (scale < lyr->min_scale)
+			  visible = 0;
+		  }
+		if (lyr->ok_max_scale)
+		  {
+		      if (scale > lyr->max_scale)
+			  visible = 0;
+		  }
+		if (visible)
+		  {
+		      lyr->visible = 1;
+		      return;
+		  }
+	    }
+	  lyr = lyr->next;
+      }
+}
+
+RL2_PRIVATE rl2PrivMapConfigAuxPtr
+rl2_create_map_config_aux (sqlite3 * sqlite, const void *data,
+			   rl2MapConfigPtr map_config, int width, int height,
+			   const char *format, int quality,
+			   const unsigned char *blob, int blob_sz, int reaspect)
+{
+/* allocating a MapConfig Aux object */
+    int ok_format = 1;
+    int format_id;
+    rl2MapAttachedDbPtr db;
+    rl2MapLayerPtr lyr;
+    rl2PrivMapAttachedDbPtr aux_db;
+    rl2PrivMapLayerPtr aux_lyr;
+    rl2PrivMapConfigAuxPtr aux = malloc (sizeof (rl2PrivMapConfigAux));
+    aux->valid = 1;
+    aux->width = width;
+    aux->height = height;
+    aux->pixel_ratio = 0.0;
+    aux->scale = 0.0;
+    aux->map_config = map_config;
+    aux->ctx = NULL;
+    aux->image = NULL;
+    aux->image_size = 0;
+    aux->first_db = NULL;
+    aux->last_db = NULL;
+    aux->first_lyr = NULL;
+    aux->last_lyr = NULL;
+    if (strcmp (format, "image/png") == 0)
+      {
+	  format_id = RL2_OUTPUT_FORMAT_PNG;
+	  ok_format = 1;
+      }
+    if (strcmp (format, "image/jpeg") == 0)
+      {
+	  format_id = RL2_OUTPUT_FORMAT_JPEG;
+	  ok_format = 1;
+      }
+    if (strcmp (format, "image/tiff") == 0)
+      {
+	  format_id = RL2_OUTPUT_FORMAT_TIFF;
+	  ok_format = 1;
+      }
+    if (strcmp (format, "application/x-pdf") == 0)
+      {
+	  format_id = RL2_OUTPUT_FORMAT_PDF;
+	  ok_format = 1;
+      }
+    if (!ok_format)
+      {
+	  aux->format_id = RL2_OUTPUT_FORMAT_UNKNOWN;
+	  goto error;
+      }
+    else
+	aux->format_id = format_id;
+    if (quality > 0 && quality < 100)
+	aux->quality = quality;
+    else
+	aux->quality = 80;
+
+    if (reaspect == 0)
+      {
+	  /* testing for consistent aspect ratios */
+	  double aspect_org;
+	  double aspect_dst;
+	  double confidence;
+	  aspect_org = do_compute_bbox_aspect_ratio (sqlite, blob, blob_sz);
+	  if (aspect_org < 0.0)
+	      goto error;
+	  aspect_dst = (double) width / (double) height;
+	  confidence = aspect_org / 100.0;
+	  if (aspect_dst >= (aspect_org - confidence)
+	      && aspect_dst <= (aspect_org + confidence))
+	      ;
+	  else
+	      goto error;
+      }
+
+/* checking the Geometry */
+    if (rl2_parse_bbox_srid
+	(sqlite, blob, blob_sz, &(aux->srid), &(aux->min_x), &(aux->min_y),
+	 &(aux->max_x), &(aux->max_y)) != RL2_OK)
+	goto error;
+
+/* computing the current Scale ratio */
+    aux->pixel_ratio = rl2_pixel_ratio (aux->width, aux->height,
+					aux->max_x - aux->min_x,
+					aux->max_y - aux->min_y);
+    aux->scale =
+	rl2_standard_scale (sqlite, aux->srid, aux->width, aux->height,
+			    aux->max_x - aux->min_x, aux->max_y - aux->min_y);
+    if (aux->map_config->raster_wms_auto_switch)
+	raster_wms_auto_switch (map_config->first_lyr, aux->scale);
+
+    db = map_config->first_db;
+    while (db != NULL)
+      {
+	  /* inserting all ATTACHED Database into the AUX struct */
+	  aux_db = malloc (sizeof (rl2PrivMapAttachedDb));
+	  aux_db->attached = db;
+	  aux_db->remapped = NULL;
+	  aux_db->valid = 0;
+	  aux_db->next = NULL;
+
+	  if (aux->first_db == NULL)
+	      aux->first_db = aux_db;
+	  if (aux->last_db != NULL)
+	      aux->last_db->next = aux_db;
+	  aux->last_db = aux_db;
+	  db = db->next;
+      }
+
+    lyr = map_config->first_lyr;
+    while (lyr != NULL)
+      {
+	  /* inserting all Map Layers into the AUX struct */
+	  aux_lyr = malloc (sizeof (rl2PrivMapLayer));
+	  aux_lyr->prefix = NULL;
+	  aux_lyr->layer = lyr;
+	  aux_lyr->min_value = 0.0;
+	  aux_lyr->max_value = 0.0;
+	  aux_lyr->style_name = NULL;
+	  aux_lyr->xml_style = NULL;
+	  aux_lyr->syntetic_band = RL2_SYNTETIC_NONE;
+	  aux_lyr->ctx = NULL;
+	  aux_lyr->ctx_labels = NULL;
+	  aux_lyr->ctx_nodes = NULL;
+	  aux_lyr->ctx_edges = NULL;
+	  aux_lyr->ctx_faces = NULL;
+	  aux_lyr->ctx_edge_seeds = NULL;
+	  aux_lyr->ctx_face_seeds = NULL;
+	  aux_lyr->ctx_links = NULL;
+	  aux_lyr->ctx_link_seeds = NULL;
+	  aux_lyr->canvas = NULL;
+	  aux_lyr->valid = lyr->visible;
+	  aux_lyr->next = NULL;
+
+	  if (aux->first_lyr == NULL)
+	      aux->first_lyr = aux_lyr;
+	  if (aux->last_lyr != NULL)
+	      aux->last_lyr->next = aux_lyr;
+	  aux->last_lyr = aux_lyr;
+	  lyr = lyr->next;
+      }
+
+    aux_db = aux->first_db;
+    while (aux_db != NULL)
+      {
+	  /* validating all Attached Database */
+	  validate_attached_db (sqlite, aux_db);
+	  aux_db = aux_db->next;
+      }
+
+    aux_lyr = aux->first_lyr;
+    while (aux_lyr != NULL)
+      {
+	  /* validating all Map Layers */
+	  const char *alias;
+	  if (aux_lyr->layer->visible == 0)
+	    {
+		/* skipping any invisible Map Layer */
+		aux_lyr = aux_lyr->next;
+		continue;
+	    }
+	  switch (aux_lyr->layer->type)
+	    {
+	    case RL2_MAP_LAYER_RASTER:
+		if (do_check_prefix (aux, aux_lyr->layer->prefix, &alias))
+		    do_check_layer_raster (sqlite, alias, aux_lyr);
+		if (aux_lyr->valid)
+		  {
+		      /* creating a Canvas */
+		      aux_lyr->ctx =
+			  rl2_graph_create_context (data, width, height);
+		      if (aux_lyr->ctx != NULL)
+			{
+			    rl2_prime_background (aux_lyr->ctx, 0, 0, 0, 0);	/* transparent background */
+			    aux_lyr->canvas =
+				rl2_create_raster_canvas (aux_lyr->ctx);
+			}
+		      if (aux_lyr->canvas == NULL)
+			  aux_lyr->valid = 0;
+		      if (aux_lyr->canvas == NULL)
+			  goto error;
+		  }
+		break;
+	    case RL2_MAP_LAYER_WMS:
+		if (do_check_prefix (aux, aux_lyr->layer->prefix, &alias))
+		    do_check_layer_WMS (sqlite, alias, aux_lyr);
+		if (aux_lyr->valid)
+		  {
+		      /* creating a Canvas */
+		      aux_lyr->ctx =
+			  rl2_graph_create_context (data, width, height);
+		      if (aux_lyr->ctx != NULL)
+			{
+			    rl2_prime_background (aux_lyr->ctx, 0, 0, 0, 0);	/* transparent background */
+			    aux_lyr->canvas =
+				rl2_create_raster_canvas (aux_lyr->ctx);
+			}
+		      if (aux_lyr->canvas == NULL)
+			  aux_lyr->valid = 0;
+		      if (aux_lyr->canvas == NULL)
+			  goto error;
+		  }
+		break;
+	    case RL2_MAP_LAYER_VECTOR:
+		if (do_check_prefix (aux, aux_lyr->layer->prefix, &alias))
+		    do_check_layer_vector (sqlite, alias, aux_lyr);
+		if (aux_lyr->valid)
+		  {
+		      /* creating a Canvas */
+		      aux_lyr->ctx =
+			  rl2_graph_create_context (data, width, height);
+		      aux_lyr->ctx_labels =
+			  rl2_graph_create_context (data, width, height);
+		      if (aux_lyr->ctx != NULL && aux_lyr->ctx_labels != NULL)
+			{
+			    rl2_prime_background (aux_lyr->ctx, 0, 0, 0, 0);	/* transparent background */
+			    rl2_prime_background (aux_lyr->ctx_labels, 0, 0, 0, 0);	/* transparent background */
+			    aux_lyr->canvas =
+				rl2_create_vector_canvas (aux_lyr->ctx,
+							  aux_lyr->ctx_labels);
+			}
+		      if (aux_lyr->canvas == NULL)
+			  aux_lyr->valid = 0;
+		      if (aux_lyr->canvas == NULL)
+			  goto error;
+		  }
+		break;
+	    case RL2_MAP_LAYER_VECTOR_VIEW:
+		if (do_check_prefix (aux, aux_lyr->layer->prefix, &alias))
+		    do_check_layer_vector_view (sqlite, alias, aux_lyr);
+		if (aux_lyr->valid)
+		  {
+		      /* creating a Canvas */
+		      aux_lyr->ctx =
+			  rl2_graph_create_context (data, width, height);
+		      aux_lyr->ctx_labels =
+			  rl2_graph_create_context (data, width, height);
+		      if (aux_lyr->ctx != NULL && aux_lyr->ctx_labels != NULL)
+			{
+			    rl2_prime_background (aux_lyr->ctx, 0, 0, 0, 0);	/* transparent background */
+			    rl2_prime_background (aux_lyr->ctx_labels, 0, 0, 0, 0);	/* transparent background */
+			    aux_lyr->canvas =
+				rl2_create_vector_canvas (aux_lyr->ctx,
+							  aux_lyr->ctx_labels);
+			}
+		      if (aux_lyr->canvas == NULL)
+			  aux_lyr->valid = 0;
+		      if (aux_lyr->canvas == NULL)
+			  goto error;
+		  }
+		break;
+	    case RL2_MAP_LAYER_VECTOR_VIRTUAL:
+		if (do_check_prefix (aux, aux_lyr->layer->prefix, &alias))
+		    do_check_layer_vector_virtual (sqlite, alias, aux_lyr);
+		if (aux_lyr->valid)
+		  {
+		      /* creating a Canvas */
+		      aux_lyr->ctx =
+			  rl2_graph_create_context (data, width, height);
+		      aux_lyr->ctx_labels =
+			  rl2_graph_create_context (data, width, height);
+		      if (aux_lyr->ctx != NULL && aux_lyr->ctx_labels != NULL)
+			{
+			    rl2_prime_background (aux_lyr->ctx, 0, 0, 0, 0);	/* transparent background */
+			    rl2_prime_background (aux_lyr->ctx_labels, 0, 0, 0, 0);	/* transparent background */
+			    aux_lyr->canvas =
+				rl2_create_vector_canvas (aux_lyr->ctx,
+							  aux_lyr->ctx_labels);
+			}
+		      if (aux_lyr->canvas == NULL)
+			  aux_lyr->valid = 0;
+		      if (aux_lyr->canvas == NULL)
+			  goto error;
+		  }
+		break;
+	    case RL2_MAP_LAYER_TOPOLOGY:
+		if (do_check_prefix (aux, aux_lyr->layer->prefix, &alias))
+		    do_check_layer_topology (sqlite, alias, aux_lyr);
+		if (aux_lyr->valid)
+		  {
+		      /* creating all Topology Canvas */
+		      aux_lyr->ctx =
+			  rl2_graph_create_context (data, width, height);
+		      aux_lyr->ctx_labels =
+			  rl2_graph_create_context (data, width, height);
+		      aux_lyr->ctx_nodes =
+			  rl2_graph_create_context (data, width, height);
+		      aux_lyr->ctx_edges =
+			  rl2_graph_create_context (data, width, height);
+		      aux_lyr->ctx_faces =
+			  rl2_graph_create_context (data, width, height);
+		      aux_lyr->ctx_edge_seeds =
+			  rl2_graph_create_context (data, width, height);
+		      aux_lyr->ctx_face_seeds =
+			  rl2_graph_create_context (data, width, height);
+		      if (aux_lyr->ctx != NULL && aux_lyr->ctx_labels != NULL
+			  && aux_lyr->ctx_nodes != NULL
+			  && aux_lyr->ctx_edges != NULL
+			  && aux_lyr->ctx_faces != NULL
+			  && aux_lyr->ctx_edge_seeds != NULL
+			  && aux_lyr->ctx_face_seeds != NULL)
+			{
+			    rl2_prime_background (aux_lyr->ctx, 0, 0, 0, 0);	/* transparent background */
+			    rl2_prime_background (aux_lyr->ctx_labels, 0, 0, 0, 0);	/* transparent background */
+			    rl2_prime_background (aux_lyr->ctx_nodes, 0, 0, 0, 0);	/* transparent background */
+			    rl2_prime_background (aux_lyr->ctx_edges, 0, 0, 0, 0);	/* transparent background */
+			    rl2_prime_background (aux_lyr->ctx_faces, 0, 0, 0, 0);	/* transparent background */
+			    rl2_prime_background (aux_lyr->ctx_edge_seeds, 0, 0, 0, 0);	/* transparent background */
+			    rl2_prime_background (aux_lyr->ctx_face_seeds, 0, 0, 0, 0);	/* transparent background */
+			    aux_lyr->canvas =
+				rl2_create_topology_canvas (aux_lyr->ctx,
+							    aux_lyr->ctx_labels,
+							    aux_lyr->ctx_nodes,
+							    aux_lyr->ctx_edges,
+							    aux_lyr->ctx_faces,
+							    aux_lyr->ctx_edge_seeds,
+							    aux_lyr->ctx_face_seeds);
+			}
+		      if (aux_lyr->canvas == NULL)
+			  aux_lyr->valid = 0;
+		      if (aux_lyr->canvas == NULL)
+			  goto error;
+		  }
+		break;
+	    case RL2_MAP_LAYER_NETWORK:
+		if (do_check_prefix (aux, aux_lyr->layer->prefix, &alias))
+		    do_check_layer_network (sqlite, alias, aux_lyr);
+		if (aux_lyr->valid)
+		  {
+		      /* creating all Network Canvas */
+		      aux_lyr->ctx =
+			  rl2_graph_create_context (data, width, height);
+		      aux_lyr->ctx_labels =
+			  rl2_graph_create_context (data, width, height);
+		      aux_lyr->ctx_nodes =
+			  rl2_graph_create_context (data, width, height);
+		      aux_lyr->ctx_links =
+			  rl2_graph_create_context (data, width, height);
+		      aux_lyr->ctx_link_seeds =
+			  rl2_graph_create_context (data, width, height);
+		      if (aux_lyr->ctx != NULL && aux_lyr->ctx_labels != NULL
+			  && aux_lyr->ctx_nodes != NULL
+			  && aux_lyr->ctx_links != NULL
+			  && aux_lyr->ctx_link_seeds != NULL)
+			{
+			    rl2_prime_background (aux_lyr->ctx, 0, 0, 0, 0);	/* transparent background */
+			    rl2_prime_background (aux_lyr->ctx_labels, 0, 0, 0, 0);	/* transparent background */
+			    rl2_prime_background (aux_lyr->ctx_nodes, 0, 0, 0, 0);	/* transparent background */
+			    rl2_prime_background (aux_lyr->ctx_links, 0, 0, 0, 0);	/* transparent background */
+			    rl2_prime_background (aux_lyr->ctx_link_seeds, 0, 0, 0, 0);	/* transparent background */
+			    aux_lyr->canvas =
+				rl2_create_network_canvas (aux_lyr->ctx,
+							   aux_lyr->ctx_labels,
+							   aux_lyr->ctx_nodes,
+							   aux_lyr->ctx_links,
+							   aux_lyr->ctx_link_seeds);
+			}
+		      if (aux_lyr->canvas == NULL)
+			  aux_lyr->valid = 0;
+		      if (aux_lyr->canvas == NULL)
+			  goto error;
+		  }
+		break;
+	    };
+	  aux_lyr = aux_lyr->next;
+      }
+
+    aux_lyr = aux->first_lyr;
+    while (aux_lyr != NULL)
+      {
+	  /* creating all XML Quick Styles */
+	  if (aux_lyr->valid)
+	    {
+		rl2MapLayerPtr layer = aux_lyr->layer;
+		if (layer != NULL)
+		  {
+		      if (layer->raster_style != NULL)
+			  do_fetch_minmax_values (sqlite, aux_lyr);
+		  }
+		rl2_create_xml_quick_style (aux_lyr);
+	    }
+	  aux_lyr = aux_lyr->next;
+      }
+
+/* preparing the Map canvas */
+    aux->ctx = rl2_graph_create_context (data, width, height);
+    rl2_prime_background (aux->ctx, 0, 0, 0, 0);	/* transparent background */
+
+    return aux;
+
+  error:
+    aux->valid = 0;
+    return aux;
+}
+
+RL2_PRIVATE void
+rl2_destroy_map_config_aux (rl2PrivMapConfigAuxPtr aux)
+{
+/* memory cleanup - destroying a MapConfig Aux object */
+    rl2PrivMapAttachedDbPtr db;
+    rl2PrivMapAttachedDbPtr db_n;
+    rl2PrivMapLayerPtr lyr;
+    rl2PrivMapLayerPtr lyr_n;
+    if (aux == NULL)
+	return;
+
+    db = aux->first_db;
+    while (db != NULL)
+      {
+	  db_n = db->next;
+	  if (db->remapped != NULL)
+	      free (db->remapped);
+	  free (db);
+	  db = db_n;
+      }
+    lyr = aux->first_lyr;
+    while (lyr != NULL)
+      {
+	  lyr_n = lyr->next;
+	  if (lyr->style_name != NULL)
+	      free (lyr->style_name);
+	  if (lyr->xml_style != NULL)
+	      sqlite3_free (lyr->xml_style);
+	  if (lyr->canvas != NULL)
+	      rl2_destroy_canvas (lyr->canvas);
+	  if (lyr->ctx != NULL)
+	      rl2_graph_destroy_context (lyr->ctx);
+	  if (lyr->ctx_labels != NULL)
+	      rl2_graph_destroy_context (lyr->ctx_labels);
+	  if (lyr->ctx_nodes != NULL)
+	      rl2_graph_destroy_context (lyr->ctx_nodes);
+	  if (lyr->ctx_edges != NULL)
+	      rl2_graph_destroy_context (lyr->ctx_edges);
+	  if (lyr->ctx_faces != NULL)
+	      rl2_graph_destroy_context (lyr->ctx_faces);
+	  if (lyr->ctx_edge_seeds != NULL)
+	      rl2_graph_destroy_context (lyr->ctx_edge_seeds);
+	  if (lyr->ctx_face_seeds != NULL)
+	      rl2_graph_destroy_context (lyr->ctx_face_seeds);
+	  if (lyr->ctx_links != NULL)
+	      rl2_graph_destroy_context (lyr->ctx_links);
+	  if (lyr->ctx_link_seeds != NULL)
+	      rl2_graph_destroy_context (lyr->ctx_link_seeds);
+	  free (lyr);
+	  lyr = lyr_n;
+      }
+
+    if (aux->ctx != NULL)
+	rl2_graph_destroy_context (aux->ctx);
+    free (aux);
 }

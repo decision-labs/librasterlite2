@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FeatureTypeStyle xmlns="http://www.opengis.net/se" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1.0" xsi:schemaLocation="http://www.opengis.net/se http://schemas.opengis.net/se/1.1.0/FeatureStyle.xsd">
+    <Name>Railroads - with label</Name>
+    <Description>
+        <Title>Railroads - with label</Title>
+        <Abstract>a LineSymbolizer with labels</Abstract>
+    </Description>
+    <Rule>
+        <LineSymbolizer>
+			<Stroke>
+				<GraphicStroke>
+					<Graphic>
+						<ExternalGraphic>
+							<OnlineResource xlink:type="simple" xlink:href="http://www.utopia.gov/zebra.png"/>
+							<Format>image/png</Format>
+						</ExternalGraphic>
+					</Graphic>
+				</GraphicStroke>
+				<SvgParameter name="stroke-opacity">1.00</SvgParameter>
+				<SvgParameter name="stroke-width">4.00</SvgParameter>
+				<SvgParameter name="stroke-linejoin">round</SvgParameter>
+				<SvgParameter name="stroke-linecap">round</SvgParameter>
+				<SvgParameter name="stroke-dasharray">20.00 20.00</SvgParameter>
+			</Stroke>
+		</LineSymbolizer>
+        <TextSymbolizer>
+			<Label>rwdb_rr_id</Label>
+			<Font>
+				<SvgParameter name="font-family">Roboto-Regular</SvgParameter>
+				<SvgParameter name="font-style">normal</SvgParameter>
+				<SvgParameter name="font-weight">normal</SvgParameter>
+				<SvgParameter name="font-size">16.00</SvgParameter>
+			</Font>
+			<LabelPlacement>
+				<LinePlacement>
+					<PerpendicularOffset>10.0000</PerpendicularOffset>
+					<IsAligned>true</IsAligned>
+				</LinePlacement>
+			</LabelPlacement>
+			<Fill>
+				<SvgParameter name="fill">#000000</SvgParameter>
+				<SvgParameter name="fill-opacity">1.00</SvgParameter>
+			</Fill>
+		</TextSymbolizer>
+    </Rule>
+</FeatureTypeStyle>

@@ -101,7 +101,8 @@ DIST_COMMON = $(srcdir)/Makefile.am $(top_srcdir)/configure \
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
-CONFIG_HEADER = config.h
+CONFIG_HEADER = fakeconfig.h config.h \
+	$(top_builddir)/./headers/rasterlite2/rl2config.h
 CONFIG_CLEAN_FILES = Doxyfile rasterlite2.pc
 CONFIG_CLEAN_VPATH_FILES =
 AM_V_P = $(am__v_P_@AM_V@)
@@ -169,7 +170,7 @@ am__recursive_targets = \
 AM_RECURSIVE_TARGETS = $(am__recursive_targets:-recursive=) TAGS CTAGS \
 	cscope distdir distdir-am dist dist-all distcheck
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) \
-	$(LISP)config.h.in
+	$(LISP)fakeconfig.h.in config.h.in
 # Read a list of newline-separated strings from the standard input,
 # and print each of them once, without duplicates.  Input order is
 # *not* preserved.
@@ -191,7 +192,9 @@ CTAGS = ctags
 CSCOPE = cscope
 DIST_SUBDIRS = $(SUBDIRS)
 am__DIST_COMMON = $(srcdir)/Doxyfile.in $(srcdir)/Makefile.in \
-	$(srcdir)/config.h.in $(srcdir)/rasterlite2.pc.in AUTHORS \
+	$(srcdir)/config.h.in $(srcdir)/fakeconfig.h.in \
+	$(srcdir)/rasterlite2.pc.in \
+	$(top_srcdir)/./headers/rasterlite2/rl2config.h.in AUTHORS \
 	COPYING ChangeLog INSTALL NEWS README compile config.guess \
 	config.sub depcomp install-sh ltmain.sh missing
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -389,13 +392,16 @@ top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = headers src test tools examples
 EXTRA_DIST = mainpage.doxy Android_R4.3.0.mk rasterlite2-4.3.0.mk \
-	Makefile-static-MinGW Makefile-static-mingw32 Makefile-static-mingw64
+	Makefile-static-MinGW Makefile-static-mingw32 \
+	Makefile-static-mingw64 \
+	fakeconfig.h fakeconfig.h.in \
+	config.h config.h.in 
 
 AUTOMAKE_OPTIONS = dist-zip foreign
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = rasterlite2.pc
 MOSTLYCLEANFILES = rasterlite2_cov.info 
-all: config.h
+all: fakeconfig.h config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
 .SUFFIXES:
@@ -433,20 +439,36 @@ $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	$(am__cd) $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
 $(am__aclocal_m4_deps):
 
-config.h: stamp-h1
+fakeconfig.h: stamp-h1
 	@test -f $@ || rm -f stamp-h1
 	@test -f $@ || $(MAKE) $(AM_MAKEFLAGS) stamp-h1
 
-stamp-h1: $(srcdir)/config.h.in $(top_builddir)/config.status
+stamp-h1: $(srcdir)/fakeconfig.h.in $(top_builddir)/config.status
 	@rm -f stamp-h1
-	cd $(top_builddir) && $(SHELL) ./config.status config.h
-$(srcdir)/config.h.in: @MAINTAINER_MODE_TRUE@ $(am__configure_deps) 
+	cd $(top_builddir) && $(SHELL) ./config.status ./fakeconfig.h
+$(srcdir)/fakeconfig.h.in: @MAINTAINER_MODE_TRUE@ $(am__configure_deps) 
 	($(am__cd) $(top_srcdir) && $(AUTOHEADER))
 	rm -f stamp-h1
 	touch $@
 
+config.h: stamp-h2
+	@test -f $@ || rm -f stamp-h2
+	@test -f $@ || $(MAKE) $(AM_MAKEFLAGS) stamp-h2
+
+stamp-h2: $(srcdir)/config.h.in $(top_builddir)/config.status
+	@rm -f stamp-h2
+	cd $(top_builddir) && $(SHELL) ./config.status ./config.h
+
+./headers/rasterlite2/rl2config.h: ./headers/rasterlite2/stamp-h3
+	@test -f $@ || rm -f ./headers/rasterlite2/stamp-h3
+	@test -f $@ || $(MAKE) $(AM_MAKEFLAGS) ./headers/rasterlite2/stamp-h3
+
+./headers/rasterlite2/stamp-h3: $(top_srcdir)/./headers/rasterlite2/rl2config.h.in $(top_builddir)/config.status
+	@rm -f ./headers/rasterlite2/stamp-h3
+	cd $(top_builddir) && $(SHELL) ./config.status ./headers/rasterlite2/rl2config.h
+
 distclean-hdr:
-	-rm -f config.h stamp-h1
+	-rm -f fakeconfig.h stamp-h1 config.h stamp-h2 ./headers/rasterlite2/rl2config.h ./headers/rasterlite2/stamp-h3
 Doxyfile: $(top_builddir)/config.status $(srcdir)/Doxyfile.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 rasterlite2.pc: $(top_builddir)/config.status $(srcdir)/rasterlite2.pc.in
@@ -780,7 +802,7 @@ distcleancheck: distclean
 	       exit 1; } >&2
 check-am: all-am
 check: check-recursive
-all-am: Makefile $(DATA) config.h
+all-am: Makefile $(DATA) fakeconfig.h config.h
 installdirs: installdirs-recursive
 installdirs-am:
 	for dir in "$(DESTDIR)$(pkgconfigdir)"; do \

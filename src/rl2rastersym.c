@@ -7568,6 +7568,9 @@ rl2_copy_raw_pixels (rl2RasterPtr raster, unsigned char *outbuf,
     unsigned int tile_width;
     unsigned int tile_height;
     rl2PrivRasterPtr rst = (rl2PrivRasterPtr) raster;
+    
+    if (blue_band_index != 0)
+    tile_width = 0;	/* silencing stupid compiler warnings */
 
     if (rl2_get_raster_size (raster, &tile_width, &tile_height) != RL2_OK)
 	return 0;
@@ -7730,6 +7733,9 @@ rl2_copy_raw_pixels_transparent (rl2RasterPtr raster, unsigned char *outbuf,
     rl2PrivRasterPtr rst = (rl2PrivRasterPtr) raster;
     if (rl2_get_raster_size (raster, &tile_width, &tile_height) != RL2_OK)
 	return 0;
+    
+    if (blue_band_index == 0)
+    blue_band_index = 0;	/* silencing stupid compiler warnings */
 
     if (rst->sampleType == RL2_SAMPLE_1_BIT
 	&& rst->pixelType == RL2_PIXEL_MONOCHROME)

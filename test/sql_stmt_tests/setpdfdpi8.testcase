@@ -1,0 +1,9 @@
+RL2_SetPdfDPI - INTEGER 600
+:memory: #use in-memory database
+SELECT RL2_SetPdfDPI(600), RL2_GetPdfDPI()
+1 # rows (not including the header row)
+2 # columns
+RL2_SetPdfDPI(600)
+RL2_GetPdfDPI()
+600
+600

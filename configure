@@ -3051,15 +3051,6 @@ fi
  VERSION='1.1.0-beta2'
 
 
-cat >>confdefs.h <<_ACEOF
-#define PACKAGE "$PACKAGE"
-_ACEOF
-
-
-cat >>confdefs.h <<_ACEOF
-#define VERSION "$VERSION"
-_ACEOF
-
 # Some tools Automake needs.
 
 ACLOCAL=${ACLOCAL-"${am_missing_run}aclocal-${am__api_version}"}
@@ -3164,7 +3155,7 @@ fi
   MAINT=$MAINTAINER_MODE_TRUE
 
 
-ac_config_headers="$ac_config_headers config.h"
+ac_config_headers="$ac_config_headers ./fakeconfig.h ./config.h ./headers/rasterlite2/rl2config.h"
 
 
 # enabling huge-file support (64 bit file pointers)
@@ -3184,8 +3175,8 @@ $as_echo "#define NDEBUG 1" >>confdefs.h
 
 
 
-# config depending options
 
+# config depending options
 
 
 
@@ -17405,108 +17396,20 @@ fi
 ac_config_files="$ac_config_files Makefile headers/Makefile src/Makefile test/Makefile test/sql_stmt_tests/Makefile test/sql_stmt_security_tests/Makefile tools/Makefile examples/Makefile Doxyfile rasterlite2.pc"
 
 
-# exporting the TARGET_CPU string
+# exporting the RL2_TARGET_CPU string
 rl2_cpu=`$CC -dumpmachine`
 cat >>confdefs.h <<_ACEOF
-#define TARGET_CPU "$rl2_cpu"
+#define RL2_TARGET_CPU "$rl2_cpu"
+_ACEOF
+
+
+# exporting the VERSION string
+cat >>confdefs.h <<_ACEOF
+#define RL2_VERSION "$PACKAGE_VERSION"
 _ACEOF
 
 
 # Checks for installed libraries
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sqlite3_prepare_v2 in -lsqlite3" >&5
-$as_echo_n "checking for sqlite3_prepare_v2 in -lsqlite3... " >&6; }
-if ${ac_cv_lib_sqlite3_sqlite3_prepare_v2+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lsqlite3 -lm $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char sqlite3_prepare_v2 ();
-int
-main ()
-{
-return sqlite3_prepare_v2 ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_sqlite3_sqlite3_prepare_v2=yes
-else
-  ac_cv_lib_sqlite3_sqlite3_prepare_v2=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_sqlite3_sqlite3_prepare_v2" >&5
-$as_echo "$ac_cv_lib_sqlite3_sqlite3_prepare_v2" >&6; }
-if test "x$ac_cv_lib_sqlite3_sqlite3_prepare_v2" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBSQLITE3 1
-_ACEOF
-
-  LIBS="-lsqlite3 $LIBS"
-
-else
-  as_fn_error $? "'libsqlite3' is required but it doesn't seem to be installed on this system." "$LINENO" 5
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for inflateInit_ in -lz" >&5
-$as_echo_n "checking for inflateInit_ in -lz... " >&6; }
-if ${ac_cv_lib_z_inflateInit_+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lz -lm $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char inflateInit_ ();
-int
-main ()
-{
-return inflateInit_ ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_z_inflateInit_=yes
-else
-  ac_cv_lib_z_inflateInit_=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_z_inflateInit_" >&5
-$as_echo "$ac_cv_lib_z_inflateInit_" >&6; }
-if test "x$ac_cv_lib_z_inflateInit_" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBZ 1
-_ACEOF
-
-  LIBS="-lz $LIBS"
-
-else
-  as_fn_error $? "'libz' is required but it doesn't seems to be installed on this system." "$LINENO" 5
-fi
-
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for jpeg_start_compress in -ljpeg" >&5
 $as_echo_n "checking for jpeg_start_compress in -ljpeg... " >&6; }
 if ${ac_cv_lib_jpeg_jpeg_start_compress+:} false; then :
@@ -17695,153 +17598,6 @@ else
   as_fn_error $? "'libgeotiff' >= v.1.2.5 is required but it doesn't seems to be installed on this system." "$LINENO" 5
 fi
 
-
-for ac_header in proj.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "proj.h" "ac_cv_header_proj_h" "$ac_includes_default"
-if test "x$ac_cv_header_proj_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_PROJ_H 1
-_ACEOF
- proj_new_incl=1
-else
-  for ac_header in proj_api.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "proj_api.h" "ac_cv_header_proj_api_h" "$ac_includes_default"
-if test "x$ac_cv_header_proj_api_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_PROJ_API_H 1
-_ACEOF
- proj_new_incl=0
-else
-  as_fn_error $? "cannot find proj_api.h, bailing out" "$LINENO" 5
-fi
-
-done
-
-fi
-
-done
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing proj_normalize_for_visualization" >&5
-$as_echo_n "checking for library containing proj_normalize_for_visualization... " >&6; }
-if ${ac_cv_search_proj_normalize_for_visualization+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char proj_normalize_for_visualization ();
-int
-main ()
-{
-return proj_normalize_for_visualization ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' proj; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_proj_normalize_for_visualization=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if ${ac_cv_search_proj_normalize_for_visualization+:} false; then :
-  break
-fi
-done
-if ${ac_cv_search_proj_normalize_for_visualization+:} false; then :
-
-else
-  ac_cv_search_proj_normalize_for_visualization=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_proj_normalize_for_visualization" >&5
-$as_echo "$ac_cv_search_proj_normalize_for_visualization" >&6; }
-ac_res=$ac_cv_search_proj_normalize_for_visualization
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-  proj_new_lib=1
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing pj_init_plus" >&5
-$as_echo_n "checking for library containing pj_init_plus... " >&6; }
-if ${ac_cv_search_pj_init_plus+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char pj_init_plus ();
-int
-main ()
-{
-return pj_init_plus ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' proj; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib -lm -lpthread -lsqlite3 $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_pj_init_plus=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if ${ac_cv_search_pj_init_plus+:} false; then :
-  break
-fi
-done
-if ${ac_cv_search_pj_init_plus+:} false; then :
-
-else
-  ac_cv_search_pj_init_plus=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_pj_init_plus" >&5
-$as_echo "$ac_cv_search_pj_init_plus" >&6; }
-ac_res=$ac_cv_search_pj_init_plus
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-  proj_new_lib=0
-else
-  as_fn_error $? "'libproj' is required but it doesn't seem to be installed on this system." "$LINENO" 5
-fi
-
-fi
-
-if test $proj_new_incl -eq 1 && test $proj_new_lib -eq 1; then
-   $as_echo "#define PROJ_NEW 1" >>confdefs.h
-
-fi
 
 #-----------------------------------------------------------------------
 #   --enable-openjpeg
@@ -18706,65 +18462,6 @@ $as_echo "yes" >&6; }
 
 fi
 
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing unzLocateFile" >&5
-$as_echo_n "checking for library containing unzLocateFile... " >&6; }
-if ${ac_cv_search_unzLocateFile+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char unzLocateFile ();
-int
-main ()
-{
-return unzLocateFile ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' minizip; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_unzLocateFile=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if ${ac_cv_search_unzLocateFile+:} false; then :
-  break
-fi
-done
-if ${ac_cv_search_unzLocateFile+:} false; then :
-
-else
-  ac_cv_search_unzLocateFile=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_unzLocateFile" >&5
-$as_echo "$ac_cv_search_unzLocateFile" >&6; }
-ac_res=$ac_cv_search_unzLocateFile
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-else
-  as_fn_error $? "'libminizip' is required but it doesn't seem to be installed on this system." "$LINENO" 5
-fi
 
 
 
@@ -20190,7 +19887,9 @@ cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
 for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
-    "config.h") CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
+    "./fakeconfig.h") CONFIG_HEADERS="$CONFIG_HEADERS ./fakeconfig.h" ;;
+    "./config.h") CONFIG_HEADERS="$CONFIG_HEADERS ./config.h" ;;
+    "./headers/rasterlite2/rl2config.h") CONFIG_HEADERS="$CONFIG_HEADERS ./headers/rasterlite2/rl2config.h" ;;
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "libtool") CONFIG_COMMANDS="$CONFIG_COMMANDS libtool" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;

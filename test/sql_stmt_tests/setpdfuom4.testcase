@@ -1,0 +1,7 @@
+RL2_SetPdfMarginUOM - INTEGER
+:memory: #use in-memory database
+SELECT RL2_SetPdfMarginUOM(12)
+1 # rows (not including the header row)
+1 # columns
+RL2_SetPdfMarginUOM(12)
+(NULL)

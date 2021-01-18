@@ -18,13 +18,12 @@ librasterlite2_la_SOURCES = rasterlite2.c rl2raw.c rl2codec.c \
 	rl2svgaux.c rl2symbolizer.c rl2symbaux.c rl2rastersym.c \
 	rl2version.c rl2md5.c md5.c rl2openjpeg.c rl2auxgeom.c \
 	rl2auxfont.c rl2symclone.c rl2_internal_data.c rl2draping.c \
-	rl2map_config.c
+	rl2map_config.c rl2map_config_paint.c
 
 librasterlite2_la_LIBADD = @LIBPNG_LIBS@ @LIBWEBP_LIBS@ @LIBLZMA_LIBS@ \
 	@LIBLZ4_LIBS@ @LIBZSTD_LIBS@ @LIBOPENJP2_LIBS@ \
 	@LIBCURL_LIBS@ @LIBXML2_LIBS@ @LIBFONTCONFIG_LIBS@ \
-	@LIBFREETYPE2_LIBS@ @LIBPIXMAN_LIBS@ @LIBCAIRO_LIBS@ \
-	@LIBSPATIALITE_LIBS@
+	@LIBFREETYPE2_LIBS@ @LIBPIXMAN_LIBS@ @LIBCAIRO_LIBS@
 
 if MINGW
 librasterlite2_la_LDFLAGS = -avoid-version -no-undefined
@@ -41,13 +40,12 @@ mod_rasterlite2_la_SOURCES = rasterlite2.c rl2raw.c rl2codec.c \
 	rl2svgaux.c rl2symbolizer.c rl2symbaux.c rl2rastersym.c \
 	rl2version.c rl2md5.c md5.c rl2openjpeg.c rl2auxgeom.c \
 	rl2auxfont.c rl2symclone.c rl2_internal_data.c rl2draping.c \
-	rl2map_config.c
+	rl2map_config.c rl2map_config_paint.c
 
 mod_rasterlite2_la_LIBADD = @LIBPNG_LIBS@ @LIBWEBP_LIBS@ @LIBLZMA_LIBS@ \
 	@LIBLZ4_LIBS@ @LIBZSTD_LIBS@ @LIBOPENJP2_LIBS@ \
 	@LIBCURL_LIBS@ @LIBXML2_LIBS@ @LIBFONTCONFIG_LIBS@ \
-	@LIBFREETYPE2_LIBS@ @LIBPIXMAN_LIBS@ @LIBCAIRO_LIBS@ \
-	@LIBSPATIALITE_LIBS@
+	@LIBFREETYPE2_LIBS@ @LIBPIXMAN_LIBS@ @LIBCAIRO_LIBS@
 
 mod_rasterlite2_la_CPPFLAGS = @CFLAGS@ @CPPFLAGS@
 mod_rasterlite2_la_CPPFLAGS += -I$(top_srcdir)/headers -I.

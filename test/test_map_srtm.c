@@ -294,11 +294,99 @@ do_export_tiff (sqlite3 * sqlite, const char *coverage, gaiaGeomCollPtr geom,
 }
 
 static int
+do_export_styled_map_image (sqlite3 * sqlite, const char *coverage,
+		     gaiaGeomCollPtr geom, const char *style,
+		     const char *suffix)
+{
+/* exporting a Map Image (full rendered - XML Style) */
+    char *sql;
+    char *path;
+    sqlite3_stmt *stmt;
+    int ret;
+    unsigned char *blob;
+    int blob_size;
+    int retcode = 0;
+    FILE *in;
+    char *xml_style = NULL;
+    const char *format = "text/plain";
+    char *xml_path;
+
+    if (strcmp (suffix, "png") == 0)
+	format = "image/png";
+    if (strcmp (suffix, "jpg") == 0)
+	format = "image/jpeg";
+    if (strcmp (suffix, "tif") == 0)
+	format = "image/tiff";
+    if (strcmp (suffix, "pdf") == 0)
+	format = "application/x-pdf";
+	
+/* reading the XML style */
+	xml_path = sqlite3_mprintf("%s.xml", style);
+	in = fopen(xml_path, "r");
+	if (in != NULL)
+	{
+		long sz;
+		fseek(in, 0, SEEK_END);
+		sz = ftell(in);
+		xml_style = malloc(sz + 1);
+		rewind(in);
+		fread(xml_style, 1, sz, in);
+		*(xml_style + sz) = '\0';
+		fclose(in);
+	}
+	else
+		goto stop;
+
+    path = sqlite3_mprintf ("./%s_styledmap_%s.%s", coverage, style, suffix);
+
+    sql =
+	"SELECT BlobToFile(RL2_GetStyledMapImageFromRaster(NULL, ?, ST_Buffer(?, 0.25), ?, ?, ?, ?, ?, ?), ?)";
+    ret = sqlite3_prepare_v2 (sqlite, sql, strlen (sql), &stmt, NULL);
+    if (ret != SQLITE_OK)
+	goto stop;
+    sqlite3_reset (stmt);
+    sqlite3_clear_bindings (stmt);
+    sqlite3_bind_text (stmt, 1, coverage, strlen (coverage), SQLITE_STATIC);
+    gaiaToSpatiaLiteBlobWkb (geom, &blob, &blob_size);
+    sqlite3_bind_blob (stmt, 2, blob, blob_size, free);
+    sqlite3_bind_int (stmt, 3, 1024);
+    sqlite3_bind_int (stmt, 4, 1024);
+    sqlite3_bind_text (stmt, 5, xml_style, strlen (xml_style), SQLITE_STATIC);
+    sqlite3_bind_text (stmt, 6, format, strlen (format), SQLITE_STATIC);
+    sqlite3_bind_text (stmt, 7, "#ffe0e0", 7, SQLITE_STATIC);
+    sqlite3_bind_int (stmt, 8, 1);
+    sqlite3_bind_text (stmt, 9, path, strlen (path), SQLITE_STATIC);
+    ret = sqlite3_step (stmt);
+    if (ret == SQLITE_DONE || ret == SQLITE_ROW)
+      {
+	  if (sqlite3_column_int (stmt, 0) == 1)
+	      retcode = 1;
+      }
+    sqlite3_finalize (stmt);
+    unlink (path);
+    if (!retcode)
+	fprintf (stderr, "ERROR: unable to export \"%s\"\n", path);
+    sqlite3_free (path);
+	sqlite3_free(xml_path);
+	free(xml_style);
+    return retcode;
+    
+stop:
+	if (path != NULL)
+		sqlite3_free(path);
+	if (xml_path != NULL)
+		sqlite3_free(xml_path);
+	if (xml_style != NULL)
+		free(xml_style);
+	return 0;
+}
+
+static int
 do_export_map_image (sqlite3 * sqlite, const char *coverage,
 		     gaiaGeomCollPtr geom, const char *style,
 		     const char *suffix)
 {
-/* exporting a Map Image (full rendered) */
+/* exporting a Map Image (full rendered - registered Style) */
     char *sql;
     char *path;
     sqlite3_stmt *stmt;
@@ -320,7 +408,7 @@ do_export_map_image (sqlite3 * sqlite, const char *coverage,
     path = sqlite3_mprintf ("./%s_map_%s.%s", coverage, style, suffix);
 
     sql =
-	"SELECT BlobToFile(RL2_GetMapImageFromRaster(NULL, ?, ST_Buffer(?, 0.65), ?, ?, ?, ?, ?, ?), ?)";
+	"SELECT BlobToFile(RL2_GetMapImageFromRaster(NULL, ?, ST_Buffer(?, 0.25), ?, ?, ?, ?, ?, ?), ?)";
     ret = sqlite3_prepare_v2 (sqlite, sql, strlen (sql), &stmt, NULL);
     if (ret != SQLITE_OK)
 	return 0;
@@ -347,6 +435,8 @@ do_export_map_image (sqlite3 * sqlite, const char *coverage,
     if (!retcode)
 	fprintf (stderr, "ERROR: unable to export \"%s\"\n", path);
     sqlite3_free (path);
+    if (strcmp(suffix, "png") == 0 && strcmp(style, "default") != 0)
+		retcode = do_export_styled_map_image (sqlite, coverage, geom, style, suffix);
     return retcode;
 }
 

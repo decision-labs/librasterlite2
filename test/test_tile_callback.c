@@ -1005,23 +1005,14 @@ main (int argc, char *argv[])
       }
 
     ret =
-	sqlite3_exec (handle, "SELECT InitSpatialMetadata()", NULL, NULL,
+	sqlite3_exec (handle, "SELECT InitSpatialMetadataFull()", NULL, NULL,
 		      &err_msg);
     if (ret != SQLITE_OK)
       {
-	  fprintf (stderr, "InitSpatialMetadata() error: %s\n", err_msg);
+	  fprintf (stderr, "InitSpatialMetadataFull() error: %s\n", err_msg);
 	  sqlite3_free (err_msg);
 	  sqlite3_close (handle);
 	  return -3;
-      }
-    ret =
-	sqlite3_exec (handle, "SELECT CreateRasterCoveragesTable()", NULL,
-		      NULL, &err_msg);
-    if (ret != SQLITE_OK)
-      {
-	  fprintf (stderr, "CreateRasterCoveragesTable() error: %s\n", err_msg);
-	  sqlite3_free (err_msg);
-	  return -4;
       }
 
     if (!test_uint8_gray (handle, priv_data))

@@ -1251,22 +1251,13 @@ main (int argc, char *argv[])
     spatialite_init_ex (db_handle, cache, 0);
     rl2_init (db_handle, priv_data, 0);
     ret =
-	sqlite3_exec (db_handle, "SELECT InitSpatialMetadata(1)", NULL, NULL,
+	sqlite3_exec (db_handle, "SELECT InitSpatialMetadataFull(1)", NULL, NULL,
 		      &err_msg);
     if (ret != SQLITE_OK)
       {
-	  fprintf (stderr, "InitSpatialMetadata() error: %s\n", err_msg);
+	  fprintf (stderr, "InitSpatialMetadataFull() error: %s\n", err_msg);
 	  sqlite3_free (err_msg);
 	  return -2;
-      }
-    ret =
-	sqlite3_exec (db_handle, "SELECT CreateRasterCoveragesTable()", NULL,
-		      NULL, &err_msg);
-    if (ret != SQLITE_OK)
-      {
-	  fprintf (stderr, "CreateRasterCoveragesTable() error: %s\n", err_msg);
-	  sqlite3_free (err_msg);
-	  return -3;
       }
 
 /* MONOCHROME tests */

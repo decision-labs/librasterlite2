@@ -8,5 +8,5 @@ includedir=@includedir@
 Name: rasterlite2
 Description: a library supporting Rasters on DBMS
 Version: @VERSION@
-Libs: -L${libdir} -lrasterlite2 -lm
+Libs: -L${libdir} -lrasterlite2 @LIBS@ @LIBPNG_LIBS@ @LIBWEBP_LIBS@ @LIBLZMA_LIBS@ @LIBLZ4_LIBS@ @LIBZSTD_LIBS@ @LIBOPENJP2_LIBS@ @LIBCURL_LIBS@ @LIBXML2_LIBS@ @LIBFONTCONFIG_LIBS@ @LIBFREETYPE2_LIBS@ @LIBPIXMAN_LIBS@ @LIBCAIRO_LIBS@ -lm
 Cflags: -I${includedir} 

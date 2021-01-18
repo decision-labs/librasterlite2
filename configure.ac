@@ -7,9 +7,9 @@ AC_LANG(C)
 AC_CONFIG_AUX_DIR([.])
 AC_CONFIG_MACRO_DIR([m4])
 
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([foreign no-define])
 AM_MAINTAINER_MODE
-AM_CONFIG_HEADER(config.h)
+AM_CONFIG_HEADER(./fakeconfig.h ./config.h ./headers/rasterlite2/rl2config.h)
 
 # enabling huge-file support (64 bit file pointers)
 AH_TEMPLATE([_LARGE_FILE],
@@ -26,8 +26,10 @@ AC_DEFINE(_LARGEFILE_SOURCE)
 AH_TEMPLATE([NDEBUG],
             [Must be defined in order to disable debug mode.])
 AC_DEFINE(NDEBUG)
-AH_TEMPLATE([TARGET_CPU],
+AH_TEMPLATE([RL2_TARGET_CPU],
             [Should contain a text-string describing the intended target CPU])
+AH_TEMPLATE([RL2_VERSION],
+            [the Version of this package.])
             
 # config depending options
 AH_TEMPLATE([OMIT_LZMA],
@@ -40,8 +42,6 @@ AH_TEMPLATE([OMIT_WEBP],
             [Should be defined in order to disable WebP support.])
 AH_TEMPLATE([OMIT_OPENJPEG],
             [Should be defined in order to disable OpenJpeg support.])
-AH_TEMPLATE([PROJ_NEW],
-            [Should be defined in order to enable PROJ.6 support.])
 
 # Checks for header files.
 AC_CHECK_HEADERS(stdlib.h,, [AC_MSG_ERROR([cannot find stdlib.h, bailing out])])
@@ -124,25 +124,18 @@ AC_CONFIG_FILES([Makefile \
 		Doxyfile \
 		rasterlite2.pc])
 
-# exporting the TARGET_CPU string
+# exporting the RL2_TARGET_CPU string
 rl2_cpu=`$CC -dumpmachine`
-AC_DEFINE_UNQUOTED([TARGET_CPU], ["$rl2_cpu"])
+AC_DEFINE_UNQUOTED([RL2_TARGET_CPU], ["$rl2_cpu"])
+
+# exporting the VERSION string
+AC_DEFINE_UNQUOTED([RL2_VERSION], ["$PACKAGE_VERSION"])
 
 # Checks for installed libraries
-AC_CHECK_LIB(sqlite3,sqlite3_prepare_v2,,AC_MSG_ERROR(['libsqlite3' is required but it doesn't seem to be installed on this system.]),-lm)
-AC_CHECK_LIB(z,inflateInit_,,AC_MSG_ERROR(['libz' is required but it doesn't seems to be installed on this system.]),-lm)
 AC_CHECK_LIB(jpeg,jpeg_start_compress,,AC_MSG_ERROR(['libjpeg' is required but it doesn't seems to be installed on this system.]),-lm)
 AC_CHECK_LIB(gif,DGifSlurp,,AC_MSG_ERROR(['libgif' is required but it doesn't seems to be installed on this system.]),-lm)
 AC_CHECK_LIB(tiff,TIFFClientOpen,,AC_MSG_ERROR(['libtiff' is required but it doesn't seems to be installed on this system.]),-lm)
 AC_CHECK_LIB(geotiff,GTIFSetFromProj4,,AC_MSG_ERROR(['libgeotiff' [>= v.1.2.5] is required but it doesn't seems to be installed on this system.]),-lm)
-
-AC_CHECK_HEADERS(proj.h, [proj_new_incl=1], 
-   [AC_CHECK_HEADERS(proj_api.h, [proj_new_incl=0], [AC_MSG_ERROR([cannot find proj_api.h, bailing out])])])
-AC_SEARCH_LIBS(proj_normalize_for_visualization, proj, [proj_new_lib=1],
-   [AC_SEARCH_LIBS(pj_init_plus, proj, [proj_new_lib=0], [AC_MSG_ERROR(['libproj' is required but it doesn't seem to be installed on this system.])], [-lm -lpthread -lsqlite3])])
-if test $proj_new_incl -eq 1 && test $proj_new_lib -eq 1; then
-   AC_DEFINE(PROJ_NEW)
-fi
 
 #-----------------------------------------------------------------------
 #   --enable-openjpeg
@@ -233,8 +226,6 @@ AC_SUBST(LIBCURL_LIBS)
 PKG_CHECK_MODULES([LIBXML2], [libxml-2.0], , AC_MSG_ERROR(['libxml2' is required but it doesn't seem to be installed on this system.]))
 AC_SUBST(LIBXML2_CFLAGS)
 AC_SUBST(LIBXML2_LIBS)
-
-AC_SEARCH_LIBS(unzLocateFile, minizip,,AC_MSG_ERROR(['libminizip' is required but it doesn't seem to be installed on this system.]))
 
 PKG_CHECK_MODULES([LIBFREETYPE2], [freetype2], , AC_MSG_ERROR(['freetype2' is required but it doesn't seem to be installed on this system.]))
 AC_SUBST(LIBFREETYPE2_CFLAGS)

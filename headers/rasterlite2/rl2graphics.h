@@ -95,6 +95,24 @@ extern "C"
 #define RL2_CANVAS_LINK_SEEDS_CTX	5508
 #define RL2_CANVAS_FACE_SEEDS_CTX	5509
 
+#define RL2_PDF_MARGIN_MILLIMS	0x8E
+#define RL2_PDF_MARGIN_INCHES	0xA3
+
+#define RL2_PDF_PAPER_FORMAT_A0	0x1F
+#define RL2_PDF_PAPER_FORMAT_A1	0x2E
+#define RL2_PDF_PAPER_FORMAT_A2	0x3D
+#define RL2_PDF_PAPER_FORMAT_A3	0x4C
+#define RL2_PDF_PAPER_FORMAT_A4	0x5B
+#define RL2_PDF_PAPER_FORMAT_A5	0x6A
+
+#define RL2_PDF_DPI_72		0X2C
+#define RL2_PDF_DPI_150		0x3D
+#define RL2_PDF_DPI_300		0x4E
+#define RL2_PDF_DPI_600		0x5F
+
+#define RL2_PDF_PORTRAIT	0X88
+#define RL2_PDF_LANDSCAPE	0x99
+
     typedef struct rl2_graphics_context rl2GraphicsContext;
     typedef rl2GraphicsContext *rl2GraphicsContextPtr;
 
@@ -249,7 +267,7 @@ extern "C"
  */
     RL2_DECLARE rl2GraphicsContextPtr
 	rl2_graph_create_mem_pdf_context (const void *priv_data,
-					  rl2MemPdfPtr pdf, int dpi,
+					  rl2MemPdfPtr pdf, int resolution,
 					  double page_width, double page_height,
 					  double margin_width,
 					  double margin_height);
@@ -1870,6 +1888,10 @@ extern "C"
 						   double maxx, double maxy,
 						   int width, int height,
 						   const char *style);
+
+    RL2_DECLARE int rl2_copy_wms_tile (rl2GraphicsContextPtr out,
+				       rl2GraphicsContextPtr in, int base_x,
+				       int base_y);
 
 #ifdef __cplusplus
 }

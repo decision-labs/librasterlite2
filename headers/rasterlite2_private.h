@@ -77,6 +77,8 @@ the terms of any one of the MPL, the GPL or the LGPL.
 #include <geo_normalize.h>
 #endif
 
+#include <rasterlite2/rl2mapconfig.h>
+
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 #ifdef _WIN32
 #ifdef DLL_EXPORT
@@ -430,6 +432,14 @@ extern "C"
     struct rl2_private_data
     {
 	int max_threads;
+	int max_wms_retries;
+	int wms_pause;
+	unsigned char pdf_margin_uom;
+	double pdf_margin_horz;
+	double pdf_margin_vert;
+	unsigned char pdf_paper_format;
+	unsigned char pdf_dpi;
+	unsigned char pdf_orientation;
 	char *tmp_atm_table;
 	void *FTlibrary;
 	struct rl2_private_tt_font *first_font;
@@ -1569,142 +1579,92 @@ extern "C"
     } rl2PrivCanvas;
     typedef rl2PrivCanvas *rl2PrivCanvasPtr;
 
-    /*
-       typedef struct rl2_priv_map_attached_db
-       {
-       char *prefix;
-       char *path;
-       struct rl2_priv_map_attached_db *next;
-       } rl2PrivMapAttachedDb;
-       typedef rl2PrivMapAttachedDb *rl2PrivMapAttachedDbPtr;
+    typedef struct rl2_priv_map_attached_db
+    {
+	rl2MapAttachedDbPtr attached;
+	char *remapped;
+	int valid;
+	struct rl2_priv_map_attached_db *next;
+    } rl2PrivMapAttachedDb;
+    typedef rl2PrivMapAttachedDb *rl2PrivMapAttachedDbPtr;
 
-       typedef struct rl2_priv_cfg_color
-       {
-       unsigned char red;
-       unsigned char green;
-       unsigned char blue;
-       } rl2PrivCfgColor;
-       typedef rl2PrivCfgColor *rl2PrivCfgColorPtr;
+    typedef struct rl2_priv_map_layer
+    {
+	rl2MapLayerPtr layer;
+	const char *prefix;
+	double min_value;
+	double max_value;
+	char *style_name;
+	char *xml_style;
+	unsigned char syntetic_band;
+	void *ctx;
+	void *ctx_labels;
+	void *ctx_nodes;
+	void *ctx_edges;
+	void *ctx_faces;
+	void *ctx_edge_seeds;
+	void *ctx_face_seeds;
+	void *ctx_links;
+	void *ctx_link_seeds;
+	rl2CanvasPtr canvas;
+	int valid;
+	struct rl2_priv_map_layer *next;
+    } rl2PrivMapLayer;
+    typedef rl2PrivMapLayer *rl2PrivMapLayerPtr;
 
-       typedef struct rl2_priv_cfg_graphic_fill
-       {
-       char *resource;
-       char *format;
-       rl2PrivCfgColorPtr color;
-       } rl2PrivCfgGraphicFill;
-       typedef rl2PrivCfgGraphicFill *rl2PrivCfgGraphicFillPtr;
+    typedef struct rl2_priv_map_config_aux
+    {
+	int valid;
+	int width;
+	int height;
+	double min_x;
+	double min_y;
+	double max_x;
+	double max_y;
+	double pixel_ratio;
+	double scale;
+	int srid;
+	int format_id;
+	int quality;
+	void *ctx;
+	unsigned char *image;
+	int image_size;
+	rl2MapConfigPtr map_config;
+	rl2PrivMapAttachedDbPtr first_db;
+	rl2PrivMapAttachedDbPtr last_db;
+	rl2PrivMapLayerPtr first_lyr;
+	rl2PrivMapLayerPtr last_lyr;
+    } rl2PrivMapConfigAux;
+    typedef rl2PrivMapConfigAux *rl2PrivMapConfigAuxPtr;
 
-       typedef struct rl2_priv_cfg_fill
-       {
-       rl2PrivCfgGraphicFillPtr graphic;
-       unsigned char red;
-       unsigned char green;
-       unsigned char blue;
-       double opacity;
-       } rl2PrivCfgFill;
-       typedef rl2PrivCfgFill *rl2PrivCfgFillPtr;
+    typedef struct rl2_wms_tile
+    {
+	int base_x;
+	int base_y;
+	int width;
+	int height;
+	double min_x;
+	double min_y;
+	double max_x;
+	double max_y;
+	int retries;
+	int done;
+	struct rl2_wms_tile *next;
+    } rl2WmsTile;
+    typedef rl2WmsTile *rl2WmsTilePtr;
 
-       typedef struct rl2_priv_cfg_stroke
-       {
-       unsigned char red;
-       unsigned char green;
-       unsigned char blue;
-       double opacity;
-       double width;
-       int linejoin;
-       int linecap;
-       int dash_count;
-       double *dash_list;
-       double dash_offset;
-       } rl2PrivCfgStroke;
-       typedef rl2PrivCfgStroke *rl2PrivCfgStrokePtr;
-
-       typedef struct rl2_priv_cfg_polygon_symbolizer
-       {
-       rl2PrivCfgFillPtr fill;
-       rl2PrivCfgStrokePtr stroke;
-       double displacement_x;
-       double displacement_y;
-       double perpendicular_offset;
-       } rl2PrivCfgPolygonSymbolizer;
-       typedef rl2PrivCfgPolygonSymbolizer *rl2PrivCfgPolygonSymbolizerPtr;
-
-       typedef struct rl2_priv_cfg_font
-       {
-       char *family;
-       int style;
-       int weight;
-       double size;
-       } rl2PrivCfgFont;
-       typedef rl2PrivCfgFont *rl2PrivCfgFontPtr;
-
-       typedef struct rl2_priv_cfg_point_placement
-       {
-       double anchor_x;
-       double anchor_y;
-       double displacement_x;
-       double displacement_y;
-       double rotation;
-       } rl2PrivCfgPointPlacement;
-       typedef rl2PrivCfgPointPlacement *rl2PrivCfgPointPlacementPtr;
-
-       typedef struct rl2_priv_cfg_placement
-       {
-       rl2PrivCfgPointPlacementPtr point;
-       } rl2PrivCfgPlacement;
-       typedef rl2PrivCfgPlacement *rl2PrivCfgPlacementPtr;
-
-       typedef struct rl2_priv_cfg_halo
-       {
-       double radius;
-       rl2PrivCfgFillPtr fill;
-       } rl2PrivCfgHalo;
-       typedef rl2PrivCfgHalo *rl2PrivCfgHaloPtr;
-
-       typedef struct rl2_priv_cfg_text_symbolizer
-       {
-       char *label;
-       rl2PrivCfgFontPtr font;
-       rl2PrivCfgPlacementPtr placement;
-       rl2PrivCfgHaloPtr halo;
-       rl2PrivCfgFillPtr fill;
-       int alone;
-       } rl2PrivCfgTextSymbolizer;
-       typedef rl2PrivCfgTextSymbolizer *rl2PrivCfgTextSymbolizerPtr;
-
-       typedef struct rl2_priv_map_layer
-       {
-       int type;
-       char *prefix;
-       char *name;
-       int visible;
-       rl2PrivCfgPolygonSymbolizerPtr polygon_sym;
-       rl2PrivCfgTextSymbolizerPtr text_sym;
-       struct rl2_priv_map_layer *next;
-       } rl2PrivMapLayer;
-       typedef rl2PrivMapLayer *rl2PrivMapLayerPtr;
-
-       typedef struct rl2_priv_map_config
-       {
-       char *name;
-       char *title;
-       char *abstract;
-       int multithread_enabled;
-       int max_threads;
-       int srid;
-       int autotransform_enabled;
-       int dms;
-       unsigned char map_background_red;
-       unsigned char map_background_green;
-       unsigned char map_background_blue;
-       int map_background_transparent;
-       rl2PrivMapAttachedDbPtr first_db;
-       rl2PrivMapAttachedDbPtr last_db;
-       rl2PrivMapLayerPtr first_lyr;
-       rl2PrivMapLayerPtr last_lyr;
-       } rl2PrivMapConfig;
-       typedef rl2PrivMapConfig *rl2PrivMapConfigPtr;
-     */
+    typedef struct rl2_tiled_wms
+    {
+	rl2MapLayerPtr layer;
+	rl2MapWmsLayerStylePtr config;
+	const char *layer_name;
+	int max_retries;
+	int pause;
+	rl2WmsTilePtr first;
+	rl2WmsTilePtr last;
+	int finished;
+    } rl2TiledWms;
+    typedef rl2TiledWms *rl2TiledWmsPtr;
 
     RL2_PRIVATE int
 	rl2_blob_from_file (const char *path, unsigned char **blob,
@@ -3006,6 +2966,37 @@ extern "C"
 					     double rotation,
 					     double anchor_point_x,
 					     double anchor_point_y);
+
+    RL2_PRIVATE rl2PrivMapConfigAuxPtr rl2_create_map_config_aux (sqlite3 *
+								  sqlite,
+								  const void
+								  *data,
+								  rl2MapConfigPtr
+								  map_config,
+								  int width,
+								  int height,
+								  const char
+								  *format,
+								  int quality,
+								  const unsigned
+								  char *blob,
+								  int blob_sz,
+								  int reaspect);
+
+    RL2_PRIVATE void rl2_destroy_map_config_aux (rl2PrivMapConfigAuxPtr aux);
+
+    RL2_PRIVATE void rl2_create_xml_quick_style (rl2PrivMapLayerPtr lyr);
+
+    RL2_PRIVATE int rl2_paint_map_config_aux (sqlite3 * sqlite,
+					      const void *data,
+					      rl2PrivMapConfigAuxPtr aux);
+
+    RL2_PRIVATE double rl2_pixel_ratio (int width, int height, double ext_x,
+					double ext_y);
+
+    RL2_PRIVATE double rl2_standard_scale (sqlite3 * handle, int srid,
+					   int width, int height, double ext_x,
+					   double ext_y);
 
 #ifdef __cplusplus
 }

@@ -1383,7 +1383,7 @@ do_version ()
 /* printing version infos */
     fprintf (stderr, "\nVersion infos\n");
     fprintf (stderr, "===========================================\n");
-    fprintf (stderr, "rl2sniff .......: %s\n", VERSION);
+    fprintf (stderr, "rl2sniff .......: %s\n", RL2_VERSION);
     fprintf (stderr, "target CPU .....: %s\n", rl2_target_cpu ());
     fprintf (stderr, "librasterlite2 .: %s\n", rl2_version ());
     fprintf (stderr, "libspatialite ..: %s\n", spatialite_version ());

@@ -576,13 +576,12 @@ rl2_graph_create_pdf_context (const void *priv_data, const char *path, int dpi,
 /* creating a PDF Graphics Context */
     struct rl2_private_data *cache = (struct rl2_private_data *) priv_data;
     RL2GraphContextPtr ctx;
-    double scale = 72.0 / (double) dpi;
-    double page2_width = page_width * 72.0;
-    double page2_height = page_height * 72.0;
-    double horz_margin_sz = margin_width * 72.0;
-    double vert_margin_sz = margin_height * 72.0;
-    double img_width = (page_width - (margin_width * 2.0)) * 72.0;
-    double img_height = (page_height - (margin_height * 2.0)) * 72.0;
+    double page2_width = page_width * dpi;
+    double page2_height = page_height * dpi;
+    double horz_margin_sz = margin_width * dpi;
+    double vert_margin_sz = margin_height * dpi;
+    double img_width = (page_width - (margin_width * 2.0)) * dpi;
+    double img_height = (page_height - (margin_height * 2.0)) * dpi;
 
     ctx = malloc (sizeof (RL2GraphContext));
     if (ctx == NULL)
@@ -645,7 +644,7 @@ rl2_graph_create_pdf_context (const void *priv_data, const char *path, int dpi,
     ctx->current_brush.pattern = NULL;
 
 /* scaling accordingly to DPI resolution */
-    cairo_scale (ctx->clip_cairo, scale, scale);
+    //cairo_scale (ctx->clip_cairo, scale, scale);
 
 /* setting up default Font options */
     ctx->font_red = 0.0;
@@ -2949,17 +2948,12 @@ rl2_pre_check_collision (const void *context, double xl,
 			 double anchor_point_x, double anchor_point_y)
 {
 /* anticipating label collision check for labels split in two lines */
-    double rads;
     double pre_x;
     double pre_y;
     double width;
     double height;
     double post_x;
     double post_y;
-    double center_x;
-    double center_y;
-    double cx;
-    double cy;
     int ret;
     int real_intersection;
     sqlite3_stmt *stmt;
@@ -4702,91 +4696,278 @@ rl2_rgba_to_pdf (const void *priv_data, unsigned int width, unsigned int height,
 {
 /* attempting to create an RGB PDF map */
     rl2MemPdfPtr mem = NULL;
-    rl2GraphicsContextPtr ctx = NULL;
+    cairo_surface_t *surface = NULL;
+    cairo_t *cairo = NULL;
     rl2GraphicsBitmapPtr bmp = NULL;
-    int dpi;
-    double w_150 = (double) width / 150.0;
-    double h_150 = (double) height / 150.0;
-    double w_300 = (double) width / 300.0;
-    double h_300 = (double) height / 300.0;
-    double w_600 = (double) width / 600.0;
-    double h_600 = (double) height / 600.0;
-    double page_width;
-    double page_height;
+    double page_width = 2480;
+    double page_height = 3508;
+    int dpi = 300;
+    double margin_horz = 0.5 * dpi;
+    double margin_vert = 0.5 * dpi;
+    double active_width;
+    double active_height;
+    double scale = 1.0;
+    double h_margin;
+    double v_margin;
+    struct rl2_private_data *data = (struct rl2_private_data *) priv_data;
+    unsigned char orientation = RL2_PDF_PORTRAIT;
 
-    if (w_150 <= 6.3 && h_150 <= 9.7)
+    if (data != NULL)
       {
-	  /* A4 portrait - 150 DPI */
-	  page_width = 8.3;
-	  page_height = 11.7;
-	  dpi = 150;
+	  switch (data->pdf_paper_format)
+	    {
+		/* setting page width in Pixels */
+	    case RL2_PDF_PAPER_FORMAT_A0:
+		switch (data->pdf_dpi)
+		  {
+		  case RL2_PDF_DPI_72:
+		      page_width = 2383;
+		      page_height = 3370;
+		      break;
+		  case RL2_PDF_DPI_150:
+		      page_width = 4966;
+		      page_height = 7021;
+		      break;
+		  case RL2_PDF_DPI_600:
+		      page_width = 19866;
+		      page_height = 28086;
+		      break;
+		  case RL2_PDF_DPI_300:
+		  default:
+		      page_width = 9933;
+		      page_height = 14943;
+		      break;
+		  };
+		break;
+	    case RL2_PDF_PAPER_FORMAT_A1:
+		switch (data->pdf_dpi)
+		  {
+		  case RL2_PDF_DPI_72:
+		      page_width = 1683;
+		      page_height = 2383;
+		      break;
+		  case RL2_PDF_DPI_150:
+		      page_width = 3508;
+		      page_height = 4966;
+		      break;
+		  case RL2_PDF_DPI_600:
+		      page_width = 14032;
+		      page_height = 19866;
+		      break;
+		  case RL2_PDF_DPI_300:
+		  default:
+		      page_width = 7016;
+		      page_height = 9933;
+		      break;
+		  };
+		break;
+	    case RL2_PDF_PAPER_FORMAT_A2:
+		switch (data->pdf_dpi)
+		  {
+		  case RL2_PDF_DPI_72:
+		      page_width = 1190;
+		      page_height = 1683;
+		      break;
+		  case RL2_PDF_DPI_150:
+		      page_width = 2480;
+		      page_height = 3508;
+		      break;
+		  case RL2_PDF_DPI_600:
+		      page_width = 9922;
+		      page_height = 14032;
+		      break;
+		  case RL2_PDF_DPI_300:
+		  default:
+		      page_width = 4961;
+		      page_height = 7016;
+		      break;
+		  };
+		break;
+	    case RL2_PDF_PAPER_FORMAT_A3:
+		switch (data->pdf_dpi)
+		  {
+		  case RL2_PDF_DPI_72:
+		      page_width = 841;
+		      page_height = 1190;
+		      break;
+		  case RL2_PDF_DPI_150:
+		      page_width = 1754;
+		      page_height = 2480;
+		      break;
+		  case RL2_PDF_DPI_600:
+		      page_width = 7016;
+		      page_height = 9922;
+		      break;
+		  case RL2_PDF_DPI_300:
+		  default:
+		      page_width = 3508;
+		      page_height = 4961;
+		      break;
+		  };
+		break;
+	    case RL2_PDF_PAPER_FORMAT_A5:
+		switch (data->pdf_dpi)
+		  {
+		  case RL2_PDF_DPI_72:
+		      page_width = 419;
+		      page_height = 595;
+		      break;
+		  case RL2_PDF_DPI_150:
+		      page_width = 874;
+		      page_height = 1240;
+		      break;
+		  case RL2_PDF_DPI_600:
+		      page_width = 3496;
+		      page_height = 4960;
+		      break;
+		  case RL2_PDF_DPI_300:
+		  default:
+		      page_width = 1748;
+		      page_height = 2480;
+		      break;
+		  };
+		break;
+	    case RL2_PDF_PAPER_FORMAT_A4:
+	    default:
+		switch (data->pdf_dpi)
+		  {
+		  case RL2_PDF_DPI_72:
+		      page_width = 595;
+		      page_height = 841;
+		      break;
+		  case RL2_PDF_DPI_150:
+		      page_width = 1240;
+		      page_height = 1754;
+		      break;
+		  case RL2_PDF_DPI_600:
+		      page_width = 4960;
+		      page_height = 7016;
+		      break;
+		  case RL2_PDF_DPI_300:
+		  default:
+		      page_width = 2480;
+		      page_height = 3508;
+		      break;
+		  };
+		break;
+	    };
+	  switch (data->pdf_dpi)
+	    {
+		/* setting DPI */
+	    case RL2_PDF_DPI_72:
+		dpi = 72;
+		break;
+	    case RL2_PDF_DPI_150:
+		dpi = 150;
+		break;
+	    case RL2_PDF_DPI_600:
+		dpi = 600;
+		break;
+	    case RL2_PDF_DPI_300:
+	    default:
+		dpi = 300;
+		break;
+	    };
+	  /* setting margins in Pixels */
+	  if (data->pdf_margin_uom == RL2_PDF_MARGIN_MILLIMS)
+	    {
+		margin_horz = data->pdf_margin_horz * 0.0393701 * dpi;
+		margin_vert = data->pdf_margin_vert * 0.0393701 * dpi;
+	    }
+	  else
+	    {
+		margin_horz = data->pdf_margin_horz * dpi;
+		margin_vert = data->pdf_margin_vert * dpi;
+	    }
+	  orientation = data->pdf_orientation;
       }
-    else if (w_150 <= 9.7 && h_150 < 6.3)
+    if (orientation != RL2_PDF_PORTRAIT)
       {
-	  /* A4 landscape - 150 DPI */
-	  page_width = 11.7;
-	  page_height = 8.3;;
-	  dpi = 150;
+	  double horz = page_width;
+	  page_width = page_height;
+	  page_height = horz;
       }
-    else if (w_300 <= 6.3 && h_300 <= 9.7)
+/* setting the printable area of the PDF */
+    active_width = page_width - (margin_horz * 2);
+    active_height = page_height - (margin_vert * 2);
+    if (active_width == width && active_height == height)
       {
-	  /* A4 portrait - 300 DPI */
-	  page_width = 8.3;
-	  page_height = 11.7;;
-	  dpi = 300;
+	  scale = 1.0;
       }
-    else if (w_300 <= 9.7 && h_300 < 6.3)
+    else if (active_width < width || active_height < height)
       {
-	  /* A4 landscape - 300 DPI */
-	  page_width = 11.7;
-	  page_height = 8.3;;
-	  dpi = 300;
+	  /* scaling the image so to fit inside the printable area of the PDF */
+	  scale = 1.0;
+	  h_margin = width;
+	  v_margin = height;
+	  while (h_margin > active_width || v_margin > active_height)
+	    {
+		scale -= 0.001;
+		h_margin = (double) width *scale;
+		v_margin = (double) height *scale;
+	    }
       }
-    else if (w_600 <= 6.3 && h_600 <= 9.7)
-      {
-	  /* A4 portrait - 600 DPI */
-	  page_width = 8.3;
-	  page_height = 11.7;;
-	  dpi = 600;
-      }
-    else
-      {
-	  /* A4 landscape - 600 DPI */
-	  page_width = 11.7;
-	  page_height = 8.3;;
-	  dpi = 600;
-      }
+/* centering the image on the PDF surface */
+    h_margin = (page_width - (width * scale)) / 2.0;
+    v_margin = (page_height - (height * scale)) / 2.0;
+
+    *pdf = NULL;
+    *pdf_size = 0;
 
     mem = rl2_create_mem_pdf_target ();
     if (mem == NULL)
 	goto error;
 
-    ctx =
-	rl2_graph_create_mem_pdf_context (priv_data, mem, dpi, page_width,
-					  page_height, 1.0, 1.0);
-    if (ctx == NULL)
-	goto error;
+    surface =
+	cairo_pdf_surface_create_for_stream (pdf_write_func, mem, page_width,
+					     page_height);
+    if (cairo_surface_status (surface) == CAIRO_STATUS_SUCCESS)
+	;
+    else
+	goto error1;
+    cairo = cairo_create (surface);
+    if (cairo_status (cairo) == CAIRO_STATUS_NO_MEMORY)
+	goto error2;
+
+/* priming a transparent background */
+    cairo_rectangle (cairo, 0, 0, page_width, page_height);
+    cairo_set_source_rgba (cairo, 0.0, 0.0, 0.0, 0.0);
+    cairo_fill (cairo);
+
     bmp = rl2_graph_create_bitmap (rgba, width, height);
     rgba = NULL;
     if (bmp == NULL)
 	goto error;
 /* rendering the Bitmap */
-    if (ctx != NULL)
-	rl2_graph_draw_bitmap (ctx, bmp, 0, 0);
+    cairo_save (cairo);
+    cairo_translate (cairo, h_margin, v_margin);
+    cairo_scale (cairo, scale, scale);
+    cairo_set_source (cairo, bmp->pattern);
+    cairo_rectangle (cairo, 0, 0, bmp->width, bmp->height);
+    cairo_fill (cairo);
+    cairo_restore (cairo);
+    cairo_surface_flush (surface);
     rl2_graph_destroy_bitmap (bmp);
-    rl2_graph_destroy_context (ctx);
+
+    cairo_surface_show_page (surface);
+    cairo_destroy (cairo);
+    cairo_surface_finish (surface);
+    cairo_surface_destroy (surface);
 /* retrieving the PDF memory block */
     if (rl2_get_mem_pdf_buffer (mem, pdf, pdf_size) != RL2_OK)
 	goto error;
     rl2_destroy_mem_pdf_target (mem);
-
     return RL2_OK;
 
+  error2:
+    if (cairo != NULL)
+	cairo_destroy (cairo);
+  error1:
+    if (surface != NULL)
+	cairo_surface_destroy (surface);
   error:
     if (bmp != NULL)
 	rl2_graph_destroy_bitmap (bmp);
-    if (ctx != NULL)
-	rl2_graph_destroy_context (ctx);
     if (mem != NULL)
 	rl2_destroy_mem_pdf_target (mem);
     return RL2_ERROR;
@@ -4798,85 +4979,268 @@ rl2_gray_pdf (const void *priv_data, unsigned int width, unsigned int height,
 {
 /* attempting to create an all-Gray PDF */
     rl2MemPdfPtr mem = NULL;
-    rl2GraphicsContextPtr ctx = NULL;
-    int dpi;
-    double w_150 = (double) width / 150.0;
-    double h_150 = (double) height / 150.0;
-    double w_300 = (double) width / 300.0;
-    double h_300 = (double) height / 300.0;
-    double w_600 = (double) width / 600.0;
-    double h_600 = (double) height / 600.0;
-    double page_width;
-    double page_height;
+    cairo_surface_t *surface = NULL;
+    cairo_t *cairo = NULL;
+    double page_width = 2480;
+    double page_height = 3508;
+    int dpi = 300;
+    double margin_horz = 0.5 * dpi;
+    double margin_vert = 0.5 * dpi;
+    double active_width;
+    double active_height;
+    double scale = 1.0;
+    double h_margin;
+    double v_margin;
+    struct rl2_private_data *data = (struct rl2_private_data *) priv_data;
+    unsigned char orientation = RL2_PDF_PORTRAIT;
 
-    if (w_150 <= 6.3 && h_150 <= 9.7)
+    if (data != NULL)
       {
-	  /* A4 portrait - 150 DPI */
-	  page_width = 8.3;
-	  page_height = 11.7;
-	  dpi = 150;
+	  switch (data->pdf_paper_format)
+	    {
+		/* setting page width in Pixels */
+	    case RL2_PDF_PAPER_FORMAT_A0:
+		switch (data->pdf_dpi)
+		  {
+		  case RL2_PDF_DPI_72:
+		      page_width = 2383;
+		      page_height = 3370;
+		      break;
+		  case RL2_PDF_DPI_150:
+		      page_width = 4966;
+		      page_height = 7021;
+		      break;
+		  case RL2_PDF_DPI_600:
+		      page_width = 19866;
+		      page_height = 28086;
+		      break;
+		  case RL2_PDF_DPI_300:
+		  default:
+		      page_width = 9933;
+		      page_height = 14943;
+		      break;
+		  };
+		break;
+	    case RL2_PDF_PAPER_FORMAT_A1:
+		switch (data->pdf_dpi)
+		  {
+		  case RL2_PDF_DPI_72:
+		      page_width = 1683;
+		      page_height = 2383;
+		      break;
+		  case RL2_PDF_DPI_150:
+		      page_width = 3508;
+		      page_height = 4966;
+		      break;
+		  case RL2_PDF_DPI_600:
+		      page_width = 14032;
+		      page_height = 19866;
+		      break;
+		  case RL2_PDF_DPI_300:
+		  default:
+		      page_width = 7016;
+		      page_height = 9933;
+		      break;
+		  };
+		break;
+	    case RL2_PDF_PAPER_FORMAT_A2:
+		switch (data->pdf_dpi)
+		  {
+		  case RL2_PDF_DPI_72:
+		      page_width = 1190;
+		      page_height = 1683;
+		      break;
+		  case RL2_PDF_DPI_150:
+		      page_width = 2480;
+		      page_height = 3508;
+		      break;
+		  case RL2_PDF_DPI_600:
+		      page_width = 9922;
+		      page_height = 14032;
+		      break;
+		  case RL2_PDF_DPI_300:
+		  default:
+		      page_width = 4961;
+		      page_height = 7016;
+		      break;
+		  };
+		break;
+	    case RL2_PDF_PAPER_FORMAT_A3:
+		switch (data->pdf_dpi)
+		  {
+		  case RL2_PDF_DPI_72:
+		      page_width = 841;
+		      page_height = 1190;
+		      break;
+		  case RL2_PDF_DPI_150:
+		      page_width = 1754;
+		      page_height = 2480;
+		      break;
+		  case RL2_PDF_DPI_600:
+		      page_width = 7016;
+		      page_height = 9922;
+		      break;
+		  case RL2_PDF_DPI_300:
+		  default:
+		      page_width = 3508;
+		      page_height = 4961;
+		      break;
+		  };
+		break;
+	    case RL2_PDF_PAPER_FORMAT_A5:
+		switch (data->pdf_dpi)
+		  {
+		  case RL2_PDF_DPI_72:
+		      page_width = 419;
+		      page_height = 595;
+		      break;
+		  case RL2_PDF_DPI_150:
+		      page_width = 874;
+		      page_height = 1240;
+		      break;
+		  case RL2_PDF_DPI_600:
+		      page_width = 3496;
+		      page_height = 4960;
+		      break;
+		  case RL2_PDF_DPI_300:
+		  default:
+		      page_width = 1748;
+		      page_height = 2480;
+		      break;
+		  };
+		break;
+	    case RL2_PDF_PAPER_FORMAT_A4:
+	    default:
+		switch (data->pdf_dpi)
+		  {
+		  case RL2_PDF_DPI_72:
+		      page_width = 595;
+		      page_height = 841;
+		      break;
+		  case RL2_PDF_DPI_150:
+		      page_width = 1240;
+		      page_height = 1754;
+		      break;
+		  case RL2_PDF_DPI_600:
+		      page_width = 4960;
+		      page_height = 7016;
+		      break;
+		  case RL2_PDF_DPI_300:
+		  default:
+		      page_width = 2480;
+		      page_height = 3508;
+		      break;
+		  };
+		break;
+	    };
+	  switch (data->pdf_dpi)
+	    {
+		/* setting DPI */
+	    case RL2_PDF_DPI_72:
+		dpi = 72;
+		break;
+	    case RL2_PDF_DPI_150:
+		dpi = 150;
+		break;
+	    case RL2_PDF_DPI_600:
+		dpi = 600;
+		break;
+	    case RL2_PDF_DPI_300:
+	    default:
+		dpi = 300;
+		break;
+	    };
+	  /* setting margins in Pixels */
+	  if (data->pdf_margin_uom == RL2_PDF_MARGIN_MILLIMS)
+	    {
+		margin_horz = data->pdf_margin_horz * 0.0393701 * dpi;
+		margin_vert = data->pdf_margin_vert * 0.0393701 * dpi;
+	    }
+	  else
+	    {
+		margin_horz = data->pdf_margin_horz * dpi;
+		margin_vert = data->pdf_margin_vert * dpi;
+	    }
+	  orientation = data->pdf_orientation;
       }
-    else if (w_150 <= 9.7 && h_150 < 6.3)
+    if (orientation != RL2_PDF_PORTRAIT)
       {
-	  /* A4 landscape - 150 DPI */
-	  page_width = 11.7;
-	  page_height = 8.3;;
-	  dpi = 150;
+	  double horz = page_width;
+	  page_width = page_height;
+	  page_height = horz;
       }
-    else if (w_300 <= 6.3 && h_300 <= 9.7)
+/* setting the printable area of the PDF */
+    active_width = page_width - (margin_horz * 2);
+    active_height = page_height - (margin_vert * 2);
+    if (active_width == width && active_height == height)
       {
-	  /* A4 portrait - 300 DPI */
-	  page_width = 8.3;
-	  page_height = 11.7;;
-	  dpi = 300;
+	  scale = 1.0;
       }
-    else if (w_300 <= 9.7 && h_300 < 6.3)
+    else if (active_width < width || active_height < height)
       {
-	  /* A4 landscape - 300 DPI */
-	  page_width = 11.7;
-	  page_height = 8.3;;
-	  dpi = 300;
+	  /* scaling the image so to fit inside the printable area of the PDF */
+	  scale = 1.0;
+	  h_margin = width;
+	  v_margin = height;
+	  while (h_margin > active_width || v_margin > active_height)
+	    {
+		scale -= 0.001;
+		h_margin = (double) width *scale;
+		v_margin = (double) height *scale;
+	    }
       }
-    else if (w_600 <= 6.3 && h_600 <= 9.7)
-      {
-	  /* A4 portrait - 600 DPI */
-	  page_width = 8.3;
-	  page_height = 11.7;;
-	  dpi = 600;
-      }
-    else
-      {
-	  /* A4 landscape - 600 DPI */
-	  page_width = 11.7;
-	  page_height = 8.3;;
-	  dpi = 600;
-      }
+/* centering the image on the PDF surface */
+    h_margin = (page_width - (width * scale)) / 2.0;
+    v_margin = (page_height - (height * scale)) / 2.0;
+
+    *pdf = NULL;
+    *pdf_size = 0;
 
     mem = rl2_create_mem_pdf_target ();
     if (mem == NULL)
 	goto error;
 
-    ctx =
-	rl2_graph_create_mem_pdf_context (priv_data, mem, dpi, page_width,
-					  page_height, 1.0, 1.0);
-    if (ctx == NULL)
-	goto error;
-    rl2_graph_set_solid_pen (ctx, 255, 0, 0, 255, 2.0, RL2_PEN_CAP_BUTT,
-			     RL2_PEN_JOIN_MITER);
-    rl2_graph_set_brush (ctx, 128, 128, 128, 255);
-    rl2_graph_draw_rounded_rectangle (ctx, 0, 0, width, height, width / 10.0);
+    surface =
+	cairo_pdf_surface_create_for_stream (pdf_write_func, mem, page_width,
+					     page_height);
+    if (cairo_surface_status (surface) == CAIRO_STATUS_SUCCESS)
+	;
+    else
+	goto error1;
+    cairo = cairo_create (surface);
+    if (cairo_status (cairo) == CAIRO_STATUS_NO_MEMORY)
+	goto error2;
 
-    rl2_graph_destroy_context (ctx);
+/* priming a transparent background */
+    cairo_rectangle (cairo, 0, 0, page_width, page_height);
+    cairo_set_source_rgba (cairo, 0.0, 0.0, 0.0, 0.0);
+    cairo_fill (cairo);
+/* painting a gray rectangle */
+    cairo_save (cairo);
+    cairo_translate (cairo, h_margin, v_margin);
+    cairo_scale (cairo, scale, scale);
+    cairo_set_source_rgba (cairo, 128.0, 128.0, 128.0, 255.0);
+    cairo_rectangle (cairo, 0, 0, width, height);
+    cairo_fill (cairo);
+    cairo_restore (cairo);
+    cairo_surface_flush (surface);
+    cairo_surface_show_page (surface);
+    cairo_destroy (cairo);
+    cairo_surface_finish (surface);
+    cairo_surface_destroy (surface);
 /* retrieving the PDF memory block */
     if (rl2_get_mem_pdf_buffer (mem, pdf, pdf_size) != RL2_OK)
 	goto error;
     rl2_destroy_mem_pdf_target (mem);
-
     return RL2_OK;
 
+  error2:
+    if (cairo != NULL)
+	cairo_destroy (cairo);
+  error1:
+    if (surface != NULL)
+	cairo_surface_destroy (surface);
   error:
-    if (ctx != NULL)
-	rl2_graph_destroy_context (ctx);
     if (mem != NULL)
 	rl2_destroy_mem_pdf_target (mem);
     return RL2_ERROR;
@@ -5256,8 +5620,6 @@ rl2_get_canvas_ctx (rl2CanvasPtr ptr, int which)
     return NULL;
 }
 
-
-
 RL2_DECLARE void
 rl2_prime_background (void *pctx, unsigned char red, unsigned char green,
 		      unsigned char blue, unsigned char alpha)
@@ -5275,110 +5637,6 @@ rl2_prime_background (void *pctx, unsigned char red, unsigned char green,
     cairo_fill (ctx->cairo);
 }
 
-RL2_DECLARE int
-rl2_initialize_map_canvas (sqlite3 * sqlite, const void *priv_data, int width,
-			   int height, const unsigned char *blob, int blob_sz,
-			   const char *bg_color, int transparent, int reaspect)
-{
-/* attempting to initialize the internal Map Canvas */
-    int srid;
-    double minx;
-    double miny;
-    double maxx;
-    double maxy;
-    unsigned char bg_red = 255;
-    unsigned char bg_green = 255;
-    unsigned char bg_blue = 255;
-    unsigned char bg_alpha = 0;
-    rl2GraphicsContextPtr ctx = NULL;
-    struct rl2_private_data *cache = (struct rl2_private_data *) priv_data;
-    struct rl2_private_map_canvas *canvas;
-
-    if (cache == NULL)
-	return RL2_MAP_CANVAS_NULL_INTERNAL_CACHE;
-
-    if (reaspect == 0)
-      {
-	  /* testing for consistent aspect ratios */
-	  double aspect_org =
-	      do_compute_bbox_aspect_ratio (sqlite, blob, blob_sz);
-	  double aspect_dst = (double) width / (double) height;
-	  double confidence = aspect_org / 100.0;
-	  if (aspect_org < 0.0)
-	      return RL2_MAP_CANVAS_INVALID_BBOX;
-	  aspect_org = do_compute_bbox_aspect_ratio (sqlite, blob, blob_sz);
-	  if (aspect_org < 0.0)
-	      return RL2_MAP_CANVAS_INVALID_BBOX;
-	  aspect_dst = (double) width / (double) height;
-	  confidence = aspect_org / 100.0;
-	  if (aspect_dst >= (aspect_org - confidence)
-	      && aspect_dst <= (aspect_org + confidence))
-	      ;
-	  else
-	      return RL2_MAP_CANVAS_INCONSISTENT_ASPECT_RATIO;
-      }
-    if (rl2_parse_bbox_srid
-	(sqlite, blob, blob_sz, &srid, &minx, &miny, &maxx, &maxy) != RL2_OK)
-	return RL2_MAP_CANVAS_INVALID_BBOX;
-
-    canvas = &(cache->map_canvas);
-    if (canvas->ref_ctx != NULL)
-	return RL2_MAP_CANVAS_ALREADY_IN_USE;
-
-    if (rl2_parse_hexrgb (bg_color, &bg_red, &bg_green, &bg_blue) != RL2_OK)
-	return RL2_MAP_CANVAS_INVALID_BGCOLOR;
-
-    ctx = rl2_graph_create_context (priv_data, width, height);
-    if (ctx == NULL)
-	return RL2_MAP_CANVAS_ERROR_GRAPHICS_CONTEXT;
-
-    canvas->width = width;
-    canvas->height = height;
-    canvas->ref_ctx = ctx;
-    canvas->srid = srid;
-    canvas->minx = minx;
-    canvas->miny = miny;
-    canvas->maxx = maxx;
-    canvas->maxy = maxy;
-    canvas->transparent = transparent;
-    if (transparent)
-	bg_alpha = 0;
-    else
-	bg_alpha = 255;
-    /* priming the Map Canvas background */
-    rl2_prime_background (ctx, bg_red, bg_green, bg_blue, bg_alpha);
-    return RL2_OK;
-}
-
-RL2_DECLARE int
-rl2_finalize_map_canvas (const void *priv_data)
-{
-/* finalizing the Internal Map Canvas */
-    struct rl2_private_map_canvas *canvas;
-    struct rl2_private_data *cache = (struct rl2_private_data *) priv_data;
-    rl2GraphicsContextPtr context;
-
-    if (cache == NULL)
-	return RL2_MAP_CANVAS_NULL_INTERNAL_CACHE;
-
-    canvas = &(cache->map_canvas);
-    if (canvas->ref_ctx == NULL)
-	return RL2_MAP_CANVAS_NOT_IN_USE;
-
-    context = (rl2GraphicsContextPtr) (canvas->ref_ctx);
-    rl2_graph_destroy_context (context);
-    canvas->width = 0;
-    canvas->height = 0;
-    canvas->ref_ctx = NULL;
-    canvas->srid = -1;
-    canvas->minx = 0.0;
-    canvas->miny = 0.0;
-    canvas->maxx = 0.0;
-    canvas->maxy = 0.0;
-    canvas->transparent = 1;
-    return RL2_OK;
-}
-
 RL2_PRIVATE struct rl2_advanced_labeling *
 rl2_get_labeling_ref (const void *context)
 {
@@ -5387,6 +5645,25 @@ rl2_get_labeling_ref (const void *context)
     if (ctx == NULL)
 	return NULL;
     return ctx->labeling;
+}
+
+RL2_DECLARE int
+rl2_copy_wms_tile (rl2GraphicsContextPtr out, rl2GraphicsContextPtr in,
+		   int base_x, int base_y)
+{
+// copying a WMS tile into the full frame
+    RL2GraphContextPtr ctx_in = (RL2GraphContextPtr) in;
+    RL2GraphContextPtr ctx_out = (RL2GraphContextPtr) out;
+
+    if (ctx_out == NULL || ctx_in == NULL)
+	return RL2_ERROR;
+	
+    cairo_save (ctx_out->cairo);
+    cairo_translate (ctx_out->cairo, base_x, base_y);
+    cairo_set_source_surface (ctx_out->cairo, ctx_in->surface, 0, 0);
+    cairo_paint (ctx_out->cairo);
+    cairo_restore (ctx_out->cairo);
+    return RL2_OK;
 }
 
 RL2_DECLARE const char *

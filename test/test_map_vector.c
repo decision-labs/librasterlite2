@@ -87,10 +87,93 @@ get_extent (int srid)
 }
 
 static int
+test_styled_map_vector (sqlite3 * sqlite, gaiaGeomCollPtr geom, int *extret)
+{
+/* exporting a Map Image (full rendered - XML Style) */
+    char *sql;
+    char *path;
+    sqlite3_stmt *stmt;
+    int ret;
+    unsigned char *blob;
+    int blob_size;
+    int retcode = 0;
+    const char *format = "image/png";
+    int i;
+    FILE *in;
+    char *xml_style = NULL;
+    const char *xml_path = "./railways.xml";
+    const char *coverage = "railroads";
+	
+/* reading the XML style */
+	in = fopen(xml_path, "r");
+	if (in != NULL)
+	{
+		long sz;
+		fseek(in, 0, SEEK_END);
+		sz = ftell(in);
+		xml_style = malloc(sz + 1);
+		rewind(in);
+		fread(xml_style, 1, sz, in);
+		*(xml_style + sz) = '\0';
+		fclose(in);
+	}
+	else
+		goto stop;
+
+    path =
+	sqlite3_mprintf ("./styledmap_%d.%s", geom->Srid,
+			 "png");
+    for (i = 0; i < (int) strlen (path); i++)
+      {
+	  if (path[i] == ' ')
+	      path[i] = '_';
+      }
+
+    sql =
+	"SELECT BlobToFile(RL2_GetStyledMapImageFromVector(NULL, ?, ?, ?, ?, ?, ?, ?, ?), ?)";
+    ret = sqlite3_prepare_v2 (sqlite, sql, strlen (sql), &stmt, NULL);
+    if (ret != SQLITE_OK)
+	goto stop;
+    sqlite3_reset (stmt);
+    sqlite3_clear_bindings (stmt);
+    sqlite3_bind_text (stmt, 1, coverage, strlen (coverage), SQLITE_STATIC);
+    gaiaToSpatiaLiteBlobWkb (geom, &blob, &blob_size);
+    sqlite3_bind_blob (stmt, 2, blob, blob_size, free);
+    sqlite3_bind_int (stmt, 3, 1024);
+    sqlite3_bind_int (stmt, 4, 1024);
+    sqlite3_bind_text (stmt, 5, xml_style, strlen (xml_style), SQLITE_STATIC);
+    sqlite3_bind_text (stmt, 6, format, strlen (format), SQLITE_STATIC);
+    sqlite3_bind_text (stmt, 7, "#804040", 7, SQLITE_STATIC);
+    sqlite3_bind_int (stmt, 8, 1);
+    sqlite3_bind_text (stmt, 9, path, strlen (path), SQLITE_STATIC);
+    ret = sqlite3_step (stmt);
+    if (ret == SQLITE_DONE || ret == SQLITE_ROW)
+      {
+	  if (sqlite3_column_int (stmt, 0) == 1)
+	      retcode = 1;
+      }
+    sqlite3_finalize (stmt);
+    unlink (path);
+    if (!retcode)
+	fprintf (stderr, "ERROR: unable to export \"%s\"\n", path);
+    sqlite3_free (path);
+	free(xml_style);
+    *extret += retcode;
+    return retcode;
+    
+stop:
+	if (path != NULL)
+		sqlite3_free(path);
+	if (xml_style != NULL)
+		free(xml_style);
+	return 0;
+}
+
+static int
 test_map_vector (sqlite3 * sqlite, const char *coverage, const char *style,
 		 gaiaGeomCollPtr geom, int *extret)
 {
-/* exporting a Map Image (full rendered) */
+/* exporting a Map Image (full rendered - registered Style) */
     char *sql;
     char *path;
     sqlite3_stmt *stmt;
@@ -138,6 +221,11 @@ test_map_vector (sqlite3 * sqlite, const char *coverage, const char *style,
     if (!retcode)
 	fprintf (stderr, "ERROR: unable to export \"%s\"\n", path);
     sqlite3_free (path);
+    *extret += retcode;
+    if (strcmp(coverage, "railroads") == 0 && strcmp(style, "Railroads - with label") == 0)
+    {
+		retcode = test_styled_map_vector (sqlite, geom, extret);
+	 }
     *extret += retcode;
     return retcode;
 }
@@ -193,6 +281,7 @@ test_capi_base (sqlite3 * sqlite, const char *coverage, const char *style,
     unsigned char *alpha;
     unsigned char *png = NULL;
     int png_size;
+    int has_labels;
     FILE *out;
     int half_transparent;
     rl2GraphicsContextPtr ctx = NULL;
@@ -240,25 +329,25 @@ test_capi_base (sqlite3 * sqlite, const char *coverage, const char *style,
 	  ret =
 	      rl2_map_image_paint_from_vector (sqlite, data, canvas, NULL,
 					       coverage, blob, blob_sz, 0,
-					       style, NULL);
+					       style, NULL, &has_labels);
 	  break;
       case 1:
 	  ret =
 	      rl2_map_image_paint_from_vector_ex (sqlite, data, canvas, NULL,
 						  coverage, blob, blob_sz, 0,
-						  style, NULL, 1, 1, 1, 1, 1);
+						  style, NULL, 1, 1, 1, 1, 1, &has_labels);
 	  break;
       case 2:
 	  ret =
 	      rl2_map_image_paint_from_vector_ex (sqlite, data, canvas, NULL,
 						  coverage, blob, blob_sz, 0,
-						  style, NULL, 0, 1, 0, 1, 0);
+						  style, NULL, 0, 1, 0, 1, 0, &has_labels);
 	  break;
       case 3:
 	  ret =
 	      rl2_map_image_paint_from_vector_ex (sqlite, data, canvas, NULL,
 						  coverage, blob, blob_sz, 0,
-						  style, NULL, 1, 0, 1, 0, 1);
+						  style, NULL, 1, 0, 1, 0, 1, &has_labels);
 	  break;
       };
     if (ret != RL2_OK)

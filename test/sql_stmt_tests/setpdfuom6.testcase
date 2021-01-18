@@ -1,0 +1,9 @@
+RL2_SetPdfMarginUOM - TEXT millimeters
+:memory: #use in-memory database
+SELECT RL2_SetPdfMarginUOM('mm'), RL2_GetPdfMarginUOM()
+1 # rows (not including the header row)
+2 # columns
+RL2_SetPdfMarginUOM('mm')
+RL2_GetPdfMarginUOM()
+mm
+mm

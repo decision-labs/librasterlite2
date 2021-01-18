@@ -1,0 +1,7 @@
+RL2_SetPdfPaperFormat - DOUBLE
+:memory: #use in-memory database
+SELECT RL2_SetPdfPaperFormat(0.75)
+1 # rows (not including the header row)
+1 # columns
+RL2_SetPdfPaperFormat(0.75)
+(NULL)

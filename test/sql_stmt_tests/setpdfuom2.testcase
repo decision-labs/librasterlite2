@@ -1,0 +1,7 @@
+RL2_SetPdfMarginUOM - TEXT
+:memory: #use in-memory database
+SELECT RL2_SetPdfMarginUOM('one')
+1 # rows (not including the header row)
+1 # columns
+RL2_SetPdfMarginUOM('one')
+in

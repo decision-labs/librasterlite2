@@ -72,6 +72,14 @@ rl2_alloc_private (void)
     if (priv_data == NULL)
 	return NULL;
     priv_data->max_threads = 1;
+    priv_data->max_wms_retries = 5;
+    priv_data->wms_pause = 1000;
+    priv_data->pdf_margin_uom = RL2_PDF_MARGIN_INCHES;
+    priv_data->pdf_margin_horz = 0.5;
+    priv_data->pdf_margin_vert = 0.5;
+    priv_data->pdf_paper_format = RL2_PDF_PAPER_FORMAT_A4;
+    priv_data->pdf_dpi = RL2_PDF_DPI_300;
+    priv_data->pdf_orientation = RL2_PDF_PORTRAIT;
     priv_data->tmp_atm_table = NULL;
     struct rl2_private_map_canvas *canvas;
 

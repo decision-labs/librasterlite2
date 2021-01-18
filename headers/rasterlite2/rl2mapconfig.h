@@ -600,6 +600,8 @@ extern "C"
  */
     typedef struct rl2_map_wms_layer_style
     {
+/** Http Proxy */
+	char *http_proxy;
 /** GetMap URL */
 	char *get_map_url;
 /** GetFeatureInfo URL */
@@ -731,6 +733,10 @@ extern "C"
 	int map_background_transparent;
 /** Raster/WMS auto-switch is enabled */
 	int raster_wms_auto_switch;
+/** WMS max number of retries */
+	int max_wms_retries;
+/** WMS pause (in millis) */
+	int wms_pause;
 /** Label Anti Collision is enabled */
 	int label_anti_collision;
 /** Label Wrap Text is enabled */
@@ -792,6 +798,11 @@ extern "C"
 
  */
     typedef rl2MapConfigChanges *rl2MapConfigChangesPtr;
+
+    RL2_DECLARE unsigned char *rl2_xml_from_registered_map_config (sqlite3 *
+								   sqlite,
+								   const char
+								   *mapconf_name);
 
     RL2_DECLARE rl2MapConfigPtr rl2_parse_map_config_xml (const unsigned char
 							  *xml);

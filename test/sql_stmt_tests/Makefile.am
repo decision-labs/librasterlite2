@@ -7,6 +7,34 @@ EXTRA_DIST = getmaxthreads1.testcase \
 	setmaxthreads5.testcase \
 	setmaxthreads6.testcase \
 	setmaxthreads7.testcase \
+	getwmsretries1.testcase \
+	setwmsretries1.testcase \
+	setwmsretries2.testcase \
+	setwmsretries3.testcase \
+	setwmsretries4.testcase \
+	setwmsretries5.testcase \
+	setwmsretries6.testcase \
+	setwmsretries7.testcase \
+	getwmspause1.testcase \
+	setwmspause1.testcase \
+	setwmspause2.testcase \
+	setwmspause3.testcase \
+	setwmspause4.testcase \
+	setwmspause5.testcase \
+	setwmspause6.testcase \
+	setwmspause7.testcase \
+	isanticollision.testcase \
+	enableanticollision.testcase \
+	disableanticollision.testcase \
+	iswraptext.testcase \
+	enablewraptext.testcase \
+	disablewraptext.testcase \
+	isautorotate.testcase \
+	enableautorotate.testcase \
+	disableautorotate.testcase \
+	isshiftposition.testcase \
+	enableshiftposition.testcase \
+	disableshiftposition.testcase \
 	copyrastercov1.testcase \
 	copyrastercov2.testcase \
 	copyrastercov3.testcase \
@@ -279,6 +307,12 @@ EXTRA_DIST = getmaxthreads1.testcase \
 	getmapimage21.testcase \
 	getmapimage22.testcase \
 	getmapimage23.testcase \
+	getpdfdpi.testcase \
+	getpdfpage.testcase \
+	getpdforient.testcase \
+	getpdfuom.testcase \
+	getpdfhorz.testcase \
+	getpdfvert.testcase \
 	getstyledmapimage1.testcase \
 	getstyledmapimage2.testcase \
 	getstyledmapimage3.testcase \
@@ -659,6 +693,47 @@ EXTRA_DIST = getmaxthreads1.testcase \
 	setpalettecolorentry2.testcase \
 	setpalettecolorentry3.testcase \
 	setpalettecolorentry4.testcase \
+	setpdfdpi1.testcase \
+	setpdfdpi2.testcase \
+	setpdfdpi3.testcase \
+	setpdfdpi4.testcase \
+	setpdfdpi5.testcase \
+	setpdfdpi6.testcase \
+	setpdfdpi7.testcase \
+	setpdfdpi8.testcase \
+	setpdfhorz1.testcase \
+	setpdfhorz2.testcase \
+	setpdfhorz3.testcase \
+	setpdfhorz4.testcase \
+	setpdfhorz5.testcase \
+	setpdforient1.testcase \
+	setpdforient2.testcase \
+	setpdforient3.testcase \
+	setpdforient4.testcase \
+	setpdforient5.testcase \
+	setpdforient6.testcase \
+	setpdfpage1.testcase \
+	setpdfpage2.testcase \
+	setpdfpage3.testcase \
+	setpdfpage4.testcase \
+	setpdfpage5.testcase \
+	setpdfpage6.testcase \
+	setpdfpage7.testcase \
+	setpdfpage8.testcase \
+	setpdfpage9.testcase \
+	setpdfpage10.testcase \
+	setpdfuom1.testcase \
+	setpdfuom2.testcase \
+	setpdfuom3.testcase \
+	setpdfuom4.testcase \
+	setpdfuom5.testcase \
+	setpdfuom6.testcase \
+	setpdfuom7.testcase \
+	setpdfvert1.testcase \
+	setpdfvert2.testcase \
+	setpdfvert3.testcase \
+	setpdfvert4.testcase \
+	setpdfvert5.testcase \
 	setpixelopaque2.testcase \
 	setpixeltransparent1.testcase \
 	setpixeltransparent2.testcase \

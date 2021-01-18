@@ -2645,27 +2645,11 @@ spatialite_autocreate (sqlite3 * db)
 	return;
 
 /* all right, it's empty: proceding to initialize */
-    strcpy (sql, "SELECT InitSpatialMetadata(1)");
+    strcpy (sql, "SELECT InitSpatialMetadataFull(1)");
     ret = sqlite3_exec (db, sql, NULL, NULL, &err_msg);
     if (ret != SQLITE_OK)
       {
-	  fprintf (stderr, "InitSpatialMetadata() error: %s\n", err_msg);
-	  sqlite3_free (err_msg);
-	  return;
-      }
-    strcpy (sql, "SELECT CreateRasterCoveragesTable()");
-    ret = sqlite3_exec (db, sql, NULL, NULL, &err_msg);
-    if (ret != SQLITE_OK)
-      {
-	  fprintf (stderr, "CreateRasterCoveragesTable() error: %s\n", err_msg);
-	  sqlite3_free (err_msg);
-	  return;
-      }
-    strcpy (sql, "SELECT CreateStylingTables()");
-    ret = sqlite3_exec (db, sql, NULL, NULL, &err_msg);
-    if (ret != SQLITE_OK)
-      {
-	  fprintf (stderr, "CreateStylingTables() error: %s\n", err_msg);
+	  fprintf (stderr, "InitSpatialMetadataFull() error: %s\n", err_msg);
 	  sqlite3_free (err_msg);
 	  return;
       }
@@ -4406,7 +4390,7 @@ do_version ()
 /* printing version infos */
     fprintf (stderr, "\nVersion infos\n");
     fprintf (stderr, "===========================================\n");
-    fprintf (stderr, "rl2tool ........: %s\n", VERSION);
+    fprintf (stderr, "rl2tool ........: %s\n", RL2_VERSION);
     fprintf (stderr, "target CPU .....: %s\n", rl2_target_cpu ());
     fprintf (stderr, "librasterlite2 .: %s\n", rl2_version ());
     fprintf (stderr, "libspatialite ..: %s\n", spatialite_version ());

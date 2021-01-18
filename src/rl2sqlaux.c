@@ -64,6 +64,7 @@ the terms of any one of the MPL, the GPL or the LGPL.
 #include "rasterlite2/rasterlite2.h"
 #include "rasterlite2/rl2wms.h"
 #include "rasterlite2/rl2graphics.h"
+#include "rasterlite2/rl2mapconfig.h"
 #include "rasterlite2_private.h"
 
 #include <spatialite/gg_const.h>
@@ -1734,6 +1735,76 @@ rgb_to_rgba (unsigned int width, unsigned int height, unsigned char *rgb)
 	    }
       }
     return rgba;
+}
+
+static unsigned char *
+rgb_alpha_to_rgba (unsigned int width, unsigned int height, unsigned char *rgb,
+		   unsigned char *alpha)
+{
+/* transforming an RGB buffer + Alpha into RGBA */
+    unsigned char *rgba = NULL;
+    unsigned char *p_out;
+    const unsigned char *p_in;
+    const unsigned char *p_alpha;
+    unsigned int x;
+    unsigned int y;
+
+    rgba = malloc (width * height * 4);
+    if (rgba == NULL)
+	return NULL;
+    p_in = rgb;
+    p_alpha = alpha;
+    p_out = rgba;
+    for (y = 0; y < height; y++)
+      {
+	  for (x = 0; x < width; x++)
+	    {
+		*p_out++ = *p_in++;	/* red */
+		*p_out++ = *p_in++;	/* green */
+		*p_out++ = *p_in++;	/* blue */
+		*p_out++ = *p_alpha++;	/* alpha */
+	    }
+      }
+    return rgba;
+}
+
+static void
+rgb_alpha_to_rgb (unsigned int width, unsigned int height, unsigned char *rgb,
+		  unsigned char *alpha)
+{
+/* transforming an RGB buffer + Alpga into RGB (transparency as white pixels) */
+    unsigned char *p_out;
+    const unsigned char *p_in;
+    const unsigned char *p_alpha;
+    unsigned int x;
+    unsigned int y;
+
+    p_in = rgb;
+    p_alpha = alpha;
+    p_out = rgb;
+    for (y = 0; y < height; y++)
+      {
+	  for (x = 0; x < width; x++)
+	    {
+		unsigned char red = *p_in++;	/* red */
+		unsigned char green = *p_in++;	/* green */
+		unsigned char blue = *p_in++;	/* blue */
+		unsigned char alpha = *p_alpha++;	/* alpha */
+		if (alpha > 128)
+		  {
+		      *p_out++ = red;
+		      *p_out++ = green;
+		      *p_out++ = blue;
+		  }
+		else
+		  {
+		      /* transforming transparency into white pixels */
+		      *p_out++ = 255;
+		      *p_out++ = 255;
+		      *p_out++ = 255;
+		  }
+	    }
+      }
 }
 
 RL2_PRIVATE int
@@ -4975,24 +5046,25 @@ get_payload_from_rgb_rgba_transparent (unsigned int width,
       }
     else if (format == RL2_OUTPUT_FORMAT_JPEG)
       {
+	  rgb_alpha_to_rgb (width, height, rgb, alpha);
 	  ret = rl2_rgb_to_jpeg (width, height, rgb, quality, image, image_sz);
 	  if (ret != RL2_OK)
 	      goto error;
       }
     else if (format == RL2_OUTPUT_FORMAT_TIFF)
       {
+	  rgb_alpha_to_rgb (width, height, rgb, alpha);
 	  ret = rl2_rgb_to_tiff (width, height, rgb, image, image_sz);
 	  if (ret != RL2_OK)
 	      goto error;
       }
     else if (format == RL2_OUTPUT_FORMAT_PDF)
       {
-	  unsigned char *rgba = rgb_to_rgba (width, height, rgb);
+	  unsigned char *rgba = rgb_alpha_to_rgba (width, height, rgb, alpha);
 	  if (rgba == NULL)
 	      goto error;
 	  ret =
 	      rl2_rgba_to_pdf (priv_data, width, height, rgba, image, image_sz);
-	  rgba = NULL;
 	  if (ret != RL2_OK)
 	      goto error;
       }
@@ -5863,38 +5935,6 @@ set_coverage_copyright (sqlite3 * sqlite, const char *coverage_name,
 }
 
 RL2_PRIVATE int
-rl2_test_layer_group (sqlite3 * handle, const char *db_prefix, const char *name)
-{
-/* testing for an eventual Layer Group */
-    int ret;
-    char **results;
-    int rows;
-    int columns;
-    int i;
-    int ok = 0;
-    char *sql;
-    char *xdb_prefix;
-
-/* testing if the Layer Group exists */
-    if (db_prefix == NULL)
-	db_prefix = "MAIN";
-    xdb_prefix = rl2_double_quoted_sql (db_prefix);
-    sql =
-	sqlite3_mprintf ("SELECT group_name FROM \"%s\".SE_styled_groups "
-			 "WHERE Lower(group_name) = Lower(%Q)", xdb_prefix,
-			 name);
-    free (xdb_prefix);
-    ret = sqlite3_get_table (handle, sql, &results, &rows, &columns, NULL);
-    sqlite3_free (sql);
-    if (ret != SQLITE_OK)
-	return 0;
-    for (i = 1; i <= rows; i++)
-	ok = 1;
-    sqlite3_free_table (results);
-    return ok;
-}
-
-RL2_PRIVATE int
 rl2_is_mixed_resolutions_coverage (sqlite3 * handle, const char *db_prefix,
 				   const char *coverage)
 {
@@ -6035,9 +6075,20 @@ test_geographic_srid (sqlite3 * handle, int srid)
     return is_geographic;
 }
 
-static double
-standard_scale (sqlite3 * handle, int srid, int width, int height,
-		double ext_x, double ext_y)
+RL2_PRIVATE double
+rl2_pixel_ratio (int width, int height, double ext_x, double ext_y)
+{
+/* computing the map-units/pixel ratio */
+    double x_res = ext_x / (double) width;
+    double y_res = ext_y / (double) height;
+    if (x_res > y_res)
+	return x_res;
+    return y_res;
+}
+
+RL2_PRIVATE double
+rl2_standard_scale (sqlite3 * handle, int srid, int width, int height,
+		    double ext_x, double ext_y)
 {
 /* computing the standard (normalized) scale */
     double linear_res;
@@ -6746,12 +6797,6 @@ do_paint_map_from_raster (struct aux_raster_render *args)
     ext_y = maxy - miny;
     if (ext_x <= 0.0 || ext_y <= 0.0)
 	goto error;
-    if (rl2_test_layer_group (sqlite, db_prefix, cvg_name))
-      {
-	  /* switching the whole task to the Group renderer */
-	  fprintf (stderr, "------------ GROUP NOT YET IMPLEMENTED\n");
-	  goto error;
-      }
 
 /* attempting to load the Coverage definitions from the DBMS */
     coverage = rl2_create_coverage_from_dbms (sqlite, db_prefix, cvg_name);
@@ -6816,7 +6861,8 @@ do_paint_map_from_raster (struct aux_raster_render *args)
 	  x_res = ext_x / (double) width;
 	  y_res = ext_y / (double) height;
       }
-    map_scale = standard_scale (sqlite, out_srid, width, height, ext_x, ext_y);
+    map_scale =
+	rl2_standard_scale (sqlite, out_srid, width, height, ext_x, ext_y);
 
 /* validating the style */
     ok_style = 0;
@@ -7056,7 +7102,7 @@ do_paint_map_from_raster (struct aux_raster_render *args)
 	|| (base_height <= 0 || base_height >= USHRT_MAX))
 	goto error;
 
-    if ((base_width * base_height) > (8192 * 8192))
+    if ((base_width * base_height) > (20000 * 30000))
       {
 	  /* warning: this usually implies missing Pyramid support */
 	  fprintf (stderr,
@@ -7540,90 +7586,6 @@ rl2_styled_map_image_blob_from_raster (sqlite3 * sqlite, const void *data,
     return RL2_ERROR;
 }
 
-RL2_DECLARE int
-rl2_paint_raster_on_map_canvas (sqlite3 * sqlite,
-				const void *data,
-				const char *db_prefix,
-				const char *cvg_name, const char *style_name)
-{
-/* rendering a Raster Coverage on the Map Canvas */
-    struct rl2_private_data *cache = (struct rl2_private_data *) data;
-    rl2GraphicsContextPtr ctx;
-    struct aux_raster_render aux;
-
-    if (cache == NULL)
-	return RL2_MAP_CANVAS_NULL_INTERNAL_CACHE;
-    ctx = (rl2GraphicsContextPtr) (cache->map_canvas.ref_ctx);
-    if (ctx == NULL)
-	return RL2_MAP_CANVAS_NOT_IN_USE;
-
-    aux.sqlite = sqlite;
-    aux.data = data;
-    aux.canvas = NULL;
-    aux.db_prefix = db_prefix;
-    aux.cvg_name = cvg_name;
-    aux.blob = NULL;
-    aux.blob_sz = 0;
-    aux.width = cache->map_canvas.width;
-    aux.height = cache->map_canvas.height;
-    aux.style_name = style_name;
-    aux.xml_style = NULL;
-    aux.output = NULL;
-    aux.minx = cache->map_canvas.minx;
-    aux.miny = cache->map_canvas.miny;
-    aux.maxx = cache->map_canvas.maxx;
-    aux.maxy = cache->map_canvas.maxy;
-    aux.srid = cache->map_canvas.srid;
-    aux.graphics_ctx = cache->map_canvas.ref_ctx;
-    aux.is_map_canvas = 1;
-
-    if (do_paint_map_from_raster (&aux) == RL2_OK)
-	return RL2_OK;
-    return RL2_ERROR;
-}
-
-RL2_DECLARE int
-rl2_paint_styled_raster_on_map_canvas (sqlite3 * sqlite,
-				       const void *data,
-				       const char *db_prefix,
-				       const char *cvg_name,
-				       const unsigned char *xml_style)
-{
-/* rendering a Styled Raster Coverage on the Map Canvas */
-    struct rl2_private_data *cache = (struct rl2_private_data *) data;
-    rl2GraphicsContextPtr ctx;
-    struct aux_raster_render aux;
-
-    if (cache == NULL)
-	return RL2_MAP_CANVAS_NULL_INTERNAL_CACHE;
-    ctx = (rl2GraphicsContextPtr) (cache->map_canvas.ref_ctx);
-    if (ctx == NULL)
-	return RL2_MAP_CANVAS_NOT_IN_USE;
-
-    aux.sqlite = sqlite;
-    aux.data = data;
-    aux.canvas = NULL;
-    aux.db_prefix = db_prefix;
-    aux.cvg_name = cvg_name;
-    aux.blob = NULL;
-    aux.blob_sz = 0;
-    aux.width = cache->map_canvas.width;
-    aux.height = cache->map_canvas.height;
-    aux.style_name = NULL;
-    aux.xml_style = xml_style;
-    aux.output = NULL;
-    aux.minx = cache->map_canvas.minx;
-    aux.miny = cache->map_canvas.miny;
-    aux.maxx = cache->map_canvas.maxx;
-    aux.maxy = cache->map_canvas.maxy;
-    aux.srid = cache->map_canvas.srid;
-    aux.is_map_canvas = 1;
-
-    if (do_paint_map_from_raster (&aux) == RL2_OK)
-	return RL2_OK;
-    return RL2_ERROR;
-}
-
 static int
 do_transform_point (sqlite3 * handle, const unsigned char *blob, int blob_sz,
 		    int srid, double *x, double *y)
@@ -8100,7 +8062,7 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
 	goto error;
     x_res = ext_x / (double) width;
     y_res = ext_y / (double) height;
-    scale = standard_scale (sqlite, out_srid, width, height, ext_x, ext_y);
+    scale = rl2_standard_scale (sqlite, out_srid, width, height, ext_x, ext_y);
 /* validating the style */
     ok_style = 0;
     if (style_name == NULL)
@@ -9645,103 +9607,100 @@ rl2_map_image_paint_from_vector_ex (sqlite3 * sqlite, const void *data,
     return ret;
 }
 
-RL2_DECLARE int
-rl2_paint_vector_on_map_canvas (sqlite3 * sqlite,
-				const void *data,
-				const char *db_prefix,
-				const char *cvg_name, const char *style_name)
+static int
+sniff_valid_xml (const char *str)
 {
-    return RL2_OK;
+/* sniffing if a generic text string seems to be valid XML */
+    char header[8];
+    const char *in = str;
+    int head = 1;
+    int pos = 0;
+
+    while (*in != '\0')
+      {
+	  if (head && (*in == ' ' || *in == '\t' || *in == '\r' || *in == '\n'))
+	    {
+		/* ignoring white spaces */
+		in++;
+		continue;
+	    }
+	  else
+	      head = 0;
+	  header[pos++] = *in;
+	  if (pos == 6)
+	      break;
+	  in++;
+      }
+    header[pos] = '\0';
+    if (strcmp (header, "<?xml ") == 0)
+	return 1;
+    return 0;
 }
 
 RL2_DECLARE int
-rl2_paint_styled_vector_on_map_canvas (sqlite3 * sqlite,
-				       const void *data,
-				       const char
-				       *db_prefix,
-				       const char *cvg_name,
-				       const unsigned char *xml_name)
+rl2_image_blob_from_map_config (sqlite3 * sqlite, const void *data,
+				const char *mapconf,
+				const unsigned char *blob, int blob_sz,
+				int width, int height, const char *format,
+				int quality, int reaspect, unsigned char **img,
+				int *img_size)
 {
-    return RL2_OK;
-}
+/* rendering a Complex Map Image from a registered Map Configuration */
+    rl2PrivMapConfigAuxPtr aux = NULL;
+    rl2MapConfigPtr map_config = NULL;
+    unsigned char *xml;
+    int free_xml = 0;
 
-RL2_DECLARE int
-rl2_image_blob_from_map_canvas (const void *data,
-				const char *format,
-				int quality, unsigned char **img, int *img_size)
-{
-    int ret;
-    int ok_format;
-    unsigned char *image = NULL;
-    int image_size;
-    unsigned char format_id = RL2_OUTPUT_FORMAT_UNKNOWN;
-    rl2GraphicsContextPtr ctx;
-    struct rl2_private_data *cache = (struct rl2_private_data *) data;
-    unsigned char *rgb = NULL;
-    unsigned char *alpha = NULL;
-    int half_transparent;
+    *img = NULL;
+    *img_size = 0;
 
-    if (cache == NULL)
-	return RL2_MAP_CANVAS_NULL_INTERNAL_CACHE;
-    ctx = (rl2GraphicsContextPtr) (cache->map_canvas.ref_ctx);
-    if (ctx == NULL)
-	return RL2_MAP_CANVAS_NOT_IN_USE;
-
-/* validating the format */
-    ok_format = 0;
-    if (strcmp (format, "image/png") == 0)
+    if (sniff_valid_xml (mapconf))
       {
-	  format_id = RL2_OUTPUT_FORMAT_PNG;
-	  ok_format = 1;
+	  /* an XML configuration was directly passed */
+	  xml = (unsigned char *) mapconf;
+	  free_xml = 0;
       }
-    if (strcmp (format, "image/jpeg") == 0)
+    else
       {
-	  format_id = RL2_OUTPUT_FORMAT_JPEG;
-	  ok_format = 1;
-      }
-    if (strcmp (format, "image/tiff") == 0)
-      {
-	  format_id = RL2_OUTPUT_FORMAT_TIFF;
-	  ok_format = 1;
-      }
-    if (strcmp (format, "application/x-pdf") == 0)
-      {
-	  format_id = RL2_OUTPUT_FORMAT_PDF;
-	  ok_format = 1;
-      }
-    if (!ok_format)
-	return RL2_MAP_CANVAS_INVALID_IMAGE_FORMAT;
-
-/* preparing the output image */
-    rgb = rl2_graph_get_context_rgb_array (ctx);
-    alpha = rl2_graph_get_context_alpha_array (ctx, &half_transparent);
-    if (rgb == NULL || alpha == NULL)
-      {
-	  ret = RL2_MAP_CANVAS_INVALID_PIXBUF;
-	  goto error;
+	  /* attempting to fetch the registered XML MapConfiguration */
+	  xml = rl2_xml_from_registered_map_config (sqlite, mapconf);
+	  if (xml == NULL)
+	      goto error;
+	  free_xml = 1;
       }
 
-    if (!get_payload_from_rgb_rgba_transparent
-	(cache->map_canvas.width, cache->map_canvas.height, data, rgb, alpha,
-	 format_id, quality, &image, &image_size, 1.0, half_transparent))
+/* parsing the XML MapConfiguration */
+    map_config = rl2_parse_map_config_xml (xml);
+    if (xml != NULL)
       {
-	  ret = RL2_MAP_CANVAS_IMAGE_ERROR;
-	  goto error;
+	  if (free_xml)
+	      free (xml);
+	  xml = NULL;
       }
-    if (rgb != NULL)
-	free (rgb);
-    if (alpha != NULL)
-	free (alpha);
-    *img = image;
-    *img_size = image_size;
+    if (map_config == NULL)
+	goto error;
+
+    aux =
+	rl2_create_map_config_aux (sqlite, data, map_config, width, height,
+				   format, quality, blob, blob_sz, reaspect);
+    if (aux == NULL)
+	goto error;
+
+    if (rl2_paint_map_config_aux (sqlite, data, aux) != RL2_OK)
+	goto error;
+
+    *img = aux->image;
+    *img_size = aux->image_size;
+    rl2_destroy_map_config (map_config);
+    rl2_destroy_map_config_aux (aux);
     return RL2_OK;
 
   error:
-    if (rgb != NULL)
-	free (rgb);
-    if (alpha != NULL)
-	free (alpha);
-    *img = NULL;
-    *img_size = 0;;
-    return ret;
+    if (xml != NULL)
+	free (xml);
+    if (map_config != NULL)
+	rl2_destroy_map_config (map_config);
+    if (aux != NULL)
+	rl2_destroy_map_config_aux (aux);
+    return RL2_ERROR;
 }

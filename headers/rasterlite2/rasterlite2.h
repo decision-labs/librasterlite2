@@ -70,6 +70,7 @@ extern "C"
 {
 #endif
 
+#include "rasterlite2/rl2config.h"
 #include "rasterlite2/sqlite.h"
 
 /** RasterLite2 flag: FALSE */
@@ -5049,6 +5050,12 @@ extern "C"
 	rl2_rgba_to_pdf (const void *priv_data, unsigned int width,
 			 unsigned int height, unsigned char *rgba,
 			 unsigned char **pdf, int *pdf_size);
+			 
+			 
+    RL2_DECLARE int
+	rl2_rgba_to_pdfazzo (const void *priv_data, unsigned int width,
+			 unsigned int height, unsigned char *rgba,
+			 unsigned char **pdf, int *pdf_size);
 
 /**
  Exports an all-Gray PDF document
@@ -6226,49 +6233,18 @@ extern "C"
 						       const char *bg_color,
 						       int *image_size);
 
-    RL2_DECLARE int rl2_initialize_map_canvas (sqlite3 * sqlite,
-					       const void *cache, int width,
-					       int height,
-					       const unsigned char *blob,
-					       int blob_size,
-					       const char *bg_color,
-					       int transparent, int reaspect);
-
-    RL2_DECLARE int rl2_finalize_map_canvas (const void *cache);
-
-    RL2_DECLARE int rl2_paint_raster_on_map_canvas (sqlite3 * sqlite,
-						    const void *data,
-						    const char *db_prefix,
-						    const char *cvg_name,
-						    const char *style_name);
-
-    RL2_DECLARE int rl2_paint_styled_raster_on_map_canvas (sqlite3 * sqlite,
+    RL2_DECLARE int rl2_image_blob_from_map_config (sqlite3 * sqlite,
 							   const void *data,
-							   const char
-							   *db_prefix,
-							   const char *cvg_name,
+							   const char *mapconf,
 							   const unsigned char
-							   *xml_name);
-
-    RL2_DECLARE int rl2_paint_vector_on_map_canvas (sqlite3 * sqlite,
-						    const void *data,
-						    const char *db_prefix,
-						    const char *cvg_name,
-						    const char *style_name);
-
-    RL2_DECLARE int rl2_paint_styled_vector_on_map_canvas (sqlite3 * sqlite,
-							   const void *data,
-							   const char
-							   *db_prefix,
-							   const char *cvg_name,
-							   const unsigned char
-							   *xml_name);
-
-    RL2_DECLARE int rl2_image_blob_from_map_canvas (const void *data,
-						    const char *format,
-						    int transparent,
-						    unsigned char **img,
-						    int *img_size);
+							   *blob, int blob_sz,
+							   int width,
+							   int height,
+							   const char *format,
+							   int quality,
+							   int reaspect,
+							   unsigned char **img,
+							   int *img_size);
 
     RL2_DECLARE rl2FeatureTypeStylePtr rl2_feature_type_style_from_xml (const
 									char

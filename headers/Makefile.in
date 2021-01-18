@@ -99,7 +99,9 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 DIST_COMMON = $(srcdir)/Makefile.am $(nobase_include_HEADERS) \
 	$(noinst_HEADERS) $(am__DIST_COMMON)
 mkinstalldirs = $(install_sh) -d
-CONFIG_HEADER = $(top_builddir)/config.h
+CONFIG_HEADER = $(top_builddir)/./fakeconfig.h \
+	$(top_builddir)/./config.h \
+	$(top_builddir)/./headers/rasterlite2/rl2config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 AM_V_P = $(am__v_P_@AM_V@)
@@ -323,6 +325,8 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 noinst_HEADERS = rasterlite2_private.h rl2svg_private.h
 nobase_include_HEADERS = rasterlite2/rasterlite2.h \
+	rasterlite2/rl2config.h \
+	rasterlite2/rl2config.h.in \
 	rasterlite2/sqlite.h \
 	rasterlite2/rl2wms.h \
 	rasterlite2/rl2tiff.h \
@@ -342,9 +346,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu headers/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign headers/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu headers/Makefile
+	  $(AUTOMAKE) --foreign headers/Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \

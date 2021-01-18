@@ -601,6 +601,501 @@ fnct_SetMaxThreads (sqlite3_context * context, int argc, sqlite3_value ** argv)
 }
 
 static void
+fnct_GetMaxWmsRetries (sqlite3_context * context, int argc, sqlite3_value ** argv)
+{
+/* SQL function:
+/ RL2_GetMaxWmsRetries()
+/
+/ return the currently set Max number of WMS Retries
+*/
+    int max_wms_retries = 5;
+    struct rl2_private_data *priv_data = sqlite3_user_data (context);
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+    if (priv_data != NULL)
+	max_wms_retries = priv_data->max_wms_retries;
+    sqlite3_result_int (context, max_wms_retries);
+}
+
+static void
+fnct_SetMaxWmsRetries (sqlite3_context * context, int argc, sqlite3_value ** argv)
+{
+/* SQL function:
+/ RL2_SetMaxWmsRetries(INTEGER max)
+/
+/ return the currently set Max number of WMS Retries (after this call)
+/ -1 on invalid arguments
+*/
+    int max_wms_retries = 5;
+    struct rl2_private_data *priv_data = sqlite3_user_data (context);
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+    if (sqlite3_value_type (argv[0]) == SQLITE_INTEGER)
+	max_wms_retries = sqlite3_value_int (argv[0]);
+    else
+      {
+	  sqlite3_result_int (context, -1);
+	  return;
+      }
+
+/* normalizing between 1 and 10 */
+    if (max_wms_retries < 1)
+	max_wms_retries = 1;
+    if (max_wms_retries > 10)
+	max_wms_retries = 10;
+
+    if (priv_data != NULL)
+	priv_data->max_wms_retries = max_wms_retries;
+    else
+	max_wms_retries = 1;
+    sqlite3_result_int (context, max_wms_retries);
+}
+
+static void
+fnct_GetWmsPause (sqlite3_context * context, int argc, sqlite3_value ** argv)
+{
+/* SQL function:
+/ RL2_GetWmsPause()
+/
+/ return the currently set WMS Pause (in millis)
+*/
+    int wms_pause = 5;
+    struct rl2_private_data *priv_data = sqlite3_user_data (context);
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+    if (priv_data != NULL)
+	wms_pause = priv_data->wms_pause;
+    sqlite3_result_int (context, wms_pause);
+}
+
+static void
+fnct_SetWmsPause (sqlite3_context * context, int argc, sqlite3_value ** argv)
+{
+/* SQL function:
+/ RL2_SetWmsPause(INTEGER millis)
+/
+/ return the currently set WMS Pause (after this call)
+/ -1 on invalid arguments
+*/
+    int wms_pause = 1000;
+    struct rl2_private_data *priv_data = sqlite3_user_data (context);
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+    if (sqlite3_value_type (argv[0]) == SQLITE_INTEGER)
+	wms_pause = sqlite3_value_int (argv[0]);
+    else
+      {
+	  sqlite3_result_int (context, -1);
+	  return;
+      }
+
+/* normalizing between 1 and 30000 */
+    if (wms_pause < 1)
+	wms_pause = 1;
+    if (wms_pause > 30000)
+	wms_pause = 30000;
+
+    if (priv_data != NULL)
+	priv_data->wms_pause = wms_pause;
+    else
+	wms_pause = 1;
+    sqlite3_result_int (context, wms_pause);
+}
+
+static void
+fnct_GetPdfMarginUOM (sqlite3_context * context, int argc, sqlite3_value ** argv)
+{
+/* SQL function:
+/ RL2_GetPdfMarginUOM()
+/
+/ return the current Unity Of Measure for PDF empty margins
+*/
+    const char *uom = "in";
+    struct rl2_private_data *priv_data = sqlite3_user_data (context);
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+    if (priv_data != NULL)
+	{
+		switch(priv_data->pdf_margin_uom)
+		{
+			case RL2_PDF_MARGIN_MILLIMS:
+				uom = "mm";
+				break;
+			case RL2_PDF_MARGIN_INCHES:
+			default:
+				uom = "in";
+				break;
+		};
+	}
+    sqlite3_result_text (context, uom, strlen(uom), SQLITE_STATIC);
+}
+
+static void
+fnct_SetPdfMarginUOM (sqlite3_context * context, int argc, sqlite3_value ** argv)
+{
+/* SQL function:
+/ RL2_SetPdfMarginUOM(text UOM)
+/
+/ return the current Unity Of Measure for PDF empty margins (after this call)
+/ NULL on invalid arguments
+*/
+    const char *uom = "in";
+    struct rl2_private_data *priv_data = sqlite3_user_data (context);
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+    if (sqlite3_value_type (argv[0]) == SQLITE_TEXT)
+	uom = (const char *)sqlite3_value_text (argv[0]);
+    else
+      {
+	  sqlite3_result_null (context);
+	  return;
+      }
+
+    if (priv_data != NULL)
+    {
+		if (strcasecmp(uom, "mm") == 0)
+		{
+			priv_data->pdf_margin_uom = RL2_PDF_MARGIN_MILLIMS;
+			uom = "mm";
+		}
+		else
+		{
+			priv_data->pdf_margin_uom = RL2_PDF_MARGIN_INCHES;
+			uom = "in";
+		}
+	}
+    else
+	uom = "in";
+    sqlite3_result_text (context, uom, strlen(uom), SQLITE_STATIC);
+}
+
+static void
+fnct_GetPdfMarginHorz (sqlite3_context * context, int argc, sqlite3_value ** argv)
+{
+/* SQL function:
+/ RL2_GetPdfMarginHorz()
+/
+/ return the currently set Horizontal PDF empty margin
+*/
+    double margin = 0.5;
+    struct rl2_private_data *priv_data = sqlite3_user_data (context);
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+    if (priv_data != NULL)
+	margin = priv_data->pdf_margin_horz;
+    sqlite3_result_double (context, margin);
+}
+
+static void
+fnct_SetPdfMarginHorz (sqlite3_context * context, int argc, sqlite3_value ** argv)
+{
+/* SQL function:
+/ RL2_SetPdfMarginHorz(double MARGIN)
+/
+/ return the currently set Horizontal PDF empty margin (after this call)
+/ -1 on invalid arguments
+*/
+    double margin = 0.5;
+    struct rl2_private_data *priv_data = sqlite3_user_data (context);
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+    if (sqlite3_value_type (argv[0]) == SQLITE_INTEGER)
+	margin = sqlite3_value_int (argv[0]);
+    else if (sqlite3_value_type (argv[0]) == SQLITE_FLOAT)
+	margin = sqlite3_value_double (argv[0]);
+    else
+      {
+	  sqlite3_result_int (context, -1);
+	  return;
+      }
+
+/* avoiding negative margins */
+    if (margin < 0.0)
+	margin = 0.0;
+
+    if (priv_data != NULL)
+	priv_data->pdf_margin_horz = margin;
+    else
+	margin = 0.5;
+    sqlite3_result_double (context, margin);
+}
+
+static void
+fnct_GetPdfMarginVert (sqlite3_context * context, int argc, sqlite3_value ** argv)
+{
+/* SQL function:
+/ RL2_GetPdfMarginVert()
+/
+/ return the currently set Horizontal PDF empty margin
+*/
+    double margin = 0.5;
+    struct rl2_private_data *priv_data = sqlite3_user_data (context);
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+    if (priv_data != NULL)
+	margin = priv_data->pdf_margin_vert;
+    sqlite3_result_double (context, margin);
+}
+
+static void
+fnct_SetPdfMarginVert (sqlite3_context * context, int argc, sqlite3_value ** argv)
+{
+/* SQL function:
+/ RL2_SetPdfMarginVert(double MARGIN)
+/
+/ return the currently set Vertical PDF empty margin (after this call)
+/ -1 on invalid arguments
+*/
+    double margin = 0.5;
+    struct rl2_private_data *priv_data = sqlite3_user_data (context);
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+    if (sqlite3_value_type (argv[0]) == SQLITE_INTEGER)
+	margin = sqlite3_value_int (argv[0]);
+    else if (sqlite3_value_type (argv[0]) == SQLITE_FLOAT)
+	margin = sqlite3_value_double (argv[0]);
+    else
+      {
+	  sqlite3_result_int (context, -1);
+	  return;
+      }
+
+/* avoiding negative margins */
+    if (margin < 0.0)
+	margin = 0.0;
+
+    if (priv_data != NULL)
+	priv_data->pdf_margin_vert = margin;
+    else
+	margin = 0.5;
+    sqlite3_result_double (context, margin);
+}
+
+static void
+fnct_GetPdfPaperFormat (sqlite3_context * context, int argc, sqlite3_value ** argv)
+{
+/* SQL function:
+/ RL2_GetPdfPaperFormat()
+/
+/ return the current PDF Paper Format
+*/
+    const char *format = "A4";
+    struct rl2_private_data *priv_data = sqlite3_user_data (context);
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+    if (priv_data != NULL)
+	{
+		switch(priv_data->pdf_paper_format)
+		{
+			case RL2_PDF_PAPER_FORMAT_A0:
+				format = "A0";
+				break;
+			case RL2_PDF_PAPER_FORMAT_A1:
+				format = "A1";
+				break;
+			case RL2_PDF_PAPER_FORMAT_A2:
+				format = "A2";
+				break;
+			case RL2_PDF_PAPER_FORMAT_A3:
+				format = "A3";
+				break;
+			case RL2_PDF_PAPER_FORMAT_A5:
+				format = "A5";
+				break;
+			case RL2_PDF_PAPER_FORMAT_A4:
+			default:
+				format = "A4";
+				break;
+		};
+	}
+    sqlite3_result_text (context, format, strlen(format), SQLITE_STATIC);
+}
+
+static void
+fnct_SetPdfPaperFormat (sqlite3_context * context, int argc, sqlite3_value ** argv)
+{
+/* SQL function:
+/ RL2_SetPdfPaperFormat(text FORMAT)
+/
+/ return the current PDF Page Format (after this call)
+/ NULL on invalid arguments
+*/
+    const char *format = "A4";
+    struct rl2_private_data *priv_data = sqlite3_user_data (context);
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+    if (sqlite3_value_type (argv[0]) == SQLITE_TEXT)
+	format = (const char *)sqlite3_value_text (argv[0]);
+    else
+      {
+	  sqlite3_result_null (context);
+	  return;
+      }
+
+    if (priv_data != NULL)
+    {
+		if (strcasecmp(format, "A0") == 0)
+		{
+			priv_data->pdf_paper_format = RL2_PDF_PAPER_FORMAT_A0;
+			format = "A0";
+		}
+		else if (strcasecmp(format, "A1") == 0)
+		{
+			priv_data->pdf_paper_format = RL2_PDF_PAPER_FORMAT_A1;
+			format = "A1";
+		}
+		else if (strcasecmp(format, "A2") == 0)
+		{
+			priv_data->pdf_paper_format = RL2_PDF_PAPER_FORMAT_A2;
+			format = "A2";
+		}
+		else if (strcasecmp(format, "A3") == 0)
+		{
+			priv_data->pdf_paper_format = RL2_PDF_PAPER_FORMAT_A3;
+			format = "A3";
+		}
+		else if (strcasecmp(format, "A5") == 0)
+		{
+			priv_data->pdf_paper_format = RL2_PDF_PAPER_FORMAT_A5;
+			format = "A5";
+		}
+		else
+		{
+			priv_data->pdf_paper_format = RL2_PDF_PAPER_FORMAT_A4;
+			format = "A4";
+		}
+	}
+    else
+	format = "A4";
+    sqlite3_result_text (context, format, strlen(format), SQLITE_STATIC);
+}
+
+static void
+fnct_GetPdfDPI (sqlite3_context * context, int argc, sqlite3_value ** argv)
+{
+/* SQL function:
+/ RL2_GetPdfDPI()
+/
+/ return the current PDF DPI setting
+*/
+    int dpi = 300;
+    struct rl2_private_data *priv_data = sqlite3_user_data (context);
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+    if (priv_data != NULL)
+	{
+		switch(priv_data->pdf_dpi)
+		{
+			case RL2_PDF_DPI_72:
+				dpi = 72;
+				break;
+			case RL2_PDF_DPI_150:
+				dpi = 150;
+				break;
+			case RL2_PDF_DPI_600:
+				dpi = 600;
+				break;
+			case RL2_PDF_DPI_300:
+			default:
+				dpi = 300;
+				break;
+		};
+	}
+    sqlite3_result_int (context, dpi);
+}
+
+static void
+fnct_SetPdfDPI (sqlite3_context * context, int argc, sqlite3_value ** argv)
+{
+/* SQL function:
+/ RL2_SetPdfDPI(integer DPI)
+/
+/ return the current PDF DPI setting (after this call)
+/ NULL on invalid arguments
+*/
+    int dpi = 300;
+    struct rl2_private_data *priv_data = sqlite3_user_data (context);
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+    if (sqlite3_value_type (argv[0]) == SQLITE_INTEGER)
+	dpi = sqlite3_value_int (argv[0]);
+    else
+      {
+	  sqlite3_result_null (context);
+	  return;
+      }
+
+    if (priv_data != NULL)
+    {
+		if (dpi == 72)
+			priv_data->pdf_dpi = RL2_PDF_DPI_72;
+		else if (dpi == 150)
+			priv_data->pdf_dpi = RL2_PDF_DPI_150;
+		else if (dpi == 600)
+			priv_data->pdf_dpi = RL2_PDF_DPI_600;
+		else
+		{
+			priv_data->pdf_dpi = RL2_PDF_DPI_300;
+			dpi = 300;
+		}
+	}
+    else
+	dpi = 300;
+    sqlite3_result_int (context, dpi);
+}
+
+static void
+fnct_GetPdfOrientation (sqlite3_context * context, int argc, sqlite3_value ** argv)
+{
+/* SQL function:
+/ RL2_GetPdfOrientation()
+/
+/ return the current PDF Orientation setting
+*/
+    const char *orientation = "Portrait";
+    struct rl2_private_data *priv_data = sqlite3_user_data (context);
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+    if (priv_data != NULL)
+	{
+		switch(priv_data->pdf_orientation)
+		{
+			case RL2_PDF_LANDSCAPE:
+				orientation = "Landscape";
+				break;
+			case RL2_PDF_PORTRAIT:
+			default:
+				orientation = "Portrait";
+				break;
+		};
+	}
+    sqlite3_result_text (context, orientation, strlen(orientation), SQLITE_STATIC);
+}
+
+static void
+fnct_SetPdfOrientation (sqlite3_context * context, int argc, sqlite3_value ** argv)
+{
+/* SQL function:
+/ RL2_SetPdfOrientation(text ORIENTATION)
+/
+/ return the current PDF Orientation setting (after this call)
+/ NULL on invalid arguments
+*/
+    const char *orientation = "Portrait";
+    struct rl2_private_data *priv_data = sqlite3_user_data (context);
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+    if (sqlite3_value_type (argv[0]) == SQLITE_TEXT)
+	orientation = (const char *)sqlite3_value_text (argv[0]);
+    else
+      {
+	  sqlite3_result_null (context);
+	  return;
+      }
+
+    if (priv_data != NULL)
+    {
+		if (strcasecmp(orientation, "Landscape") == 0)
+		{
+			priv_data->pdf_orientation = RL2_PDF_LANDSCAPE;
+			orientation = "Landscape";
+		}
+		else
+		{
+			priv_data->pdf_orientation = RL2_PDF_PORTRAIT;
+			orientation = "Portrait";
+		}
+	}
+    else
+	orientation = "Portrait";
+    sqlite3_result_text (context, orientation, strlen(orientation), SQLITE_STATIC);
+}
+
+static void
 fnct_IsAntiLabelCollisionEnabled (sqlite3_context * context, int argc,
 				  sqlite3_value ** argv)
 {
@@ -4406,7 +4901,7 @@ fnct_LoadRasterFromWMS (sqlite3_context * context, int argc,
     double tileh;
     unsigned int tile_width;
     unsigned int tile_height;
-    WmsRetryListPtr retry_list = NULL;
+    WmsRetryListPtr retry_list = NULL; 
     char *table;
     char *xtable;
     char *sql;
@@ -9391,590 +9886,84 @@ fnct_GetMapImageFromWMS (sqlite3_context * context, int argc,
 }
 
 static void
-fnct_InitializeMapCanvas (sqlite3_context * context, int argc,
-			  sqlite3_value ** argv)
+fnct_GetImageFromMapConfiguration (sqlite3_context * context, int argc,
+			    sqlite3_value ** argv)
 {
 /* SQL function:
-/ InitializeMapCanvas(int width, int height, BLOB geom)
-/ InitializeMapCanvas(int width, int height, BLOB geom, text bg_color)
-/ InitializeMapCanvas(int width, int height, BLOB geom, text bg_color,
-/				      int transparent)
-/ InitializeMapCanvas(int width, int height, BLOB geom, text bg_color,
-/				      int transparent, int reaspect)
+/ GetImageFromMapConfiguration(text mapConf, BLOB geom, int width,
+/                              int height)
+/ GetImageFromMapConfiguration(text mapConf, BLOB geom, int width,
+/                              int height, text format)
+/ GetImageFromMapConfiguration(text mapConf, BLOB geom, int width, 
+/                              int height, text format, int quality)
+/ GetImageFromMapConfiguration(text mapConf, BLOB geom, int width, 
+/                              int height, text format, int quality, 
+/                              int reaspect)
 /
-/ will return 1 (TRUE) on success
-/ or will raise an exception on failure
+/ will return a BLOB containing the Image payload from a MapConfiguration
+/ or NULL (INVALID ARGS)
 /
 */
-    int ret;
-    const char *msg;
+    int err = 0;
+    const char *mapconf;
     int width;
     int height;
     const unsigned char *blob;
     int blob_sz;
-    const char *bg_color = "#ffffff";
-    int transparent = 0;
-    int reaspect = 0;
-    sqlite3 *sqlite = sqlite3_context_db_handle (context);
-    const void *data = sqlite3_user_data (context);
-    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
-
-/* testing arguments for validity */
-    if (sqlite3_value_type (argv[0]) != SQLITE_INTEGER)
-      {
-	  msg =
-	      "RL2_InitializeMapCanvas exception - 1st argument is not an Integer.";
-	  sqlite3_result_error (context, msg, -1);
-	  return;
-      }
-    if (sqlite3_value_type (argv[1]) != SQLITE_INTEGER)
-      {
-	  msg =
-	      "RL2_InitializeMapCanvas exception - 2nd argument is not an Integer.";
-	  sqlite3_result_error (context, msg, -1);
-	  return;
-      }
-    if (sqlite3_value_type (argv[2]) != SQLITE_BLOB)
-      {
-	  msg =
-	      "RL2_InitializeMapCanvas exception - 3rd argument is not a BLOB.";
-	  sqlite3_result_error (context, msg, -1);
-	  return;
-      }
-    if (argc > 3 && sqlite3_value_type (argv[3]) != SQLITE_TEXT)
-      {
-	  msg =
-	      "RL2_InitializeMapCanvas exception - 4th argument is not a Text string.";
-	  sqlite3_result_error (context, msg, -1);
-	  return;
-      }
-    if (argc > 4 && sqlite3_value_type (argv[4]) != SQLITE_INTEGER)
-      {
-	  msg =
-	      "RL2_InitializeMapCanvas exception - 5th argument is not an Integer.";
-	  sqlite3_result_error (context, msg, -1);
-	  return;
-      }
-    if (argc > 5 && sqlite3_value_type (argv[5]) != SQLITE_INTEGER)
-      {
-	  msg =
-	      "RL2_InitializeMapCanvas exception - 6th argument is not an Integer.";
-	  sqlite3_result_error (context, msg, -1);
-	  return;
-      }
-
-/* retrieving the arguments */
-    width = sqlite3_value_int (argv[0]);
-    height = sqlite3_value_int (argv[1]);
-    blob = sqlite3_value_blob (argv[2]);
-    blob_sz = sqlite3_value_bytes (argv[2]);
-    if (argc > 3)
-	bg_color = (const char *) sqlite3_value_text (argv[3]);
-    if (argc > 4)
-	transparent = sqlite3_value_int (argv[4]);
-    if (argc > 5)
-	reaspect = sqlite3_value_int (argv[5]);
-
-    ret =
-	rl2_initialize_map_canvas (sqlite, data, width, height, blob, blob_sz,
-				   bg_color, transparent, reaspect);
-    if (ret == RL2_OK)
-	sqlite3_result_int (context, 1);
-    else
-      {
-	  switch (ret)
-	    {
-	    case RL2_MAP_CANVAS_INVALID_BBOX:
-		msg =
-		    "RL2_InitializeMapCanvas exception: Invalid BBOX Geometry.";
-		break;
-	    case RL2_MAP_CANVAS_INCONSISTENT_ASPECT_RATIO:
-		msg =
-		    "RL2_InitializeMapCanvas exception: Inconsistent aspect ratio.";
-		break;
-	    case RL2_MAP_CANVAS_INVALID_BGCOLOR:
-		msg = "RL2_InitializeMapCanvas exception: Invalid BgColor.";
-		break;
-	    case RL2_MAP_CANVAS_NULL_INTERNAL_CACHE:
-		msg =
-		    "RL2_InitializeMapCanvas exception: NULL pointer to Private Data.";
-		break;
-	    case RL2_MAP_CANVAS_ALREADY_IN_USE:
-		msg = "RL2_InitializeMapCanvas exception: Already in use.";
-		break;
-	    case RL2_MAP_CANVAS_ERROR_GRAPHICS_CONTEXT:
-		msg =
-		    "RL2_InitializeMapCanvas exception: Unable to create a Graphics Context.";
-		break;
-	    default:
-		msg = "RL2_InitializeMapCanvas exception: Unknown reason.";
-		break;
-	    };
-	  sqlite3_result_error (context, msg, -1);
-      }
-}
-
-static void
-fnct_FinalizeMapCanvas (sqlite3_context * context, int argc,
-			sqlite3_value ** argv)
-{
-/* SQL function:
-/ FinalizeMapCanvas()
-/
-/ will return 1 (TRUE) on success
-/ or will raise an exception on failure
-/
-*/
-    int ret;
-    const char *msg;
-    const void *data = sqlite3_user_data (context);
-    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
-
-    ret = rl2_finalize_map_canvas (data);
-    if (ret == RL2_OK)
-	sqlite3_result_int (context, 1);
-    else
-      {
-	  switch (ret)
-	    {
-	    case RL2_MAP_CANVAS_NULL_INTERNAL_CACHE:
-		msg =
-		    "RL2_FinalizeMapCanvas exception: NULL pointer to Private Data.";
-		break;
-	    case RL2_MAP_CANVAS_NOT_IN_USE:
-		msg = "RL2_FinalizeMapCanvas exception: Not in use.";
-		break;
-	    default:
-		msg = "RL2_FinalizeMapCanvas exception: Unknown reason.";
-		break;
-	    };
-	  sqlite3_result_error (context, msg, -1);
-      }
-}
-
-static void
-fnct_PaintRasterOnMapCanvas (sqlite3_context * context, int argc,
-			     sqlite3_value ** argv)
-{
-/* SQL function:
-/ PaintRasterOnMapCanvas(text db_prefix, text coverage, text style_name)
-/
-/ will return 1 (TRUE) on success
-/ or will raise an exception on failure
-/
-*/
-    int ret;
-    const char *msg;
-    const char *db_prefix = NULL;
-    const char *cvg_name;
-    const char *style_name = "default";
-    sqlite3 *sqlite;
-    const void *data;
-    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
-
-/* testing arguments for validity */
-    if (sqlite3_value_type (argv[0]) == SQLITE_TEXT
-	|| sqlite3_value_type (argv[0]) == SQLITE_NULL)
-	;
-    else
-      {
-	  msg =
-	      "RL2_PaintRasterOnMapCanvas exception - 1st argument is not NULL or a Text string.";
-	  sqlite3_result_error (context, msg, -1);
-	  return;
-      }
-    if (sqlite3_value_type (argv[1]) != SQLITE_TEXT)
-      {
-	  msg =
-	      "RL2_PaintRasterOnMapCanvas exception - 2nd argument is not a Text string.";
-	  sqlite3_result_error (context, msg, -1);
-	  return;
-      }
-    if (sqlite3_value_type (argv[2]) != SQLITE_TEXT)
-      {
-	  msg =
-	      "RL2_PaintRasterOnMapCanvas exception - 3rd argument is not a Text string.";
-	  sqlite3_result_error (context, msg, -1);
-	  return;
-      }
-
-/* retrieving the arguments */
-    if (sqlite3_value_type (argv[0]) == SQLITE_TEXT)
-	db_prefix = (const char *) sqlite3_value_text (argv[0]);
-    cvg_name = (const char *) sqlite3_value_text (argv[1]);
-    style_name = (const char *) sqlite3_value_text (argv[2]);
-
-    sqlite = sqlite3_context_db_handle (context);
-    data = sqlite3_user_data (context);
-
-    ret =
-	rl2_paint_raster_on_map_canvas (sqlite, data, db_prefix, cvg_name,
-					style_name);
-    if (ret == RL2_OK)
-	sqlite3_result_int (context, 1);
-    else
-      {
-	  char *dyn_msg = NULL;
-	  const char *msg;
-	  switch (ret)
-	    {
-	    case RL2_MAP_CANVAS_NULL_INTERNAL_CACHE:
-		msg =
-		    "RL2_PaintRasterOnMapCanvas exception: NULL pointer to Private Data.";
-		break;
-	    case RL2_MAP_CANVAS_NOT_IN_USE:
-		msg = "RL2_PaintRasterOnMapCanvas exception: Not in use.";
-		break;
-	    case RL2_MAP_CANVAS_MISSING_COVERAGE:
-		if (db_prefix == NULL)
-		    dyn_msg =
-			sqlite3_mprintf
-			("RL2_PaintRasterOnMapCanvas exception: Coverage MAIN.%s does not exist.",
-			 cvg_name);
-		msg = dyn_msg;
-		break;
-	    case RL2_MAP_CANVAS_RASTER_TRANSFORM:
-		if (db_prefix == NULL)
-		    dyn_msg =
-			sqlite3_mprintf
-			("RL2_PaintRasterOnMapCanvas exception: Coverage %s.%s invalid Trasform.",
-			 db_prefix, cvg_name);
-		msg = dyn_msg;
-		break;
-	    default:
-		msg = "RL2_PaintRasterOnMapCanvas exception: Unknown reason.";
-		break;
-	    };
-	  sqlite3_result_error (context, msg, -1);
-	  if (dyn_msg != NULL)
-	      sqlite3_free (dyn_msg);
-      }
-}
-
-static void
-fnct_PaintStyledRasterOnMapCanvas (sqlite3_context * context, int argc,
-				   sqlite3_value ** argv)
-{
-/* SQL function:
-/ PaintStyledRasterOnMapCanvas(text db_prefix, text coverage, text xml_style)
-/
-/ will return 1 (TRUE) on success
-/ or will raise an exception on failure
-/
-*/
-    int ret;
-    const char *msg;
-    const char *db_prefix = NULL;
-    const char *cvg_name;
-    const unsigned char *xml_style;
-    sqlite3 *sqlite;
-    const void *data;
-    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
-
-/* testing arguments for validity */
-    if (sqlite3_value_type (argv[0]) == SQLITE_TEXT
-	|| sqlite3_value_type (argv[0]) == SQLITE_NULL)
-	;
-    else
-      {
-	  msg =
-	      "RL2_PaintStyledRasterOnMapCanvas exception - 1st argument is not NULL or a Text string.";
-	  sqlite3_result_error (context, msg, -1);
-	  return;
-      }
-    if (sqlite3_value_type (argv[1]) != SQLITE_TEXT)
-      {
-	  msg =
-	      "RL2_PaintStyledRasterOnMapCanvas exception - 2nd argument is not a Text string.";
-	  sqlite3_result_error (context, msg, -1);
-	  return;
-      }
-    if (sqlite3_value_type (argv[2]) != SQLITE_TEXT)
-      {
-	  msg =
-	      "RL2_PaintStyledRasterOnMapCanvas exception - 3rd argument is not a Text string.";
-	  sqlite3_result_error (context, msg, -1);
-	  return;
-      }
-
-/* retrieving the arguments */
-    if (sqlite3_value_type (argv[0]) == SQLITE_TEXT)
-	db_prefix = (const char *) sqlite3_value_text (argv[0]);
-    cvg_name = (const char *) sqlite3_value_text (argv[1]);
-    xml_style = sqlite3_value_text (argv[2]);
-
-    sqlite = sqlite3_context_db_handle (context);
-    data = sqlite3_user_data (context);
-
-    ret =
-	rl2_paint_styled_raster_on_map_canvas (sqlite, data, db_prefix,
-					       cvg_name, xml_style);
-    if (ret != RL2_OK)
-	sqlite3_result_int (context, 1);
-    else
-      {
-	  const char *msg;
-	  switch (ret)
-	    {
-	    case RL2_MAP_CANVAS_NULL_INTERNAL_CACHE:
-		msg =
-		    "RL2_PaintStyledRasterOnMapCanvas exception: NULL pointer to Private Data.";
-		break;
-	    case RL2_MAP_CANVAS_NOT_IN_USE:
-		msg = "RL2_PaintStyledRasterOnMapCanvas exception: Not in use.";
-		break;
-	    default:
-		msg =
-		    "RL2_PaintStyledRasterOnMapCanvas exception: Unknown reason.";
-		break;
-	    };
-	  sqlite3_result_error (context, msg, -1);
-      }
-}
-
-static void
-fnct_PaintVectorOnMapCanvas (sqlite3_context * context, int argc,
-			     sqlite3_value ** argv)
-{
-/* SQL function:
-/ PaintVectorOnMapCanvas(text db_prefix, text coverage, text style_name)
-/
-/ will return 1 (TRUE) on success
-/ or will raise an exception on failure
-/
-*/
-    int ret;
-    const char *msg;
-    const char *db_prefix = NULL;
-    const char *cvg_name;
-    const char *style_name = "default";
-    sqlite3 *sqlite;
-    const void *data;
-    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
-
-/* testing arguments for validity */
-    if (sqlite3_value_type (argv[0]) == SQLITE_TEXT
-	|| sqlite3_value_type (argv[0]) == SQLITE_NULL)
-	;
-    else
-      {
-	  msg =
-	      "RL2_PaintVectorOnMapCanvas exception - 1st argument is not NULL or a Text string.";
-	  sqlite3_result_error (context, msg, -1);
-	  return;
-      }
-    if (sqlite3_value_type (argv[1]) != SQLITE_TEXT)
-      {
-	  msg =
-	      "RL2_PaintVectorOnMapCanvas exception - 2nd argument is not a Text string.";
-	  sqlite3_result_error (context, msg, -1);
-	  return;
-      }
-    if (sqlite3_value_type (argv[2]) != SQLITE_TEXT)
-      {
-	  msg =
-	      "RL2_PaintVectorOnMapCanvas exception - 3rd argument is not a Text string.";
-	  sqlite3_result_error (context, msg, -1);
-	  return;
-      }
-
-/* retrieving the arguments */
-    if (sqlite3_value_type (argv[0]) == SQLITE_TEXT)
-	db_prefix = (const char *) sqlite3_value_text (argv[0]);
-    cvg_name = (const char *) sqlite3_value_text (argv[1]);
-    style_name = (const char *) sqlite3_value_text (argv[2]);
-
-    sqlite = sqlite3_context_db_handle (context);
-    data = sqlite3_user_data (context);
-
-    ret =
-	rl2_paint_vector_on_map_canvas (sqlite, data, db_prefix, cvg_name,
-					style_name);
-    if (ret != RL2_OK)
-	sqlite3_result_int (context, 1);
-    else
-      {
-	  const char *msg;
-	  switch (ret)
-	    {
-	    case RL2_MAP_CANVAS_NULL_INTERNAL_CACHE:
-		msg =
-		    "RL2_PaintVectorOnMapCanvas exception: NULL pointer to Private Data.";
-		break;
-	    case RL2_MAP_CANVAS_NOT_IN_USE:
-		msg = "RL2_PaintVectorOnMapCanvas exception: Not in use.";
-		break;
-	    default:
-		msg = "RL2_PaintVectorOnMapCanvas exception: Unknown reason.";
-		break;
-	    };
-	  sqlite3_result_error (context, msg, -1);
-      }
-}
-
-static void
-fnct_PaintStyledVectorOnMapCanvas (sqlite3_context * context, int argc,
-				   sqlite3_value ** argv)
-{
-/* SQL function:
-/ PaintStyledVectorOnMapCanvas(text db_prefix, text coverage, text xml_style)
-/
-/ will return 1 (TRUE) on success
-/ or will raise an exception on failure
-/
-*/
-    int ret;
-    const char *msg;
-    const char *db_prefix = NULL;
-    const char *cvg_name;
-    const unsigned char *xml_style;
-    sqlite3 *sqlite;
-    const void *data;
-    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
-
-/* testing arguments for validity */
-    if (sqlite3_value_type (argv[0]) == SQLITE_TEXT
-	|| sqlite3_value_type (argv[0]) == SQLITE_NULL)
-	;
-    else
-      {
-	  msg =
-	      "RL2_PaintStyledVectorOnMapCanvas exception - 1st argument is not NULL or a Text string.";
-	  sqlite3_result_error (context, msg, -1);
-	  return;
-      }
-    if (sqlite3_value_type (argv[1]) != SQLITE_TEXT)
-      {
-	  msg =
-	      "RL2_PaintStyledVectorOnMapCanvas exception - 2nd argument is not a Text string.";
-	  sqlite3_result_error (context, msg, -1);
-	  return;
-      }
-    if (sqlite3_value_type (argv[2]) != SQLITE_TEXT)
-      {
-	  msg =
-	      "RL2_PaintStyledVectorOnMapCanvas exception - 3rd argument is not a Text string.";
-	  sqlite3_result_error (context, msg, -1);
-	  return;
-      }
-
-/* retrieving the arguments */
-    if (sqlite3_value_type (argv[0]) == SQLITE_TEXT)
-	db_prefix = (const char *) sqlite3_value_text (argv[0]);
-    cvg_name = (const char *) sqlite3_value_text (argv[1]);
-    xml_style = sqlite3_value_text (argv[2]);
-
-    sqlite = sqlite3_context_db_handle (context);
-    data = sqlite3_user_data (context);
-
-    ret =
-	rl2_paint_styled_vector_on_map_canvas (sqlite, data, db_prefix,
-					       cvg_name, xml_style);
-    if (ret != RL2_OK)
-	sqlite3_result_int (context, 1);
-    else
-      {
-	  const char *msg;
-	  switch (ret)
-	    {
-	    case RL2_MAP_CANVAS_NULL_INTERNAL_CACHE:
-		msg =
-		    "RL2_PaintStyledVectorOnMapCanvas exception: NULL pointer to Private Data.";
-		break;
-	    case RL2_MAP_CANVAS_NOT_IN_USE:
-		msg = "RL2_PaintStyledVectorOnMapCanvas exception: Not in use.";
-		break;
-	    default:
-		msg =
-		    "RL2_PaintStyledVectorOnMapCanvas exception: Unknown reason.";
-		break;
-	    };
-	  sqlite3_result_error (context, msg, -1);
-      }
-}
-
-static void
-fnct_GetImageFromMapCanvas (sqlite3_context * context, int argc,
-			    sqlite3_value ** argv)
-{
-/* SQL function:
-/ GetImageFromMapCanvas()
-/ GetImageFromMapCanvas(text format)
-/ GetImageFromMapCanvas(text format, int quality)
-/
-/ will return a BLOB containing the Image payload from a Map Canvas
-/ or will raise an exception on failure
-/
-*/
-    int ret;
-    char *msg;
     const char *format = "image/png";
     int quality = 80;
+    int reaspect = 0;
+    sqlite3 *sqlite;
     const void *data;
     unsigned char *image = NULL;
     int image_size;
     RL2_UNUSED ();		/* LCOV_EXCL_LINE */
 
 /* testing arguments for validity */
-    if (argc > 0 && sqlite3_value_type (argv[0]) != SQLITE_TEXT)
+    err = 0;
+    if (sqlite3_value_type (argv[0]) != SQLITE_TEXT)
+	err = 1;
+    if (sqlite3_value_type (argv[1]) != SQLITE_BLOB)
+	err = 1;
+    if (sqlite3_value_type (argv[2]) != SQLITE_INTEGER)
+	err = 1;
+    if (sqlite3_value_type (argv[3]) != SQLITE_INTEGER)
+	err = 1;
+    if (argc > 4 && sqlite3_value_type (argv[4]) != SQLITE_TEXT)
+	err = 1;
+    if (argc > 5 && sqlite3_value_type (argv[5]) != SQLITE_INTEGER)
+	err = 1;
+    if (argc > 6 && sqlite3_value_type (argv[6]) != SQLITE_INTEGER)
+	err = 1;
+    if (err != 0)
       {
-	  msg =
-	      "RL2_GetImageFromMapCanvas exception - 1st argument is not a Text string.";
-	  sqlite3_result_error (context, msg, -1);
-	  return;
-      }
-    if (argc > 1 && sqlite3_value_type (argv[1]) != SQLITE_INTEGER)
-      {
-	  msg =
-	      "RL2_GetImageFromMapCanvas exception - 2nd argument is not an Integer.";
-	  sqlite3_result_error (context, msg, -1);
+	  sqlite3_result_null (context);
 	  return;
       }
 
 /* retrieving the arguments */
-    if (argc > 0)
-	format = (const char *) sqlite3_value_text (argv[0]);
-    if (argc > 1)
-	quality = sqlite3_value_int (argv[1]);
+    mapconf = (const char *) sqlite3_value_text (argv[0]);
+    blob = sqlite3_value_blob (argv[1]);
+    blob_sz = sqlite3_value_bytes (argv[1]);
+    width = sqlite3_value_int (argv[2]);
+    height = sqlite3_value_int (argv[3]);
+    if (argc > 4)
+	format = (const char *) sqlite3_value_text (argv[4]);
+    if (argc > 5)
+	quality = sqlite3_value_int (argv[5]);
+    if (argc > 6)
+	reaspect = sqlite3_value_int (argv[6]);
 
+    sqlite = sqlite3_context_db_handle (context);
     data = sqlite3_user_data (context);
 
-    ret =
-	rl2_image_blob_from_map_canvas (data, format, quality, &image,
-					&image_size);
-    if (ret == RL2_OK)
-	sqlite3_result_blob (context, image, image_size, free);
+    if (rl2_image_blob_from_map_config
+	(sqlite, data, mapconf, blob, blob_sz, width, height, format, quality, reaspect, &image,
+	 &image_size) != RL2_OK)
+	sqlite3_result_null (context);
     else
-      {
-	  switch (ret)
-	    {
-	    case RL2_MAP_CANVAS_NULL_INTERNAL_CACHE:
-		msg =
-		    "RL2_InitializeMapCanvas exception: NULL pointer to Private Data.";
-		break;
-	    case RL2_MAP_CANVAS_NOT_IN_USE:
-		msg = "RL2_GetImageFromMapCanvas exception: Not in use.";
-		break;
-	    case RL2_MAP_CANVAS_INVALID_IMAGE_FORMAT:
-		msg =
-		    "RL2_GetImageFromMapCanvas exception: invalid Image format.";
-		break;
-	    case RL2_MAP_CANVAS_INVALID_PIXBUF:
-		msg =
-		    "RL2_GetImageFromMapCanvas exception: invalid Pixel Buffer.";
-		break;
-	    case RL2_MAP_CANVAS_IMAGE_ERROR:
-		msg =
-		    "RL2_GetImageFromMapCanvas exception: unexpected error while creating the output Image.";
-		break;
-	    default:
-		msg = "RL2_GetImageFromMapCanvas exception: Unknown reason.";
-		break;
-	    };
-	  sqlite3_result_error (context, msg, -1);
-      }
+	sqlite3_result_blob (context, image, image_size, free);
 }
-
 
 static void
 fnct_GetTileImage (sqlite3_context * context, int argc, sqlite3_value ** argv)
@@ -11451,6 +11440,54 @@ register_rl2_sql_functions (void *p_db, const void *p_data)
     sqlite3_create_function (db, "RL2_SetMaxThreads", 1,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
 			     fnct_SetMaxThreads, 0, 0);
+    sqlite3_create_function (db, "RL2_GetMaxWmsRetries", 0,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_GetMaxWmsRetries, 0, 0);
+    sqlite3_create_function (db, "RL2_SetMaxWmsRetries", 1,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_SetMaxWmsRetries, 0, 0);
+    sqlite3_create_function (db, "RL2_GetWmsPause", 0,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_GetWmsPause, 0, 0);
+    sqlite3_create_function (db, "RL2_SetWmsPause", 1,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_SetWmsPause, 0, 0);
+    sqlite3_create_function (db, "RL2_GetPdfMarginUOM", 0,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_GetPdfMarginUOM, 0, 0);
+    sqlite3_create_function (db, "RL2_SetPdfMarginUOM", 1,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_SetPdfMarginUOM, 0, 0);
+    sqlite3_create_function (db, "RL2_GetPdfMarginHorz", 0,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_GetPdfMarginHorz, 0, 0);
+    sqlite3_create_function (db, "RL2_SetPdfMarginHorz", 1,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_SetPdfMarginHorz, 0, 0);
+    sqlite3_create_function (db, "RL2_GetPdfMarginVert", 0,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_GetPdfMarginVert, 0, 0);
+    sqlite3_create_function (db, "RL2_SetPdfMarginVert", 1,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_SetPdfMarginVert, 0, 0);
+    sqlite3_create_function (db, "RL2_GetPdfPaperFormat", 0,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_GetPdfPaperFormat, 0, 0);
+    sqlite3_create_function (db, "RL2_SetPdfPaperFormat", 1,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_SetPdfPaperFormat, 0, 0);
+    sqlite3_create_function (db, "RL2_GetPdfDPI", 0,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_GetPdfDPI, 0, 0);
+    sqlite3_create_function (db, "RL2_SetPdfDPI", 1,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_SetPdfDPI, 0, 0);
+    sqlite3_create_function (db, "RL2_GetPdfOrientation", 0,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_GetPdfOrientation, 0, 0);
+    sqlite3_create_function (db, "RL2_SetPdfOrientation", 1,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_SetPdfOrientation, 0, 0);
     sqlite3_create_function (db, "RL2_EnableAntiLabelCollision", 0,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
 			     fnct_EnableAntiLabelCollision, 0, 0);
@@ -12014,61 +12051,31 @@ register_rl2_sql_functions (void *p_db, const void *p_data)
 			     fnct_GetMapImageFromWMS, 0, 0);
     sqlite3_create_function (db, "RL2_GetMapImageFromWMS", 10,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
-			     fnct_GetMapImageFromWMS, 0, 0);
-    sqlite3_create_function (db, "InitializeMapCanvas", 3, SQLITE_UTF8,
-			     priv_data, fnct_InitializeMapCanvas, 0, 0);
-    sqlite3_create_function (db, "RL2_InitializeMapCanvas", 3, SQLITE_UTF8,
-			     priv_data, fnct_InitializeMapCanvas, 0, 0);
-    sqlite3_create_function (db, "InitializeMapCanvas", 4, SQLITE_UTF8,
-			     priv_data, fnct_InitializeMapCanvas, 0, 0);
-    sqlite3_create_function (db, "RL2_InitializeMapCanvas", 4, SQLITE_UTF8,
-			     priv_data, fnct_InitializeMapCanvas, 0, 0);
-    sqlite3_create_function (db, "InitializeMapCanvas", 5, SQLITE_UTF8,
-			     priv_data, fnct_InitializeMapCanvas, 0, 0);
-    sqlite3_create_function (db, "RL2_InitializeMapCanvas", 5, SQLITE_UTF8,
-			     priv_data, fnct_InitializeMapCanvas, 0, 0);
-    sqlite3_create_function (db, "InitializeMapCanvas", 6, SQLITE_UTF8,
-			     priv_data, fnct_InitializeMapCanvas, 0, 0);
-    sqlite3_create_function (db, "RL2_InitializeMapCanvas", 6, SQLITE_UTF8,
-			     priv_data, fnct_InitializeMapCanvas, 0, 0);
-    sqlite3_create_function (db, "FinalizeMapCanvas", 0, SQLITE_UTF8, priv_data,
-			     fnct_FinalizeMapCanvas, 0, 0);
-    sqlite3_create_function (db, "RL2_FinalizeMapCanvas", 0, SQLITE_UTF8,
-			     priv_data, fnct_FinalizeMapCanvas, 0, 0);
-    sqlite3_create_function (db, "PaintRasterOnMapCanvas", 3,
+			     fnct_GetMapImageFromWMS, 0, 0);			     
+    sqlite3_create_function (db, "GetImageFromMapConfiguration", 4,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
-			     fnct_PaintRasterOnMapCanvas, 0, 0);
-    sqlite3_create_function (db, "RL2_PaintRasterOnMapCanvas", 3,
+			     fnct_GetImageFromMapConfiguration, 0, 0);
+    sqlite3_create_function (db, "RL2_GetImageFromMapConfiguration", 4,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
-			     fnct_PaintRasterOnMapCanvas, 0, 0);
-    sqlite3_create_function (db, "PaintStyledRasterOnMapCanvas", 3, SQLITE_UTF8,
-			     priv_data, fnct_PaintStyledRasterOnMapCanvas, 0,
-			     0);
-    sqlite3_create_function (db, "RL2_PaintStyledRasterOnMapCanvas", 3,
-			     SQLITE_UTF8, priv_data,
-			     fnct_PaintStyledRasterOnMapCanvas, 0, 0);
-    sqlite3_create_function (db, "PaintVectorOnMapCanvas", 3, SQLITE_UTF8,
-			     priv_data, fnct_PaintVectorOnMapCanvas, 0, 0);
-    sqlite3_create_function (db, "RL2_PaintVectorOnMapCanvas", 3, SQLITE_UTF8,
-			     priv_data, fnct_PaintVectorOnMapCanvas, 0, 0);
-    sqlite3_create_function (db, "PaintStyledVectorOnMapCanvas", 3, SQLITE_UTF8,
-			     priv_data, fnct_PaintStyledVectorOnMapCanvas, 0,
-			     0);
-    sqlite3_create_function (db, "RL2_PaintStyledVectorOnMapCanvas", 3,
-			     SQLITE_UTF8, priv_data,
-			     fnct_PaintStyledVectorOnMapCanvas, 0, 0);
-    sqlite3_create_function (db, "GetImageFromMapCanvas", 0, SQLITE_UTF8,
-			     priv_data, fnct_GetImageFromMapCanvas, 0, 0);
-    sqlite3_create_function (db, "RL2_GetImageFromMapCanvas", 0, SQLITE_UTF8,
-			     priv_data, fnct_GetImageFromMapCanvas, 0, 0);
-    sqlite3_create_function (db, "GetImageFromMapCanvas", 1, SQLITE_UTF8,
-			     priv_data, fnct_GetImageFromMapCanvas, 0, 0);
-    sqlite3_create_function (db, "RL2_GetImageFromMapCanvas", 1, SQLITE_UTF8,
-			     priv_data, fnct_GetImageFromMapCanvas, 0, 0);
-    sqlite3_create_function (db, "GetImageFromMapCanvas", 2, SQLITE_UTF8,
-			     priv_data, fnct_GetImageFromMapCanvas, 0, 0);
-    sqlite3_create_function (db, "RL2_GetImageFromMapCanvas", 2, SQLITE_UTF8,
-			     priv_data, fnct_GetImageFromMapCanvas, 0, 0);
+			     fnct_GetImageFromMapConfiguration, 0, 0);
+    sqlite3_create_function (db, "GetImageFromMapConfiguration", 5,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_GetImageFromMapConfiguration, 0, 0);
+    sqlite3_create_function (db, "RL2_GetImageFromMapConfiguration", 5,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_GetImageFromMapConfiguration, 0, 0);
+    sqlite3_create_function (db, "GetImageFromMapConfiguration", 6,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_GetImageFromMapConfiguration, 0, 0);
+    sqlite3_create_function (db, "RL2_GetImageFromMapConfiguration", 6,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_GetImageFromMapConfiguration, 0, 0);
+    sqlite3_create_function (db, "GetImageFromMapConfiguration", 7,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_GetImageFromMapConfiguration, 0, 0);
+    sqlite3_create_function (db, "RL2_GetImageFromMapConfiguration", 7,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_GetImageFromMapConfiguration, 0, 0);
     sqlite3_create_function (db, "GetTileImage", 3,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
 			     fnct_GetTileImage, 0, 0);

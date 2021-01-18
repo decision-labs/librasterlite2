@@ -104,7 +104,9 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 DIST_COMMON = $(srcdir)/Makefile.am $(noinst_HEADERS) \
 	$(am__DIST_COMMON)
 mkinstalldirs = $(install_sh) -d
-CONFIG_HEADER = $(top_builddir)/config.h
+CONFIG_HEADER = $(top_builddir)/./fakeconfig.h \
+	$(top_builddir)/./config.h \
+	$(top_builddir)/./headers/rasterlite2/rl2config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
@@ -146,7 +148,7 @@ am_librasterlite2_la_OBJECTS = rasterlite2.lo rl2raw.lo rl2codec.lo \
 	rl2svgaux.lo rl2symbolizer.lo rl2symbaux.lo rl2rastersym.lo \
 	rl2version.lo rl2md5.lo md5.lo rl2openjpeg.lo rl2auxgeom.lo \
 	rl2auxfont.lo rl2symclone.lo rl2_internal_data.lo \
-	rl2draping.lo rl2map_config.lo
+	rl2draping.lo rl2map_config.lo rl2map_config_paint.lo
 librasterlite2_la_OBJECTS = $(am_librasterlite2_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -180,7 +182,8 @@ am_mod_rasterlite2_la_OBJECTS = mod_rasterlite2_la-rasterlite2.lo \
 	mod_rasterlite2_la-rl2symclone.lo \
 	mod_rasterlite2_la-rl2_internal_data.lo \
 	mod_rasterlite2_la-rl2draping.lo \
-	mod_rasterlite2_la-rl2map_config.lo
+	mod_rasterlite2_la-rl2map_config.lo \
+	mod_rasterlite2_la-rl2map_config_paint.lo
 mod_rasterlite2_la_OBJECTS = $(am_mod_rasterlite2_la_OBJECTS)
 mod_rasterlite2_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(mod_rasterlite2_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
@@ -198,7 +201,7 @@ AM_V_at = $(am__v_at_@AM_V@)
 am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
 am__v_at_0 = @
 am__v_at_1 = 
-DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
+DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/. -I$(top_builddir)/./headers/rasterlite2
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/md5.Plo \
@@ -216,6 +219,7 @@ am__depfiles_remade = ./$(DEPDIR)/md5.Plo \
 	./$(DEPDIR)/mod_rasterlite2_la-rl2import.Plo \
 	./$(DEPDIR)/mod_rasterlite2_la-rl2jpeg.Plo \
 	./$(DEPDIR)/mod_rasterlite2_la-rl2map_config.Plo \
+	./$(DEPDIR)/mod_rasterlite2_la-rl2map_config_paint.Plo \
 	./$(DEPDIR)/mod_rasterlite2_la-rl2md5.Plo \
 	./$(DEPDIR)/mod_rasterlite2_la-rl2openjpeg.Plo \
 	./$(DEPDIR)/mod_rasterlite2_la-rl2paint.Plo \
@@ -241,7 +245,8 @@ am__depfiles_remade = ./$(DEPDIR)/md5.Plo \
 	./$(DEPDIR)/rl2codec.Plo ./$(DEPDIR)/rl2dbms.Plo \
 	./$(DEPDIR)/rl2draping.Plo ./$(DEPDIR)/rl2gif.Plo \
 	./$(DEPDIR)/rl2import.Plo ./$(DEPDIR)/rl2jpeg.Plo \
-	./$(DEPDIR)/rl2map_config.Plo ./$(DEPDIR)/rl2md5.Plo \
+	./$(DEPDIR)/rl2map_config.Plo \
+	./$(DEPDIR)/rl2map_config_paint.Plo ./$(DEPDIR)/rl2md5.Plo \
 	./$(DEPDIR)/rl2openjpeg.Plo ./$(DEPDIR)/rl2paint.Plo \
 	./$(DEPDIR)/rl2png.Plo ./$(DEPDIR)/rl2pyramid.Plo \
 	./$(DEPDIR)/rl2rastersym.Plo ./$(DEPDIR)/rl2raw.Plo \
@@ -466,13 +471,13 @@ librasterlite2_la_SOURCES = rasterlite2.c rl2raw.c rl2codec.c \
 	rl2svgaux.c rl2symbolizer.c rl2symbaux.c rl2rastersym.c \
 	rl2version.c rl2md5.c md5.c rl2openjpeg.c rl2auxgeom.c \
 	rl2auxfont.c rl2symclone.c rl2_internal_data.c rl2draping.c \
-	rl2map_config.c
+	rl2map_config.c rl2map_config_paint.c
 
 librasterlite2_la_LIBADD = @LIBPNG_LIBS@ @LIBWEBP_LIBS@ @LIBLZMA_LIBS@ \
 	@LIBLZ4_LIBS@ @LIBZSTD_LIBS@ @LIBOPENJP2_LIBS@ @LIBCURL_LIBS@ \
 	@LIBXML2_LIBS@ @LIBFONTCONFIG_LIBS@ @LIBFREETYPE2_LIBS@ \
-	@LIBPIXMAN_LIBS@ @LIBCAIRO_LIBS@ @LIBSPATIALITE_LIBS@ \
-	$(am__append_1) $(am__append_2)
+	@LIBPIXMAN_LIBS@ @LIBCAIRO_LIBS@ $(am__append_1) \
+	$(am__append_2)
 @MINGW_FALSE@librasterlite2_la_LDFLAGS = -version-info 1:0:0
 @MINGW_TRUE@librasterlite2_la_LDFLAGS = -avoid-version -no-undefined
 mod_rasterlite2_la_SOURCES = rasterlite2.c rl2raw.c rl2codec.c \
@@ -482,13 +487,13 @@ mod_rasterlite2_la_SOURCES = rasterlite2.c rl2raw.c rl2codec.c \
 	rl2svgaux.c rl2symbolizer.c rl2symbaux.c rl2rastersym.c \
 	rl2version.c rl2md5.c md5.c rl2openjpeg.c rl2auxgeom.c \
 	rl2auxfont.c rl2symclone.c rl2_internal_data.c rl2draping.c \
-	rl2map_config.c
+	rl2map_config.c rl2map_config_paint.c
 
 mod_rasterlite2_la_LIBADD = @LIBPNG_LIBS@ @LIBWEBP_LIBS@ \
 	@LIBLZMA_LIBS@ @LIBLZ4_LIBS@ @LIBZSTD_LIBS@ @LIBOPENJP2_LIBS@ \
 	@LIBCURL_LIBS@ @LIBXML2_LIBS@ @LIBFONTCONFIG_LIBS@ \
 	@LIBFREETYPE2_LIBS@ @LIBPIXMAN_LIBS@ @LIBCAIRO_LIBS@ \
-	@LIBSPATIALITE_LIBS@ $(am__append_3) $(am__append_4)
+	$(am__append_3) $(am__append_4)
 mod_rasterlite2_la_CPPFLAGS = @CFLAGS@ @CPPFLAGS@ \
 	-I$(top_srcdir)/headers -I. -DLOADABLE_EXTENSION
 mod_rasterlite2_la_LIBTOOLFLAGS = --tag=disable-static
@@ -508,9 +513,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign src/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu src/Makefile
+	  $(AUTOMAKE) --foreign src/Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \
@@ -591,6 +596,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_rasterlite2_la-rl2import.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_rasterlite2_la-rl2jpeg.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_rasterlite2_la-rl2map_config.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_rasterlite2_la-rl2map_config_paint.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_rasterlite2_la-rl2md5.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_rasterlite2_la-rl2openjpeg.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_rasterlite2_la-rl2paint.Plo@am__quote@ # am--include-marker
@@ -623,6 +629,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rl2import.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rl2jpeg.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rl2map_config.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rl2map_config_paint.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rl2md5.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rl2openjpeg.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rl2paint.Plo@am__quote@ # am--include-marker
@@ -901,6 +908,13 @@ mod_rasterlite2_la-rl2map_config.lo: rl2map_config.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(mod_rasterlite2_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(mod_rasterlite2_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o mod_rasterlite2_la-rl2map_config.lo `test -f 'rl2map_config.c' || echo '$(srcdir)/'`rl2map_config.c
 
+mod_rasterlite2_la-rl2map_config_paint.lo: rl2map_config_paint.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(mod_rasterlite2_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(mod_rasterlite2_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT mod_rasterlite2_la-rl2map_config_paint.lo -MD -MP -MF $(DEPDIR)/mod_rasterlite2_la-rl2map_config_paint.Tpo -c -o mod_rasterlite2_la-rl2map_config_paint.lo `test -f 'rl2map_config_paint.c' || echo '$(srcdir)/'`rl2map_config_paint.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/mod_rasterlite2_la-rl2map_config_paint.Tpo $(DEPDIR)/mod_rasterlite2_la-rl2map_config_paint.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='rl2map_config_paint.c' object='mod_rasterlite2_la-rl2map_config_paint.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(mod_rasterlite2_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(mod_rasterlite2_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o mod_rasterlite2_la-rl2map_config_paint.lo `test -f 'rl2map_config_paint.c' || echo '$(srcdir)/'`rl2map_config_paint.c
+
 mostlyclean-libtool:
 	-rm -f *.lo
 
@@ -1051,6 +1065,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/mod_rasterlite2_la-rl2import.Plo
 	-rm -f ./$(DEPDIR)/mod_rasterlite2_la-rl2jpeg.Plo
 	-rm -f ./$(DEPDIR)/mod_rasterlite2_la-rl2map_config.Plo
+	-rm -f ./$(DEPDIR)/mod_rasterlite2_la-rl2map_config_paint.Plo
 	-rm -f ./$(DEPDIR)/mod_rasterlite2_la-rl2md5.Plo
 	-rm -f ./$(DEPDIR)/mod_rasterlite2_la-rl2openjpeg.Plo
 	-rm -f ./$(DEPDIR)/mod_rasterlite2_la-rl2paint.Plo
@@ -1083,6 +1098,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/rl2import.Plo
 	-rm -f ./$(DEPDIR)/rl2jpeg.Plo
 	-rm -f ./$(DEPDIR)/rl2map_config.Plo
+	-rm -f ./$(DEPDIR)/rl2map_config_paint.Plo
 	-rm -f ./$(DEPDIR)/rl2md5.Plo
 	-rm -f ./$(DEPDIR)/rl2openjpeg.Plo
 	-rm -f ./$(DEPDIR)/rl2paint.Plo
@@ -1162,6 +1178,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/mod_rasterlite2_la-rl2import.Plo
 	-rm -f ./$(DEPDIR)/mod_rasterlite2_la-rl2jpeg.Plo
 	-rm -f ./$(DEPDIR)/mod_rasterlite2_la-rl2map_config.Plo
+	-rm -f ./$(DEPDIR)/mod_rasterlite2_la-rl2map_config_paint.Plo
 	-rm -f ./$(DEPDIR)/mod_rasterlite2_la-rl2md5.Plo
 	-rm -f ./$(DEPDIR)/mod_rasterlite2_la-rl2openjpeg.Plo
 	-rm -f ./$(DEPDIR)/mod_rasterlite2_la-rl2paint.Plo
@@ -1194,6 +1211,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/rl2import.Plo
 	-rm -f ./$(DEPDIR)/rl2jpeg.Plo
 	-rm -f ./$(DEPDIR)/rl2map_config.Plo
+	-rm -f ./$(DEPDIR)/rl2map_config_paint.Plo
 	-rm -f ./$(DEPDIR)/rl2md5.Plo
 	-rm -f ./$(DEPDIR)/rl2openjpeg.Plo
 	-rm -f ./$(DEPDIR)/rl2paint.Plo

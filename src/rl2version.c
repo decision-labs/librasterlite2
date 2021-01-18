@@ -56,11 +56,11 @@ the terms of any one of the MPL, the GPL or the LGPL.
 RL2_DECLARE const char *
 rl2_version (void)
 {
-    return VERSION;
+    return RL2_VERSION;
 }
 
 RL2_DECLARE const char *
 rl2_target_cpu (void)
 {
-    return TARGET_CPU;
+    return RL2_TARGET_CPU;
 }

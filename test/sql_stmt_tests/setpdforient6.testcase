@@ -1,0 +1,9 @@
+RL2_SetPdfOrientation - Orientation Landscape
+:memory: #use in-memory database
+SELECT RL2_SetPdfOrientation('landscape'), RL2_GetPdfOrientation()
+1 # rows (not including the header row)
+2 # columns
+RL2_SetPdfOrientation('landscape')
+RL2_GetPdfOrientation()
+Landscape
+Landscape

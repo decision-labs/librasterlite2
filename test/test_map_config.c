@@ -1732,7 +1732,7 @@ test_map_config (const unsigned char *xml, int *retcode)
 	  ret = -162;
 	  goto stop;
       }
-    if (rl2_compare_map_configs (map, clone) == 0)
+    if (rl2_compare_map_configs (map, clone) != NULL)
       {
 	  fprintf (stderr, "CompareMapConfigs unexpected result: 0\n");
 	  ret = -163;
