@@ -281,11 +281,9 @@ test_capi_base (sqlite3 * sqlite, const char *coverage, const char *style,
     unsigned char *alpha;
     unsigned char *png = NULL;
     int png_size;
-    int has_labels;
     FILE *out;
     int half_transparent;
     rl2GraphicsContextPtr ctx = NULL;
-    rl2GraphicsContextPtr ctx_labels = NULL;
     rl2GraphicsContextPtr ctx_nodes = NULL;
     rl2GraphicsContextPtr ctx_edges = NULL;
     rl2GraphicsContextPtr ctx_links = NULL;
@@ -300,25 +298,23 @@ test_capi_base (sqlite3 * sqlite, const char *coverage, const char *style,
     if (toponet)
       {
 	  ctx = rl2_graph_create_context (data, 1024, 1024);
-	  ctx_labels = rl2_graph_create_context (data, 1024, 1024);
 	  ctx_nodes = rl2_graph_create_context (data, 1024, 1024);
 	  ctx_links = rl2_graph_create_context (data, 1024, 1024);
 	  ctx_link_seeds = rl2_graph_create_context (data, 1024, 1024);
 	  canvas =
-	      rl2_create_network_canvas (ctx, ctx_labels, ctx_nodes, ctx_links,
+	      rl2_create_network_canvas (ctx, ctx_nodes, ctx_links,
 					 ctx_link_seeds);
       }
     if (topogeo)
       {
 	  ctx = rl2_graph_create_context (data, 1024, 1024);
-	  ctx_labels = rl2_graph_create_context (data, 1024, 1024);
 	  ctx_nodes = rl2_graph_create_context (data, 1024, 1024);
 	  ctx_edges = rl2_graph_create_context (data, 1024, 1024);
 	  ctx_faces = rl2_graph_create_context (data, 1024, 1024);
 	  ctx_edge_seeds = rl2_graph_create_context (data, 1024, 1024);
 	  ctx_face_seeds = rl2_graph_create_context (data, 1024, 1024);
 	  canvas =
-	      rl2_create_topology_canvas (ctx, ctx_labels, ctx_nodes, ctx_edges,
+	      rl2_create_topology_canvas (ctx, ctx_nodes, ctx_edges,
 					  ctx_faces, ctx_edge_seeds,
 					  ctx_face_seeds);
       }
@@ -329,25 +325,25 @@ test_capi_base (sqlite3 * sqlite, const char *coverage, const char *style,
 	  ret =
 	      rl2_map_image_paint_from_vector (sqlite, data, canvas, NULL,
 					       coverage, blob, blob_sz, 0,
-					       style, NULL, &has_labels);
+					       style, NULL);
 	  break;
       case 1:
 	  ret =
 	      rl2_map_image_paint_from_vector_ex (sqlite, data, canvas, NULL,
 						  coverage, blob, blob_sz, 0,
-						  style, NULL, 1, 1, 1, 1, 1, &has_labels);
+						  style, NULL, 1, 1, 1, 1, 1);
 	  break;
       case 2:
 	  ret =
 	      rl2_map_image_paint_from_vector_ex (sqlite, data, canvas, NULL,
 						  coverage, blob, blob_sz, 0,
-						  style, NULL, 0, 1, 0, 1, 0, &has_labels);
+						  style, NULL, 0, 1, 0, 1, 0);
 	  break;
       case 3:
 	  ret =
 	      rl2_map_image_paint_from_vector_ex (sqlite, data, canvas, NULL,
 						  coverage, blob, blob_sz, 0,
-						  style, NULL, 1, 0, 1, 0, 1, &has_labels);
+						  style, NULL, 1, 0, 1, 0, 1);
 	  break;
       };
     if (ret != RL2_OK)

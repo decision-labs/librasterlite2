@@ -601,7 +601,8 @@ fnct_SetMaxThreads (sqlite3_context * context, int argc, sqlite3_value ** argv)
 }
 
 static void
-fnct_GetMaxWmsRetries (sqlite3_context * context, int argc, sqlite3_value ** argv)
+fnct_GetMaxWmsRetries (sqlite3_context * context, int argc,
+		       sqlite3_value ** argv)
 {
 /* SQL function:
 / RL2_GetMaxWmsRetries()
@@ -617,7 +618,8 @@ fnct_GetMaxWmsRetries (sqlite3_context * context, int argc, sqlite3_value ** arg
 }
 
 static void
-fnct_SetMaxWmsRetries (sqlite3_context * context, int argc, sqlite3_value ** argv)
+fnct_SetMaxWmsRetries (sqlite3_context * context, int argc,
+		       sqlite3_value ** argv)
 {
 /* SQL function:
 / RL2_SetMaxWmsRetries(INTEGER max)
@@ -699,7 +701,8 @@ fnct_SetWmsPause (sqlite3_context * context, int argc, sqlite3_value ** argv)
 }
 
 static void
-fnct_GetPdfMarginUOM (sqlite3_context * context, int argc, sqlite3_value ** argv)
+fnct_GetPdfMarginUOM (sqlite3_context * context, int argc,
+		      sqlite3_value ** argv)
 {
 /* SQL function:
 / RL2_GetPdfMarginUOM()
@@ -710,23 +713,24 @@ fnct_GetPdfMarginUOM (sqlite3_context * context, int argc, sqlite3_value ** argv
     struct rl2_private_data *priv_data = sqlite3_user_data (context);
     RL2_UNUSED ();		/* LCOV_EXCL_LINE */
     if (priv_data != NULL)
-	{
-		switch(priv_data->pdf_margin_uom)
-		{
-			case RL2_PDF_MARGIN_MILLIMS:
-				uom = "mm";
-				break;
-			case RL2_PDF_MARGIN_INCHES:
-			default:
-				uom = "in";
-				break;
-		};
-	}
-    sqlite3_result_text (context, uom, strlen(uom), SQLITE_STATIC);
+      {
+	  switch (priv_data->pdf_margin_uom)
+	    {
+	    case RL2_PDF_MARGIN_MILLIMS:
+		uom = "mm";
+		break;
+	    case RL2_PDF_MARGIN_INCHES:
+	    default:
+		uom = "in";
+		break;
+	    };
+      }
+    sqlite3_result_text (context, uom, strlen (uom), SQLITE_STATIC);
 }
 
 static void
-fnct_SetPdfMarginUOM (sqlite3_context * context, int argc, sqlite3_value ** argv)
+fnct_SetPdfMarginUOM (sqlite3_context * context, int argc,
+		      sqlite3_value ** argv)
 {
 /* SQL function:
 / RL2_SetPdfMarginUOM(text UOM)
@@ -738,7 +742,7 @@ fnct_SetPdfMarginUOM (sqlite3_context * context, int argc, sqlite3_value ** argv
     struct rl2_private_data *priv_data = sqlite3_user_data (context);
     RL2_UNUSED ();		/* LCOV_EXCL_LINE */
     if (sqlite3_value_type (argv[0]) == SQLITE_TEXT)
-	uom = (const char *)sqlite3_value_text (argv[0]);
+	uom = (const char *) sqlite3_value_text (argv[0]);
     else
       {
 	  sqlite3_result_null (context);
@@ -746,25 +750,26 @@ fnct_SetPdfMarginUOM (sqlite3_context * context, int argc, sqlite3_value ** argv
       }
 
     if (priv_data != NULL)
-    {
-		if (strcasecmp(uom, "mm") == 0)
-		{
-			priv_data->pdf_margin_uom = RL2_PDF_MARGIN_MILLIMS;
-			uom = "mm";
-		}
-		else
-		{
-			priv_data->pdf_margin_uom = RL2_PDF_MARGIN_INCHES;
-			uom = "in";
-		}
-	}
+      {
+	  if (strcasecmp (uom, "mm") == 0)
+	    {
+		priv_data->pdf_margin_uom = RL2_PDF_MARGIN_MILLIMS;
+		uom = "mm";
+	    }
+	  else
+	    {
+		priv_data->pdf_margin_uom = RL2_PDF_MARGIN_INCHES;
+		uom = "in";
+	    }
+      }
     else
 	uom = "in";
-    sqlite3_result_text (context, uom, strlen(uom), SQLITE_STATIC);
+    sqlite3_result_text (context, uom, strlen (uom), SQLITE_STATIC);
 }
 
 static void
-fnct_GetPdfMarginHorz (sqlite3_context * context, int argc, sqlite3_value ** argv)
+fnct_GetPdfMarginHorz (sqlite3_context * context, int argc,
+		       sqlite3_value ** argv)
 {
 /* SQL function:
 / RL2_GetPdfMarginHorz()
@@ -780,7 +785,8 @@ fnct_GetPdfMarginHorz (sqlite3_context * context, int argc, sqlite3_value ** arg
 }
 
 static void
-fnct_SetPdfMarginHorz (sqlite3_context * context, int argc, sqlite3_value ** argv)
+fnct_SetPdfMarginHorz (sqlite3_context * context, int argc,
+		       sqlite3_value ** argv)
 {
 /* SQL function:
 / RL2_SetPdfMarginHorz(double MARGIN)
@@ -813,7 +819,8 @@ fnct_SetPdfMarginHorz (sqlite3_context * context, int argc, sqlite3_value ** arg
 }
 
 static void
-fnct_GetPdfMarginVert (sqlite3_context * context, int argc, sqlite3_value ** argv)
+fnct_GetPdfMarginVert (sqlite3_context * context, int argc,
+		       sqlite3_value ** argv)
 {
 /* SQL function:
 / RL2_GetPdfMarginVert()
@@ -829,7 +836,8 @@ fnct_GetPdfMarginVert (sqlite3_context * context, int argc, sqlite3_value ** arg
 }
 
 static void
-fnct_SetPdfMarginVert (sqlite3_context * context, int argc, sqlite3_value ** argv)
+fnct_SetPdfMarginVert (sqlite3_context * context, int argc,
+		       sqlite3_value ** argv)
 {
 /* SQL function:
 / RL2_SetPdfMarginVert(double MARGIN)
@@ -862,7 +870,8 @@ fnct_SetPdfMarginVert (sqlite3_context * context, int argc, sqlite3_value ** arg
 }
 
 static void
-fnct_GetPdfPaperFormat (sqlite3_context * context, int argc, sqlite3_value ** argv)
+fnct_GetPdfPaperFormat (sqlite3_context * context, int argc,
+			sqlite3_value ** argv)
 {
 /* SQL function:
 / RL2_GetPdfPaperFormat()
@@ -873,35 +882,36 @@ fnct_GetPdfPaperFormat (sqlite3_context * context, int argc, sqlite3_value ** ar
     struct rl2_private_data *priv_data = sqlite3_user_data (context);
     RL2_UNUSED ();		/* LCOV_EXCL_LINE */
     if (priv_data != NULL)
-	{
-		switch(priv_data->pdf_paper_format)
-		{
-			case RL2_PDF_PAPER_FORMAT_A0:
-				format = "A0";
-				break;
-			case RL2_PDF_PAPER_FORMAT_A1:
-				format = "A1";
-				break;
-			case RL2_PDF_PAPER_FORMAT_A2:
-				format = "A2";
-				break;
-			case RL2_PDF_PAPER_FORMAT_A3:
-				format = "A3";
-				break;
-			case RL2_PDF_PAPER_FORMAT_A5:
-				format = "A5";
-				break;
-			case RL2_PDF_PAPER_FORMAT_A4:
-			default:
-				format = "A4";
-				break;
-		};
-	}
-    sqlite3_result_text (context, format, strlen(format), SQLITE_STATIC);
+      {
+	  switch (priv_data->pdf_paper_format)
+	    {
+	    case RL2_PDF_PAPER_FORMAT_A0:
+		format = "A0";
+		break;
+	    case RL2_PDF_PAPER_FORMAT_A1:
+		format = "A1";
+		break;
+	    case RL2_PDF_PAPER_FORMAT_A2:
+		format = "A2";
+		break;
+	    case RL2_PDF_PAPER_FORMAT_A3:
+		format = "A3";
+		break;
+	    case RL2_PDF_PAPER_FORMAT_A5:
+		format = "A5";
+		break;
+	    case RL2_PDF_PAPER_FORMAT_A4:
+	    default:
+		format = "A4";
+		break;
+	    };
+      }
+    sqlite3_result_text (context, format, strlen (format), SQLITE_STATIC);
 }
 
 static void
-fnct_SetPdfPaperFormat (sqlite3_context * context, int argc, sqlite3_value ** argv)
+fnct_SetPdfPaperFormat (sqlite3_context * context, int argc,
+			sqlite3_value ** argv)
 {
 /* SQL function:
 / RL2_SetPdfPaperFormat(text FORMAT)
@@ -913,7 +923,7 @@ fnct_SetPdfPaperFormat (sqlite3_context * context, int argc, sqlite3_value ** ar
     struct rl2_private_data *priv_data = sqlite3_user_data (context);
     RL2_UNUSED ();		/* LCOV_EXCL_LINE */
     if (sqlite3_value_type (argv[0]) == SQLITE_TEXT)
-	format = (const char *)sqlite3_value_text (argv[0]);
+	format = (const char *) sqlite3_value_text (argv[0]);
     else
       {
 	  sqlite3_result_null (context);
@@ -921,41 +931,41 @@ fnct_SetPdfPaperFormat (sqlite3_context * context, int argc, sqlite3_value ** ar
       }
 
     if (priv_data != NULL)
-    {
-		if (strcasecmp(format, "A0") == 0)
-		{
-			priv_data->pdf_paper_format = RL2_PDF_PAPER_FORMAT_A0;
-			format = "A0";
-		}
-		else if (strcasecmp(format, "A1") == 0)
-		{
-			priv_data->pdf_paper_format = RL2_PDF_PAPER_FORMAT_A1;
-			format = "A1";
-		}
-		else if (strcasecmp(format, "A2") == 0)
-		{
-			priv_data->pdf_paper_format = RL2_PDF_PAPER_FORMAT_A2;
-			format = "A2";
-		}
-		else if (strcasecmp(format, "A3") == 0)
-		{
-			priv_data->pdf_paper_format = RL2_PDF_PAPER_FORMAT_A3;
-			format = "A3";
-		}
-		else if (strcasecmp(format, "A5") == 0)
-		{
-			priv_data->pdf_paper_format = RL2_PDF_PAPER_FORMAT_A5;
-			format = "A5";
-		}
-		else
-		{
-			priv_data->pdf_paper_format = RL2_PDF_PAPER_FORMAT_A4;
-			format = "A4";
-		}
-	}
+      {
+	  if (strcasecmp (format, "A0") == 0)
+	    {
+		priv_data->pdf_paper_format = RL2_PDF_PAPER_FORMAT_A0;
+		format = "A0";
+	    }
+	  else if (strcasecmp (format, "A1") == 0)
+	    {
+		priv_data->pdf_paper_format = RL2_PDF_PAPER_FORMAT_A1;
+		format = "A1";
+	    }
+	  else if (strcasecmp (format, "A2") == 0)
+	    {
+		priv_data->pdf_paper_format = RL2_PDF_PAPER_FORMAT_A2;
+		format = "A2";
+	    }
+	  else if (strcasecmp (format, "A3") == 0)
+	    {
+		priv_data->pdf_paper_format = RL2_PDF_PAPER_FORMAT_A3;
+		format = "A3";
+	    }
+	  else if (strcasecmp (format, "A5") == 0)
+	    {
+		priv_data->pdf_paper_format = RL2_PDF_PAPER_FORMAT_A5;
+		format = "A5";
+	    }
+	  else
+	    {
+		priv_data->pdf_paper_format = RL2_PDF_PAPER_FORMAT_A4;
+		format = "A4";
+	    }
+      }
     else
 	format = "A4";
-    sqlite3_result_text (context, format, strlen(format), SQLITE_STATIC);
+    sqlite3_result_text (context, format, strlen (format), SQLITE_STATIC);
 }
 
 static void
@@ -970,24 +980,24 @@ fnct_GetPdfDPI (sqlite3_context * context, int argc, sqlite3_value ** argv)
     struct rl2_private_data *priv_data = sqlite3_user_data (context);
     RL2_UNUSED ();		/* LCOV_EXCL_LINE */
     if (priv_data != NULL)
-	{
-		switch(priv_data->pdf_dpi)
-		{
-			case RL2_PDF_DPI_72:
-				dpi = 72;
-				break;
-			case RL2_PDF_DPI_150:
-				dpi = 150;
-				break;
-			case RL2_PDF_DPI_600:
-				dpi = 600;
-				break;
-			case RL2_PDF_DPI_300:
-			default:
-				dpi = 300;
-				break;
-		};
-	}
+      {
+	  switch (priv_data->pdf_dpi)
+	    {
+	    case RL2_PDF_DPI_72:
+		dpi = 72;
+		break;
+	    case RL2_PDF_DPI_150:
+		dpi = 150;
+		break;
+	    case RL2_PDF_DPI_600:
+		dpi = 600;
+		break;
+	    case RL2_PDF_DPI_300:
+	    default:
+		dpi = 300;
+		break;
+	    };
+      }
     sqlite3_result_int (context, dpi);
 }
 
@@ -1012,26 +1022,27 @@ fnct_SetPdfDPI (sqlite3_context * context, int argc, sqlite3_value ** argv)
       }
 
     if (priv_data != NULL)
-    {
-		if (dpi == 72)
-			priv_data->pdf_dpi = RL2_PDF_DPI_72;
-		else if (dpi == 150)
-			priv_data->pdf_dpi = RL2_PDF_DPI_150;
-		else if (dpi == 600)
-			priv_data->pdf_dpi = RL2_PDF_DPI_600;
-		else
-		{
-			priv_data->pdf_dpi = RL2_PDF_DPI_300;
-			dpi = 300;
-		}
-	}
+      {
+	  if (dpi == 72)
+	      priv_data->pdf_dpi = RL2_PDF_DPI_72;
+	  else if (dpi == 150)
+	      priv_data->pdf_dpi = RL2_PDF_DPI_150;
+	  else if (dpi == 600)
+	      priv_data->pdf_dpi = RL2_PDF_DPI_600;
+	  else
+	    {
+		priv_data->pdf_dpi = RL2_PDF_DPI_300;
+		dpi = 300;
+	    }
+      }
     else
 	dpi = 300;
     sqlite3_result_int (context, dpi);
 }
 
 static void
-fnct_GetPdfOrientation (sqlite3_context * context, int argc, sqlite3_value ** argv)
+fnct_GetPdfOrientation (sqlite3_context * context, int argc,
+			sqlite3_value ** argv)
 {
 /* SQL function:
 / RL2_GetPdfOrientation()
@@ -1042,23 +1053,25 @@ fnct_GetPdfOrientation (sqlite3_context * context, int argc, sqlite3_value ** ar
     struct rl2_private_data *priv_data = sqlite3_user_data (context);
     RL2_UNUSED ();		/* LCOV_EXCL_LINE */
     if (priv_data != NULL)
-	{
-		switch(priv_data->pdf_orientation)
-		{
-			case RL2_PDF_LANDSCAPE:
-				orientation = "Landscape";
-				break;
-			case RL2_PDF_PORTRAIT:
-			default:
-				orientation = "Portrait";
-				break;
-		};
-	}
-    sqlite3_result_text (context, orientation, strlen(orientation), SQLITE_STATIC);
+      {
+	  switch (priv_data->pdf_orientation)
+	    {
+	    case RL2_PDF_LANDSCAPE:
+		orientation = "Landscape";
+		break;
+	    case RL2_PDF_PORTRAIT:
+	    default:
+		orientation = "Portrait";
+		break;
+	    };
+      }
+    sqlite3_result_text (context, orientation, strlen (orientation),
+			 SQLITE_STATIC);
 }
 
 static void
-fnct_SetPdfOrientation (sqlite3_context * context, int argc, sqlite3_value ** argv)
+fnct_SetPdfOrientation (sqlite3_context * context, int argc,
+			sqlite3_value ** argv)
 {
 /* SQL function:
 / RL2_SetPdfOrientation(text ORIENTATION)
@@ -1070,7 +1083,7 @@ fnct_SetPdfOrientation (sqlite3_context * context, int argc, sqlite3_value ** ar
     struct rl2_private_data *priv_data = sqlite3_user_data (context);
     RL2_UNUSED ();		/* LCOV_EXCL_LINE */
     if (sqlite3_value_type (argv[0]) == SQLITE_TEXT)
-	orientation = (const char *)sqlite3_value_text (argv[0]);
+	orientation = (const char *) sqlite3_value_text (argv[0]);
     else
       {
 	  sqlite3_result_null (context);
@@ -1078,21 +1091,22 @@ fnct_SetPdfOrientation (sqlite3_context * context, int argc, sqlite3_value ** ar
       }
 
     if (priv_data != NULL)
-    {
-		if (strcasecmp(orientation, "Landscape") == 0)
-		{
-			priv_data->pdf_orientation = RL2_PDF_LANDSCAPE;
-			orientation = "Landscape";
-		}
-		else
-		{
-			priv_data->pdf_orientation = RL2_PDF_PORTRAIT;
-			orientation = "Portrait";
-		}
-	}
+      {
+	  if (strcasecmp (orientation, "Landscape") == 0)
+	    {
+		priv_data->pdf_orientation = RL2_PDF_LANDSCAPE;
+		orientation = "Landscape";
+	    }
+	  else
+	    {
+		priv_data->pdf_orientation = RL2_PDF_PORTRAIT;
+		orientation = "Portrait";
+	    }
+      }
     else
 	orientation = "Portrait";
-    sqlite3_result_text (context, orientation, strlen(orientation), SQLITE_STATIC);
+    sqlite3_result_text (context, orientation, strlen (orientation),
+			 SQLITE_STATIC);
 }
 
 static void
@@ -1154,7 +1168,7 @@ fnct_DisableAntiLabelCollision (sqlite3_context * context, int argc,
 
 static void
 fnct_IsLabelWrapTextEnabled (sqlite3_context * context, int argc,
-				  sqlite3_value ** argv)
+			     sqlite3_value ** argv)
 {
 /* SQL function:
 / RL2_IsLabelWrapTextEnabled()
@@ -1173,7 +1187,7 @@ fnct_IsLabelWrapTextEnabled (sqlite3_context * context, int argc,
 
 static void
 fnct_EnableLabelWrapText (sqlite3_context * context, int argc,
-			       sqlite3_value ** argv)
+			  sqlite3_value ** argv)
 {
 /* SQL function:
 / RL2_EnableLabelWrapText(void)
@@ -1194,7 +1208,7 @@ fnct_EnableLabelWrapText (sqlite3_context * context, int argc,
 
 static void
 fnct_DisableLabelWrapText (sqlite3_context * context, int argc,
-				sqlite3_value ** argv)
+			   sqlite3_value ** argv)
 {
 /* SQL function:
 / RL2_DisableLabelWrapText(void)
@@ -1211,7 +1225,7 @@ fnct_DisableLabelWrapText (sqlite3_context * context, int argc,
 
 static void
 fnct_IsLabelAutorotateEnabled (sqlite3_context * context, int argc,
-				  sqlite3_value ** argv)
+			       sqlite3_value ** argv)
 {
 /* SQL function:
 / RL2_IsLabelAutorotateEnabled()
@@ -1230,7 +1244,7 @@ fnct_IsLabelAutorotateEnabled (sqlite3_context * context, int argc,
 
 static void
 fnct_EnableLabelAutorotate (sqlite3_context * context, int argc,
-			       sqlite3_value ** argv)
+			    sqlite3_value ** argv)
 {
 /* SQL function:
 / RL2_EnableLabelAutorotate(void)
@@ -1251,7 +1265,7 @@ fnct_EnableLabelAutorotate (sqlite3_context * context, int argc,
 
 static void
 fnct_DisableLabelAutorotate (sqlite3_context * context, int argc,
-				sqlite3_value ** argv)
+			     sqlite3_value ** argv)
 {
 /* SQL function:
 / RL2_DisableLabelAutorotate(void)
@@ -3084,7 +3098,7 @@ fnct_GetBandHistogramFromImage (sqlite3_context * context, int argc,
 				sqlite3_value ** argv)
 {
 /* SQL function:
-/ GetBandHistogramFromImage(BLOBencoded statistics, TEXT mime_type, int band_index)
+/ GetBandHistogramFromImage(BLOBencoded image, TEXT mime_type, int band_index)
 /
 / will return a PNG image representing the Histogram for the given Band
 / or NULL (INVALID ARGS)
@@ -3680,6 +3694,7 @@ fnct_EnableRasterCoverageAutoNDVI (sqlite3_context * context, int argc,
 */
     const char *coverage_name;
     int on_off;
+    int ret;
     sqlite3 *sqlite = sqlite3_context_db_handle (context);
     RL2_UNUSED ();		/* LCOV_EXCL_LINE */
     if (sqlite3_value_type (argv[0]) != SQLITE_TEXT)
@@ -3694,8 +3709,8 @@ fnct_EnableRasterCoverageAutoNDVI (sqlite3_context * context, int argc,
       }
     coverage_name = (const char *) sqlite3_value_text (argv[0]);
     on_off = sqlite3_value_int (argv[1]);
-    if (rl2_enable_dbms_coverage_auto_ndvi (sqlite, coverage_name, on_off) ==
-	RL2_OK)
+    ret = rl2_enable_dbms_coverage_auto_ndvi (sqlite, coverage_name, on_off);
+    if (ret == RL2_OK)
 	sqlite3_result_int (context, 1);
     else
 	sqlite3_result_int (context, 0);
@@ -4901,7 +4916,7 @@ fnct_LoadRasterFromWMS (sqlite3_context * context, int argc,
     double tileh;
     unsigned int tile_width;
     unsigned int tile_height;
-    WmsRetryListPtr retry_list = NULL; 
+    WmsRetryListPtr retry_list = NULL;
     char *table;
     char *xtable;
     char *sql;
@@ -8618,11 +8633,58 @@ fnct_WriteSectionAsciiGrid (sqlite3_context * context, int argc,
     common_write_ascii_grid (1, context, argc, argv);
 }
 
+static int
+do_retrieve_ndvi_band_selection (sqlite3 * sqlite, const char *db_prefix,
+				 const char *cvg_name, int *red_band,
+				 int *green_band, int *nir_band)
+{
+/* attempting to retrieve the NDVI/NDWI Default Band selection */
+    int ret;
+    char **results;
+    int rows;
+    int columns;
+    int i;
+    char *sql;
+    char *xdb_prefix;
+    int cnt = 0;
+
+    if (db_prefix == NULL)
+	db_prefix = "main";
+    xdb_prefix = rl2_double_quoted_sql (db_prefix);
+    sql =
+	sqlite3_mprintf
+	("SELECT red_band_index, green_band_index, nir_band_index FROM \"%s\".raster_coverages "
+	 "WHERE coverage_name = Lower(%Q) AND red_band_index IS NOT NULL "
+	 "AND green_band_index IS NOT NULL AND nir_band_index IS NOT NULL "
+	 "AND enable_auto_ndvi = 1", xdb_prefix, cvg_name);
+    free (xdb_prefix);
+    ret = sqlite3_get_table (sqlite, sql, &results, &rows, &columns, NULL);
+    sqlite3_free (sql);
+    if (ret != SQLITE_OK)
+	goto error;
+    for (i = 1; i <= rows; i++)
+      {
+	  const char *red = results[(i * columns) + 0];
+	  const char *green = results[(i * columns) + 1];
+	  const char *nir = results[(i * columns) + 2];
+	  *red_band = atoi (red);
+	  *green_band = atoi (green);
+	  *nir_band = atoi (nir);
+	  cnt++;
+      }
+    sqlite3_free_table (results);
+    if (cnt == 1)
+	return 1;
+
+  error:
+    return 0;
+}
+
 static void
 common_write_ndvi_ascii_grid (int by_section, sqlite3_context * context,
-			      int argc, sqlite3_value ** argv)
+			      int argc, sqlite3_value ** argv, int ndwi_mode)
 {
-/* common export NDVI ASCII Grid implementation */
+/* common export NDVI/NDWI ASCII Grid implementation */
     int err = 0;
     const char *db_prefix = NULL;
     const char *cvg_name;
@@ -8630,7 +8692,8 @@ common_write_ndvi_ascii_grid (int by_section, sqlite3_context * context,
     sqlite3_int64 section_id = 0;
     int width;
     int height;
-    int red_band;
+    int red_band = -1;
+    int green_band = -1;
     int nir_band;
     const unsigned char *blob;
     int blob_sz;
@@ -8670,18 +8733,14 @@ common_write_ndvi_ascii_grid (int by_section, sqlite3_context * context,
 	      err = 1;
 	  if (sqlite3_value_type (argv[5]) != SQLITE_INTEGER)
 	      err = 1;
-	  if (sqlite3_value_type (argv[6]) != SQLITE_INTEGER)
+	  if (sqlite3_value_type (argv[6]) != SQLITE_BLOB)
 	      err = 1;
-	  if (sqlite3_value_type (argv[7]) != SQLITE_INTEGER)
+	  if (sqlite3_value_type (argv[7]) != SQLITE_INTEGER
+	      && sqlite3_value_type (argv[7]) != SQLITE_FLOAT)
 	      err = 1;
-	  if (sqlite3_value_type (argv[8]) != SQLITE_BLOB)
+	  if (argc > 8 && sqlite3_value_type (argv[8]) != SQLITE_INTEGER)
 	      err = 1;
-	  if (sqlite3_value_type (argv[9]) != SQLITE_INTEGER
-	      && sqlite3_value_type (argv[9]) != SQLITE_FLOAT)
-	      err = 1;
-	  if (argc > 10 && sqlite3_value_type (argv[10]) != SQLITE_INTEGER)
-	      err = 1;
-	  if (argc > 11 && sqlite3_value_type (argv[11]) != SQLITE_INTEGER)
+	  if (argc > 9 && sqlite3_value_type (argv[9]) != SQLITE_INTEGER)
 	      err = 1;
       }
     else
@@ -8700,18 +8759,14 @@ common_write_ndvi_ascii_grid (int by_section, sqlite3_context * context,
 	      err = 1;
 	  if (sqlite3_value_type (argv[4]) != SQLITE_INTEGER)
 	      err = 1;
-	  if (sqlite3_value_type (argv[5]) != SQLITE_INTEGER)
+	  if (sqlite3_value_type (argv[5]) != SQLITE_BLOB)
 	      err = 1;
-	  if (sqlite3_value_type (argv[6]) != SQLITE_INTEGER)
+	  if (sqlite3_value_type (argv[6]) != SQLITE_INTEGER
+	      && sqlite3_value_type (argv[6]) != SQLITE_FLOAT)
 	      err = 1;
-	  if (sqlite3_value_type (argv[7]) != SQLITE_BLOB)
+	  if (argc > 7 && sqlite3_value_type (argv[7]) != SQLITE_INTEGER)
 	      err = 1;
-	  if (sqlite3_value_type (argv[8]) != SQLITE_INTEGER
-	      && sqlite3_value_type (argv[8]) != SQLITE_FLOAT)
-	      err = 1;
-	  if (argc > 9 && sqlite3_value_type (argv[9]) != SQLITE_INTEGER)
-	      err = 1;
-	  if (argc > 10 && sqlite3_value_type (argv[10]) != SQLITE_INTEGER)
+	  if (argc > 8 && sqlite3_value_type (argv[8]) != SQLITE_INTEGER)
 	      err = 1;
       }
     if (err)
@@ -8731,21 +8786,19 @@ common_write_ndvi_ascii_grid (int by_section, sqlite3_context * context,
 	  path = (const char *) sqlite3_value_text (argv[3]);
 	  width = sqlite3_value_int (argv[4]);
 	  height = sqlite3_value_int (argv[5]);
-	  red_band = sqlite3_value_int (argv[6]);
-	  nir_band = sqlite3_value_int (argv[7]);
-	  blob = sqlite3_value_blob (argv[8]);
-	  blob_sz = sqlite3_value_bytes (argv[8]);
-	  if (sqlite3_value_type (argv[9]) == SQLITE_INTEGER)
+	  blob = sqlite3_value_blob (argv[6]);
+	  blob_sz = sqlite3_value_bytes (argv[6]);
+	  if (sqlite3_value_type (argv[7]) == SQLITE_INTEGER)
 	    {
-		int ival = sqlite3_value_int (argv[9]);
+		int ival = sqlite3_value_int (argv[7]);
 		resolution = ival;
 	    }
 	  else
-	      resolution = sqlite3_value_double (argv[9]);
-	  if (argc > 10)
-	      is_centered = sqlite3_value_int (argv[10]);
-	  if (argc > 11)
-	      decimal_digits = sqlite3_value_int (argv[11]);
+	      resolution = sqlite3_value_double (argv[7]);
+	  if (argc > 8)
+	      is_centered = sqlite3_value_int (argv[8]);
+	  if (argc > 9)
+	      decimal_digits = sqlite3_value_int (argv[9]);
       }
     else
       {
@@ -8756,21 +8809,19 @@ common_write_ndvi_ascii_grid (int by_section, sqlite3_context * context,
 	  path = (const char *) sqlite3_value_text (argv[2]);
 	  width = sqlite3_value_int (argv[3]);
 	  height = sqlite3_value_int (argv[4]);
-	  red_band = sqlite3_value_int (argv[5]);
-	  nir_band = sqlite3_value_int (argv[6]);
-	  blob = sqlite3_value_blob (argv[7]);
-	  blob_sz = sqlite3_value_bytes (argv[7]);
-	  if (sqlite3_value_type (argv[8]) == SQLITE_INTEGER)
+	  blob = sqlite3_value_blob (argv[5]);
+	  blob_sz = sqlite3_value_bytes (argv[5]);
+	  if (sqlite3_value_type (argv[6]) == SQLITE_INTEGER)
 	    {
-		int ival = sqlite3_value_int (argv[8]);
+		int ival = sqlite3_value_int (argv[6]);
 		resolution = ival;
 	    }
 	  else
-	      resolution = sqlite3_value_double (argv[8]);
-	  if (argc > 9)
-	      is_centered = sqlite3_value_int (argv[9]);
-	  if (argc > 10)
-	      decimal_digits = sqlite3_value_int (argv[10]);
+	      resolution = sqlite3_value_double (argv[6]);
+	  if (argc > 7)
+	      is_centered = sqlite3_value_int (argv[7]);
+	  if (argc > 8)
+	      decimal_digits = sqlite3_value_int (argv[8]);
       }
 
     if (decimal_digits < 1)
@@ -8844,6 +8895,13 @@ common_write_ndvi_ascii_grid (int by_section, sqlite3_context * context,
 	  sqlite3_result_int (context, -1);
 	  return;
       }
+/* attempting to retrieve the Default Band NDVI selection */
+    if (!do_retrieve_ndvi_band_selection
+	(sqlite, db_prefix, cvg_name, &red_band, &green_band, &nir_band))
+      {
+	  sqlite3_result_int (context, -1);
+	  return;
+      }
 
     if (by_section)
       {
@@ -8857,9 +8915,11 @@ common_write_ndvi_ascii_grid (int by_section, sqlite3_context * context,
 							    miny, maxx, maxy,
 							    width, height,
 							    red_band,
+							    green_band,
 							    nir_band,
 							    is_centered,
-							    decimal_digits);
+							    decimal_digits,
+							    ndwi_mode);
       }
     else
       {
@@ -8869,8 +8929,9 @@ common_write_ndvi_ascii_grid (int by_section, sqlite3_context * context,
 						    coverage, resolution,
 						    minx, miny, maxx, maxy,
 						    width, height, red_band,
-						    nir_band, is_centered,
-						    decimal_digits);
+						    green_band, nir_band,
+						    is_centered, decimal_digits,
+						    ndwi_mode);
       }
     if (ret != RL2_OK)
       {
@@ -8893,21 +8954,19 @@ fnct_WriteNdviAsciiGrid (sqlite3_context * context, int argc,
 {
 /* SQL function:
 / WriteNdviAsciiGrid(text db_prefix, text coverage, text ascii_path, 
-/                    int width, int height, int red_band, int nir_band, 
-/                    BLOB geom, double resolution)
+/                    int width, int height, BLOB geom, double resolution)
 / WriteNdviAsciiGrid(text db_prefix, text coverage, text ascii_path, 
-/                    int width, int height, int red_band, int nir_band, 
-/                    BLOB geom, double resolution, int is_centered)
+/                    int width, int height, BLOB geom, double resolution,
+/                    int is_centered)
 / WriteNdviAsciiGrid(text db_prefix, text coverage, text ascii_path, 
-/                    int width, int height, int red_band, int nir_band, 
-/                    BLOB geom, double resolution, int is_centered, 
-/                    int decimal_digits)
+/                    int width, int height, BLOB geom, double resolution, 
+/                    int is_centered, int decimal_digits)
 /
 / will return 1 (TRUE, success) or 0 (FALSE, failure)
 / or -1 (INVALID ARGS)
 /
 */
-    common_write_ndvi_ascii_grid (0, context, argc, argv);
+    common_write_ndvi_ascii_grid (0, context, argc, argv, 0);
 }
 
 static void
@@ -8917,23 +8976,64 @@ fnct_WriteSectionNdviAsciiGrid (sqlite3_context * context, int argc,
 /* SQL function:
 / WriteSectionNdviAsciiGrid(text db_prefix, text coverage, int section_id,
 /                           text ascii_path, int width, int height, 
-/                           int red_band, int nir_band, BLOB geom, 
-/                           double resolution)
+/                           BLOB geom, double resolution)
 / WriteSectionNdviAsciiGrid(text db_prefix, text coverage, int section_id,
 /                           text ascii_path, int width, int height,
-/                           int red_band, int nir_band, BLOB geom, 
-/                           double resolution, int is_centered)
+/                           BLOB geom, double resolution, int is_centered)
 / WriteSectionNdviAsciiGrid(text db_prefix, text coverage, int section_id,
 /                           text ascii_path, int width, int height,
-/                           int red_band, int nir_band, BLOB geom, 
-/                           double resolution, int is_centered,
+/                           BLOB geom, double resolution, int is_centered,
 /                           int decimal_digits)
 /
 / will return 1 (TRUE, success) or 0 (FALSE, failure)
 / or -1 (INVALID ARGS)
 /
 */
-    common_write_ndvi_ascii_grid (1, context, argc, argv);
+    common_write_ndvi_ascii_grid (1, context, argc, argv, 0);
+}
+
+static void
+fnct_WriteNdwiAsciiGrid (sqlite3_context * context, int argc,
+			 sqlite3_value ** argv)
+{
+/* SQL function:
+/ WriteNdwiAsciiGrid(text db_prefix, text coverage, text ascii_path, 
+/                    int width, int height, BLOB geom, double resolution)
+/ WriteNdwiAsciiGrid(text db_prefix, text coverage, text ascii_path, 
+/                    int width, int height, BLOB geom, double resolution,
+/                    int is_centered)
+/ WriteNdwiAsciiGrid(text db_prefix, text coverage, text ascii_path, 
+/                    int width, int height, BLOB geom, double resolution,
+/                    int is_centered, int decimal_digits)
+/
+/ will return 1 (TRUE, success) or 0 (FALSE, failure)
+/ or -1 (INVALID ARGS)
+/
+*/
+    common_write_ndvi_ascii_grid (0, context, argc, argv, 1);
+}
+
+static void
+fnct_WriteSectionNdwiAsciiGrid (sqlite3_context * context, int argc,
+				sqlite3_value ** argv)
+{
+/* SQL function:
+/ WriteSectionNdwiAsciiGrid(text db_prefix, text coverage, int section_id,
+/                           text ascii_path, int width, int height, 
+/                           BLOB geom, double resolution)
+/ WriteSectionNdwiAsciiGrid(text db_prefix, text coverage, int section_id,
+/                           text ascii_path, int width, int height,
+/                           BLOB geom, double resolution, int is_centered)
+/ WriteSectionNdwiAsciiGrid(text db_prefix, text coverage, int section_id,
+/                           text ascii_path, int width, int height,
+/                           BLOB geom, double resolution, int is_centered,
+/                           int decimal_digits)
+/
+/ will return 1 (TRUE, success) or 0 (FALSE, failure)
+/ or -1 (INVALID ARGS)
+/
+*/
+    common_write_ndvi_ascii_grid (1, context, argc, argv, 1);
 }
 
 static void
@@ -9887,7 +9987,7 @@ fnct_GetMapImageFromWMS (sqlite3_context * context, int argc,
 
 static void
 fnct_GetImageFromMapConfiguration (sqlite3_context * context, int argc,
-			    sqlite3_value ** argv)
+				   sqlite3_value ** argv)
 {
 /* SQL function:
 / GetImageFromMapConfiguration(text mapConf, BLOB geom, int width,
@@ -9958,8 +10058,8 @@ fnct_GetImageFromMapConfiguration (sqlite3_context * context, int argc,
     data = sqlite3_user_data (context);
 
     if (rl2_image_blob_from_map_config
-	(sqlite, data, mapconf, blob, blob_sz, width, height, format, quality, reaspect, &image,
-	 &image_size) != RL2_OK)
+	(sqlite, data, mapconf, blob, blob_sz, width, height, format, quality,
+	 reaspect, &image, &image_size) != RL2_OK)
 	sqlite3_result_null (context);
     else
 	sqlite3_result_blob (context, image, image_size, free);
@@ -11343,7 +11443,7 @@ register_rl2_sql_functions (void *p_db, const void *p_data)
     struct rl2_private_data *priv_data = (struct rl2_private_data *) p_data;
     const char *security_level;
     if (priv_data != NULL)
-	  priv_data->labeling.sqlite = db;
+	priv_data->labeling.sqlite = db;
     sqlite3_create_function (db, "rl2_version", 0,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, 0,
 			     fnct_rl2_version, 0, 0);
@@ -12051,7 +12151,7 @@ register_rl2_sql_functions (void *p_db, const void *p_data)
 			     fnct_GetMapImageFromWMS, 0, 0);
     sqlite3_create_function (db, "RL2_GetMapImageFromWMS", 10,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
-			     fnct_GetMapImageFromWMS, 0, 0);			     
+			     fnct_GetMapImageFromWMS, 0, 0);
     sqlite3_create_function (db, "GetImageFromMapConfiguration", 4,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
 			     fnct_GetImageFromMapConfiguration, 0, 0);
@@ -12815,42 +12915,75 @@ register_rl2_sql_functions (void *p_db, const void *p_data)
 	  sqlite3_create_function (db, "RL2_WriteSectionAsciiGrid", 10,
 				   SQLITE_UTF8, priv_data,
 				   fnct_WriteSectionAsciiGrid, 0, 0);
+	  sqlite3_create_function (db, "WriteNdviAsciiGrid", 7, SQLITE_UTF8,
+				   priv_data, fnct_WriteNdviAsciiGrid, 0, 0);
+	  sqlite3_create_function (db, "RL2_WriteNdviAsciiGrid", 7,
+				   SQLITE_UTF8, priv_data,
+				   fnct_WriteNdviAsciiGrid, 0, 0);
+	  sqlite3_create_function (db, "WriteNdviAsciiGrid", 8, SQLITE_UTF8,
+				   priv_data, fnct_WriteNdviAsciiGrid, 0, 0);
+	  sqlite3_create_function (db, "RL2_WriteNdviAsciiGrid", 8,
+				   SQLITE_UTF8, priv_data,
+				   fnct_WriteNdviAsciiGrid, 0, 0);
 	  sqlite3_create_function (db, "WriteNdviAsciiGrid", 9, SQLITE_UTF8,
 				   priv_data, fnct_WriteNdviAsciiGrid, 0, 0);
 	  sqlite3_create_function (db, "RL2_WriteNdviAsciiGrid", 9,
 				   SQLITE_UTF8, priv_data,
 				   fnct_WriteNdviAsciiGrid, 0, 0);
-	  sqlite3_create_function (db, "WriteNdviAsciiGrid", 10, SQLITE_UTF8,
-				   priv_data, fnct_WriteNdviAsciiGrid, 0, 0);
-	  sqlite3_create_function (db, "RL2_WriteNdviAsciiGrid", 10,
+	  sqlite3_create_function (db, "WriteSectionNdviAsciiGrid", 8,
 				   SQLITE_UTF8, priv_data,
-				   fnct_WriteNdviAsciiGrid, 0, 0);
-	  sqlite3_create_function (db, "WriteNdviAsciiGrid", 11, SQLITE_UTF8,
-				   priv_data, fnct_WriteNdviAsciiGrid, 0, 0);
-	  sqlite3_create_function (db, "RL2_WriteNdviAsciiGrid", 11,
+				   fnct_WriteSectionNdviAsciiGrid, 0, 0);
+	  sqlite3_create_function (db, "RL2_WriteSectionNdviAsciiGrid", 8,
 				   SQLITE_UTF8, priv_data,
-				   fnct_WriteNdviAsciiGrid, 0, 0);
+				   fnct_WriteSectionNdviAsciiGrid, 0, 0);
+	  sqlite3_create_function (db, "WriteSectionNdviAsciiGrid", 9,
+				   SQLITE_UTF8, 0,
+				   fnct_WriteSectionNdviAsciiGrid, 0, 0);
+	  sqlite3_create_function (db, "RL2_WriteSectionNdviAsciiGrid", 9,
+				   SQLITE_UTF8, priv_data,
+				   fnct_WriteSectionNdviAsciiGrid, 0, 0);
 	  sqlite3_create_function (db, "WriteSectionNdviAsciiGrid", 10,
+				   SQLITE_UTF8, 0,
+				   fnct_WriteSectionNdviAsciiGrid, 0, 0);
+	  sqlite3_create_function (db, "RL2_WriteSectionNdviAsciiGrid", 10,
 				   SQLITE_UTF8, priv_data,
 				   fnct_WriteSectionNdviAsciiGrid, 0, 0);
 	  sqlite3_create_function (db, "RL2_WriteSectionNdviAsciiGrid", 10,
 				   SQLITE_UTF8, priv_data,
 				   fnct_WriteSectionNdviAsciiGrid, 0, 0);
-	  sqlite3_create_function (db, "WriteSectionNdviAsciiGrid", 11,
+	  sqlite3_create_function (db, "WriteNdwiAsciiGrid", 7, SQLITE_UTF8,
+				   priv_data, fnct_WriteNdwiAsciiGrid, 0, 0);
+	  sqlite3_create_function (db, "RL2_WriteNdwiAsciiGrid", 7,
+				   SQLITE_UTF8, priv_data,
+				   fnct_WriteNdwiAsciiGrid, 0, 0);
+	  sqlite3_create_function (db, "WriteNdwiAsciiGrid", 8, SQLITE_UTF8,
+				   priv_data, fnct_WriteNdwiAsciiGrid, 0, 0);
+	  sqlite3_create_function (db, "RL2_WriteNdwiAsciiGrid", 8,
+				   SQLITE_UTF8, priv_data,
+				   fnct_WriteNdwiAsciiGrid, 0, 0);
+	  sqlite3_create_function (db, "WriteNdwiAsciiGrid", 9, SQLITE_UTF8,
+				   priv_data, fnct_WriteNdwiAsciiGrid, 0, 0);
+	  sqlite3_create_function (db, "RL2_WriteNdwiAsciiGrid", 9,
+				   SQLITE_UTF8, priv_data,
+				   fnct_WriteNdwiAsciiGrid, 0, 0);
+	  sqlite3_create_function (db, "WriteSectionNdwiAsciiGrid", 8,
+				   SQLITE_UTF8, priv_data,
+				   fnct_WriteSectionNdwiAsciiGrid, 0, 0);
+	  sqlite3_create_function (db, "RL2_WriteSectionNdwiAsciiGrid", 8,
+				   SQLITE_UTF8, priv_data,
+				   fnct_WriteSectionNdwiAsciiGrid, 0, 0);
+	  sqlite3_create_function (db, "WriteSectionNdwiAsciiGrid", 9,
 				   SQLITE_UTF8, 0,
-				   fnct_WriteSectionNdviAsciiGrid, 0, 0);
-	  sqlite3_create_function (db, "RL2_WriteSectionNdviAsciiGrid", 11,
+				   fnct_WriteSectionNdwiAsciiGrid, 0, 0);
+	  sqlite3_create_function (db, "RL2_WriteSectionNdwiAsciiGrid", 9,
 				   SQLITE_UTF8, priv_data,
-				   fnct_WriteSectionNdviAsciiGrid, 0, 0);
-	  sqlite3_create_function (db, "WriteSectionNdviAsciiGrid", 12,
+				   fnct_WriteSectionNdwiAsciiGrid, 0, 0);
+	  sqlite3_create_function (db, "WriteSectionNdwiAsciiGrid", 10,
 				   SQLITE_UTF8, 0,
-				   fnct_WriteSectionNdviAsciiGrid, 0, 0);
-	  sqlite3_create_function (db, "RL2_WriteSectionNdviAsciiGrid", 12,
+				   fnct_WriteSectionNdwiAsciiGrid, 0, 0);
+	  sqlite3_create_function (db, "RL2_WriteSectionNdwiAsciiGrid", 10,
 				   SQLITE_UTF8, priv_data,
-				   fnct_WriteSectionNdviAsciiGrid, 0, 0);
-	  sqlite3_create_function (db, "RL2_WriteSectionNdviAsciiGrid", 12,
-				   SQLITE_UTF8, priv_data,
-				   fnct_WriteSectionNdviAsciiGrid, 0, 0);
+				   fnct_WriteSectionNdwiAsciiGrid, 0, 0);
       }
 }
 
@@ -12894,7 +13027,7 @@ init_rl2_extension (sqlite3 * db, char **pzErrMsg,
 
 #if !(defined _WIN32) || defined(__MINGW32__)
 /* MSVC is unable to understand this declaration */
-__attribute__ ((visibility ("default")))
+__attribute__((visibility ("default")))
 #endif
      RL2_DECLARE int
 	 sqlite3_modrasterlite_init (sqlite3 * db, char **pzErrMsg,

@@ -129,7 +129,7 @@ struct aux_vector_render
     int with_faces;
     int with_edge_or_link_seeds;
     int with_face_seeds;
-    int has_labels;
+    int mode_labels;
     struct aux_raster_image *output;
 };
 
@@ -7970,7 +7970,6 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
     rl2VariantArrayPtr variant = NULL;
     rl2GraphicsContextPtr ctx = NULL;
     rl2GraphicsContextPtr ctx_labels = NULL;
-    int has_labels = 0;
     unsigned char *rgb = NULL;
     unsigned char *alpha = NULL;
     int half_transparent;
@@ -8208,13 +8207,6 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
 	    {
 		/* using the Canvas Base Graphics Context */
 		ctx = rl2_get_canvas_ctx (canvas, RL2_CANVAS_BASE_CTX);
-	    }
-	  has_labels = rl2_style_has_labels (lyr_stl);
-	  if (has_labels)
-	    {
-		ctx_labels = rl2_get_canvas_ctx (canvas, RL2_CANVAS_LABELS_CTX);
-		if (ctx_labels == NULL)
-		    goto error;
 	    }
 	  if (ctx == NULL)
 	      goto error;
@@ -8712,7 +8704,6 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
 		      if (geom != NULL)
 			{
 			    /* drawing a styled Feature */
-			    int has_labels;
 			    int scale_forbidden = 0;
 			    symbolizer = NULL;
 			    if (lyr_stl != NULL)
@@ -8720,14 +8711,13 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
 				    rl2_get_symbolizer_from_feature_type_style
 				    (lyr_stl, scale, variant, &scale_forbidden);
 			    if (!scale_forbidden)
-				rl2_draw_vector_feature (ctx, ctx_labels,
-							 sqlite, priv_data,
+			    {
+				rl2_draw_vector_feature (ctx, sqlite, priv_data,
 							 symbolizer, height,
 							 minx, miny, maxx, maxy,
 							 x_res, y_res, geom,
-							 variant, &has_labels);
-			    if (has_labels)
-				aux->has_labels = 1;
+							 variant, aux->mode_labels);
+						 }
 			    rl2_destroy_geometry (geom);
 			}
 		  }
@@ -8952,9 +8942,12 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
     if (variant != NULL)
 	rl2_destroy_variant_array (variant);
     if (stmt != NULL)
-	sqlite3_finalize (stmt);
-    aux->output->img = NULL;
-    aux->output->img_size = 0;
+		sqlite3_finalize (stmt);
+	if (aux->output != NULL)
+	{
+		aux->output->img = NULL;
+		aux->output->img_size = 0;
+	}
     return RL2_ERROR;
 }
 
@@ -9082,7 +9075,7 @@ rl2_map_image_blob_from_vector (sqlite3 * sqlite, const void *data,
     aux.with_faces = 0;
     aux.with_edge_or_link_seeds = 1;
     aux.with_face_seeds = 1;
-    aux.has_labels = 0;
+    aux.mode_labels = 0;
     aux.output = malloc (sizeof (struct aux_raster_image));
     aux.output->bg_red = 255;
     aux.output->bg_green = 255;
@@ -9138,7 +9131,7 @@ rl2_map_image_blob_from_vector (sqlite3 * sqlite, const void *data,
 	  if (ctx_face_seeds == NULL)
 	      goto error;
 	  aux.canvas =
-	      rl2_create_topology_canvas (ctx, ctx_labels, ctx_nodes, ctx_edges,
+	      rl2_create_topology_canvas (ctx, ctx_nodes, ctx_edges,
 					  ctx_faces, ctx_edge_seeds,
 					  ctx_face_seeds);
       }
@@ -9155,13 +9148,13 @@ rl2_map_image_blob_from_vector (sqlite3 * sqlite, const void *data,
 	  if (ctx_link_seeds == NULL)
 	      goto error;
 	  aux.canvas =
-	      rl2_create_network_canvas (ctx, ctx_labels, ctx_nodes, ctx_links,
+	      rl2_create_network_canvas (ctx, ctx_nodes, ctx_links,
 					 ctx_link_seeds);
       }
     else
       {
 	  /* generic Vector canvas */
-	  aux.canvas = rl2_create_vector_canvas (ctx, ctx_labels);
+	  aux.canvas = rl2_create_vector_canvas (ctx);
       }
     if (aux.canvas == NULL)
 	goto error;
@@ -9297,7 +9290,7 @@ rl2_styled_map_image_blob_from_vector (sqlite3 * sqlite, const void *data,
     aux.with_faces = 0;
     aux.with_edge_or_link_seeds = 1;
     aux.with_face_seeds = 1;
-    aux.has_labels = 0;
+    aux.mode_labels = 0;
     aux.output = malloc (sizeof (struct aux_raster_image));
     aux.output->bg_red = 255;
     aux.output->bg_green = 255;
@@ -9353,7 +9346,7 @@ rl2_styled_map_image_blob_from_vector (sqlite3 * sqlite, const void *data,
 	  if (ctx_face_seeds == NULL)
 	      goto error;
 	  aux.canvas =
-	      rl2_create_topology_canvas (ctx, ctx_labels, ctx_nodes, ctx_edges,
+	      rl2_create_topology_canvas (ctx, ctx_nodes, ctx_edges,
 					  ctx_faces, ctx_edge_seeds,
 					  ctx_face_seeds);
       }
@@ -9370,13 +9363,13 @@ rl2_styled_map_image_blob_from_vector (sqlite3 * sqlite, const void *data,
 	  if (ctx_link_seeds == NULL)
 	      goto error;
 	  aux.canvas =
-	      rl2_create_network_canvas (ctx, ctx_labels, ctx_nodes, ctx_links,
+	      rl2_create_network_canvas (ctx, ctx_nodes, ctx_links,
 					 ctx_link_seeds);
       }
     else
       {
 	  /* generic Vector canvas */
-	  aux.canvas = rl2_create_vector_canvas (ctx, ctx_labels);
+	  aux.canvas = rl2_create_vector_canvas (ctx);
       }
     if (aux.canvas == NULL)
 	goto error;
@@ -9473,8 +9466,7 @@ rl2_map_image_paint_from_vector (sqlite3 * sqlite, const void *data,
 				 const char *cvg_name,
 				 const unsigned char *blob, int blob_sz,
 				 int reaspect, const char *style_name,
-				 const unsigned char *xml_style,
-				 int *has_labels)
+				 const unsigned char *xml_style)
 {
 /* rendering a Map Image from a Vector Coverage - Graphics Context */
     struct aux_vector_render aux;
@@ -9527,12 +9519,8 @@ rl2_map_image_paint_from_vector (sqlite3 * sqlite, const void *data,
     aux.with_faces = 0;
     aux.with_edge_or_link_seeds = 1;
     aux.with_face_seeds = 1;
-    aux.has_labels = 0;
+    aux.mode_labels = 0;
     ret = do_paint_map_from_vector (&aux);
-    if (aux.has_labels)
-	*has_labels = 1;
-    else
-	*has_labels = 0;
     return ret;
 }
 
@@ -9545,7 +9533,7 @@ rl2_map_image_paint_from_vector_ex (sqlite3 * sqlite, const void *data,
 				    const unsigned char *xml_style,
 				    int with_nodes, int with_edges_or_links,
 				    int with_faces, int with_edge_or_link_seeds,
-				    int with_face_seeds, int *has_labels)
+				    int with_face_seeds)
 {
 /* rendering a Map Image from a Vector Coverage - Graphics Context - extended */
     struct aux_vector_render aux;
@@ -9598,12 +9586,72 @@ rl2_map_image_paint_from_vector_ex (sqlite3 * sqlite, const void *data,
     aux.with_faces = with_faces;
     aux.with_edge_or_link_seeds = with_edge_or_link_seeds;
     aux.with_face_seeds = with_face_seeds;
-    aux.has_labels = 0;
+    aux.mode_labels = 0;
     ret = do_paint_map_from_vector (&aux);
-    if (aux.has_labels)
-	*has_labels = 1;
-    else
-	*has_labels = 0;
+    return ret;
+}
+
+RL2_DECLARE int
+rl2_map_image_paint_labels (sqlite3 * sqlite, const void *data,
+				 rl2CanvasPtr canvas, const char *db_prefix,
+				 const char *cvg_name,
+				 const unsigned char *blob, int blob_sz,
+				 int reaspect, const char *style_name,
+				 const unsigned char *xml_style)
+{
+/* rendering Labels from a Vector Coverage - Graphics Context */
+    struct aux_vector_render aux;
+    rl2GraphicsContextPtr ctx;
+    int width;
+    int height;
+    int ret;
+
+    if (canvas == NULL)
+	return RL2_ERROR;
+    ctx = rl2_get_canvas_ctx (canvas, RL2_CANVAS_BASE_CTX);
+    if (ctx == NULL)
+	return RL2_ERROR;
+    if (rl2_graph_context_get_dimensions (ctx, &width, &height) != RL2_OK)
+	return RL2_ERROR;
+
+    if (reaspect == 0)
+      {
+	  /* testing for consistent aspect ratios */
+	  double aspect_org =
+	      do_compute_bbox_aspect_ratio (sqlite, blob, blob_sz);
+	  double aspect_dst = (double) width / (double) height;
+	  double confidence = aspect_org / 100.0;
+	  aspect_org = do_compute_bbox_aspect_ratio (sqlite, blob, blob_sz);
+	  if (aspect_org < 0.0)
+	      return RL2_ERROR;
+	  aspect_dst = (double) width / (double) height;
+	  confidence = aspect_org / 100.0;
+	  if (aspect_dst >= (aspect_org - confidence)
+	      && aspect_dst <= (aspect_org + confidence))
+	      ;
+	  else
+	      return RL2_ERROR;
+      }
+
+    aux.sqlite = sqlite;
+    aux.data = data;
+    aux.canvas = canvas;
+    aux.db_prefix = db_prefix;
+    aux.cvg_name = cvg_name;
+    aux.blob = blob;
+    aux.blob_sz = blob_sz;
+    aux.width = width;
+    aux.height = height;
+    aux.style_name = style_name;
+    aux.xml_style = xml_style;
+    aux.output = NULL;
+    aux.with_nodes = 1;
+    aux.with_edges_or_links = 1;
+    aux.with_faces = 0;
+    aux.with_edge_or_link_seeds = 1;
+    aux.with_face_seeds = 1;
+    aux.mode_labels = 1;
+    ret = do_paint_map_from_vector (&aux);
     return ret;
 }
 

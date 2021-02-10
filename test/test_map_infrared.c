@@ -1304,11 +1304,11 @@ do_export_map_image (sqlite3 * sqlite, const char *coverage,
 }
 
 static int
-do_export_ndvi (sqlite3 * sqlite, const char *coverage, gaiaGeomCollPtr geom)
+do_export_ndvi (sqlite3 * sqlite, const char *coverage, gaiaGeomCollPtr geom, int ndwi_mode)
 {
 /* exporting an NDVI Ascii Grid */
-    char *sql;
-    const char *path = "./ndvi_ascii_grid.asc";
+    const char *sql;
+    const char *path;
     sqlite3_stmt *stmt;
     int ret;
     double x_res;
@@ -1327,7 +1327,16 @@ do_export_ndvi (sqlite3 * sqlite, const char *coverage, gaiaGeomCollPtr geom)
     if (xx_res != yy_res)
 	xx_res = (xx_res + yy_res) / 2.0;
 
-    sql = "SELECT RL2_WriteNdviAsciiGrid('main', ?, ?, ?, ?, ?, ?, ?, ?)";
+if (ndwi_mode)
+{
+    path = "./ndwi_ascii_grid.asc";
+    sql = "SELECT RL2_WriteNdwiAsciiGrid('main', ?, ?, ?, ?, ?, ?)";
+}
+else
+{
+    path = "./ndvi_ascii_grid.asc";
+    sql = "SELECT RL2_WriteNdviAsciiGrid('main', ?, ?, ?, ?, ?, ?)";
+}
     ret = sqlite3_prepare_v2 (sqlite, sql, strlen (sql), &stmt, NULL);
     if (ret != SQLITE_OK)
 	return 0;
@@ -1337,11 +1346,9 @@ do_export_ndvi (sqlite3 * sqlite, const char *coverage, gaiaGeomCollPtr geom)
     sqlite3_bind_text (stmt, 2, path, strlen (path), SQLITE_STATIC);
     sqlite3_bind_int (stmt, 3, 1024);
     sqlite3_bind_int (stmt, 4, 1024);
-    sqlite3_bind_int (stmt, 5, 0);	/* red band */
-    sqlite3_bind_int (stmt, 6, 3);	/* NIR band */
     gaiaToSpatiaLiteBlobWkb (geom, &blob, &blob_size);
-    sqlite3_bind_blob (stmt, 7, blob, blob_size, free);
-    sqlite3_bind_double (stmt, 8, xx_res);
+    sqlite3_bind_blob (stmt, 5, blob, blob_size, free);
+    sqlite3_bind_double (stmt, 6, xx_res);
     ret = sqlite3_step (stmt);
     if (ret == SQLITE_DONE || ret == SQLITE_ROW)
       {
@@ -1351,17 +1358,17 @@ do_export_ndvi (sqlite3 * sqlite, const char *coverage, gaiaGeomCollPtr geom)
     sqlite3_finalize (stmt);
     unlink (path);
     if (!retcode)
-	fprintf (stderr, "ERROR: unable to export \"%s\"\n", path);
+	fprintf (stderr, "cov ERROR: unable to export \"%s\"\n", path);
     return retcode;
 }
 
 static int
 do_export_section_ndvi (sqlite3 * sqlite, const char *coverage,
-			gaiaGeomCollPtr geom)
+			gaiaGeomCollPtr geom, int ndwi_mode)
 {
 /* exporting a Section NDVI Ascii Grid */
-    char *sql;
-    const char *path = "./ndvi_ascii_grid_section.asc";
+    const char *sql;
+    const char *path;
     sqlite3_stmt *stmt;
     int ret;
     double x_res;
@@ -1380,8 +1387,18 @@ do_export_section_ndvi (sqlite3 * sqlite, const char *coverage,
     if (xx_res != yy_res)
 	xx_res = (xx_res + yy_res) / 2.0;
 
+if (ndwi_mode)
+{
+    path = "./ndwi_ascii_grid_section.asc";
     sql =
-	"SELECT RL2_WriteSectionNdviAsciiGrid('main', ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	"SELECT RL2_WriteSectionNdwiAsciiGrid('main', ?, ?, ?, ?, ?, ?, ?)";
+}
+else
+{
+    path = "./ndvi_ascii_grid_section.asc";
+    sql =
+	"SELECT RL2_WriteSectionNdviAsciiGrid('main', ?, ?, ?, ?, ?, ?, ?)";
+}
     ret = sqlite3_prepare_v2 (sqlite, sql, strlen (sql), &stmt, NULL);
     if (ret != SQLITE_OK)
 	return 0;
@@ -1392,11 +1409,9 @@ do_export_section_ndvi (sqlite3 * sqlite, const char *coverage,
     sqlite3_bind_text (stmt, 3, path, strlen (path), SQLITE_STATIC);
     sqlite3_bind_int (stmt, 4, 1024);
     sqlite3_bind_int (stmt, 5, 1024);
-    sqlite3_bind_int (stmt, 6, 0);	/* red band */
-    sqlite3_bind_int (stmt, 7, 3);	/* NIR band */
     gaiaToSpatiaLiteBlobWkb (geom, &blob, &blob_size);
-    sqlite3_bind_blob (stmt, 8, blob, blob_size, free);
-    sqlite3_bind_double (stmt, 9, xx_res);
+    sqlite3_bind_blob (stmt, 6, blob, blob_size, free);
+    sqlite3_bind_double (stmt, 7, xx_res);
     ret = sqlite3_step (stmt);
     if (ret == SQLITE_DONE || ret == SQLITE_ROW)
       {
@@ -1406,7 +1421,7 @@ do_export_section_ndvi (sqlite3 * sqlite, const char *coverage,
     sqlite3_finalize (stmt);
     unlink (path);
     if (!retcode)
-	fprintf (stderr, "ERROR: unable to export \"%s\"\n", path);
+	fprintf (stderr, "sect ERROR: unable to export \"%s\"\n", path);
     return retcode;
 }
 
@@ -2299,15 +2314,6 @@ test_coverage (sqlite3 * sqlite, unsigned char compression, int tile_sz,
 	  *retcode += -41;
 	  return 0;
       }
-    if (ndvi)
-      {
-	  /* NDVI Ascii Grid */
-	  if (!do_export_ndvi (sqlite, coverage, geom))
-	    {
-		*retcode += -101;
-		return 0;
-	    }
-      }
     if (!test_map_image)
 	goto skip;
 
@@ -2384,6 +2390,33 @@ test_coverage (sqlite3 * sqlite, unsigned char compression, int tile_sz,
 	  *retcode += -102;
 	  return 0;
       }
+    if (ndvi)
+      {
+	  /* NDVI Ascii Grid */
+	  if (!do_export_ndvi (sqlite, coverage, geom, 0))
+	    {
+		*retcode += -101;
+		return 0;
+	    }
+		/* Section NDVI Ascii Grid */
+		if (!do_export_section_ndvi (sqlite, coverage, geom, 0))
+		  {
+		      *retcode += -102;
+		      return 0;
+		  }
+	  /* NDWI Ascii Grid */
+	  if (!do_export_ndvi (sqlite, coverage, geom, 1))
+	    {
+		*retcode += -101;
+		return 0;
+	    }
+		/* Section NDWI Ascii Grid */
+		if (!do_export_section_ndvi (sqlite, coverage, geom, 1))
+		  {
+		      *retcode += -102;
+		      return 0;
+		  }
+	    }
     if (!do_export_map_image (sqlite, coverage, geom, "ndvi", "jpg", 0))
       {
 	  *retcode += 104;
@@ -2682,15 +2715,6 @@ test_coverage (sqlite3 * sqlite, unsigned char compression, int tile_sz,
 	    {
 		*retcode += -100;
 		return 0;
-	    }
-	  if (ndvi)
-	    {
-		/* Section NDVI Ascii Grid */
-		if (!do_export_section_ndvi (sqlite, coverage, geom))
-		  {
-		      *retcode += -102;
-		      return 0;
-		  }
 	    }
 	  gaiaFreeGeomColl (geom);
       }

@@ -274,8 +274,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected ContrastEnhancement GammaValue %1.2f !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->raster_style->
-			       contrast_enhancement->gamma_value);
+			       lyr->raster_style->contrast_enhancement->
+			       gamma_value);
 		      ret = -19;
 		      goto stop;
 		  }
@@ -316,8 +316,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 			       "Layer <%s><%s> unexpected ChannelSelection RGB=%d Green=%d !!\n",
 			       lyr->prefix, lyr->name,
 			       lyr->raster_style->channel_selection->rgb,
-			       lyr->raster_style->
-			       channel_selection->green_channel);
+			       lyr->raster_style->channel_selection->
+			       green_channel);
 		      ret = -23;
 		      goto stop;
 		  }
@@ -358,8 +358,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 			       "Layer <%s><%s> unexpected ChannelSelection RGB=%d Green=%d !!\n",
 			       lyr->prefix, lyr->name,
 			       lyr->raster_style->channel_selection->rgb,
-			       lyr->raster_style->
-			       channel_selection->gray_channel);
+			       lyr->raster_style->channel_selection->
+			       gray_channel);
 		      ret = -27;
 		      goto stop;
 		  }
@@ -677,8 +677,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected Internal Style Name \"%s\" !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->
-			       topology_internal_style->style_internal_name);
+			       lyr->topology_internal_style->
+			       style_internal_name);
 		      ret = -57;
 		      goto stop;
 		  }
@@ -736,8 +736,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected Internal Style Name \"%s\" !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->
-			       network_internal_style->style_internal_name);
+			       lyr->network_internal_style->
+			       style_internal_name);
 		      ret = -62;
 		      goto stop;
 		  }
@@ -831,10 +831,10 @@ test_map_config (const unsigned char *xml, int *retcode)
 			       "Layer <%s><%s> unexpected PointSymbolizerMarkStroke #%02x%02x%02x !!\n",
 			       lyr->prefix, lyr->name,
 			       lyr->vector_style->point_sym->mark->stroke->red,
-			       lyr->vector_style->point_sym->mark->
-			       stroke->green,
-			       lyr->vector_style->point_sym->mark->
-			       stroke->blue);
+			       lyr->vector_style->point_sym->mark->stroke->
+			       green,
+			       lyr->vector_style->point_sym->mark->stroke->
+			       blue);
 		      ret = -71;
 		      goto stop;
 		  }
@@ -949,8 +949,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected LineSymbolizerStrokeOpacity %1.2f !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->first_line_sym->
-			       stroke->opacity);
+			       lyr->vector_style->first_line_sym->stroke->
+			       opacity);
 		      ret = -82;
 		      goto stop;
 		  }
@@ -959,8 +959,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected LineSymbolizerStrokeWidth %1.2f !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->first_line_sym->
-			       stroke->width);
+			       lyr->vector_style->first_line_sym->stroke->
+			       width);
 		      ret = -83;
 		      goto stop;
 		  }
@@ -969,8 +969,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected LineSymbolizerStrokeDotStyle %d !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->first_line_sym->
-			       stroke->dot_style);
+			       lyr->vector_style->first_line_sym->stroke->
+			       dot_style);
 		      ret = -84;
 		      goto stop;
 		  }
@@ -1071,8 +1071,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected PolygonSymbolizerFillGraphicResource \"%s\" !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->polygon_sym->fill->graphic->
-			       resource);
+			       lyr->vector_style->polygon_sym->fill->
+			       graphic->resource);
 		      ret = -94;
 		      goto stop;
 		  }
@@ -1083,8 +1083,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected PolygonSymbolizerFillGraphicFormat \"%s\" !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->polygon_sym->fill->graphic->
-			       format);
+			       lyr->vector_style->polygon_sym->fill->
+			       graphic->format);
 		      ret = -95;
 		      goto stop;
 		  }
@@ -1099,20 +1099,20 @@ test_map_config (const unsigned char *xml, int *retcode)
 		  }
 		if (lyr->vector_style->polygon_sym->fill->graphic->color->red !=
 		    0xfb
-		    || lyr->vector_style->polygon_sym->fill->graphic->color->
-		    green != 0xe3
-		    || lyr->vector_style->polygon_sym->fill->graphic->color->
-		    blue != 0x46)
+		    || lyr->vector_style->polygon_sym->fill->graphic->
+		    color->green != 0xe3
+		    || lyr->vector_style->polygon_sym->fill->graphic->
+		    color->blue != 0x46)
 		  {
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected PolygonSymbolizerFillGraphicRemapColor #%02x%02x%02x !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->polygon_sym->fill->graphic->
-			       color->red,
-			       lyr->vector_style->polygon_sym->fill->graphic->
-			       color->green,
-			       lyr->vector_style->polygon_sym->fill->graphic->
-			       color->blue);
+			       lyr->vector_style->polygon_sym->fill->
+			       graphic->color->red,
+			       lyr->vector_style->polygon_sym->fill->
+			       graphic->color->green,
+			       lyr->vector_style->polygon_sym->fill->
+			       graphic->color->blue);
 		      ret = -97;
 		      goto stop;
 		  }
@@ -1160,8 +1160,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected PolygonSymbolizerStrokeDotStyle %d !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->polygon_sym->
-			       stroke->dot_style);
+			       lyr->vector_style->polygon_sym->stroke->
+			       dot_style);
 		      ret = -102;
 		      goto stop;
 		  }
@@ -1189,8 +1189,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected PolygonSymbolizerPerpendicularOffset %1.2f !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->polygon_sym->
-			       perpendicular_offset);
+			       lyr->vector_style->
+			       polygon_sym->perpendicular_offset);
 		      ret = -104;
 		      goto stop;
 		  }
@@ -1309,8 +1309,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected TextSymbolizerPointPlacementRotation %1.2f !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->text_sym->placement->
-			       point->rotation);
+			       lyr->vector_style->text_sym->placement->point->
+			       rotation);
 		      ret = -117;
 		      goto stop;
 		  }
@@ -1320,8 +1320,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected TextSymbolizerPointPlacementAnchorX %1.2f !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->text_sym->placement->
-			       point->anchor_x);
+			       lyr->vector_style->text_sym->placement->point->
+			       anchor_x);
 		      ret = -118;
 		      goto stop;
 		  }
@@ -1331,30 +1331,30 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected TextSymbolizerPointPlacementAnchorY %1.2f !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->text_sym->placement->
-			       point->anchor_y);
+			       lyr->vector_style->text_sym->placement->point->
+			       anchor_y);
 		      ret = -119;
 		      goto stop;
 		  }
-		if (lyr->vector_style->text_sym->placement->
-		    point->displacement_x != 10.1)
+		if (lyr->vector_style->text_sym->placement->point->
+		    displacement_x != 10.1)
 		  {
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected TextSymbolizerPointPlacementDisplacementX %1.2f !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->text_sym->placement->
-			       point->displacement_x);
+			       lyr->vector_style->text_sym->placement->point->
+			       displacement_x);
 		      ret = -120;
 		      goto stop;
 		  }
-		if (lyr->vector_style->text_sym->placement->
-		    point->displacement_y != 0.32)
+		if (lyr->vector_style->text_sym->placement->point->
+		    displacement_y != 0.32)
 		  {
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected TextSymbolizerPointPlacementDisplacementY %1.2f !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->text_sym->placement->
-			       point->displacement_y);
+			       lyr->vector_style->text_sym->placement->point->
+			       displacement_y);
 		      ret = -121;
 		      goto stop;
 		  }
@@ -1401,8 +1401,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected TextSymbolizerHaloFillOpacity %1.2f !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->text_sym->halo->
-			       fill->opacity);
+			       lyr->vector_style->text_sym->halo->fill->
+			       opacity);
 		      ret = -126;
 		      goto stop;
 		  }
@@ -1474,14 +1474,14 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      ret = -133;
 		      goto stop;
 		  }
-		if (lyr->vector_style->text_sym->placement->line->
-		    perpendicular_offset != 1.32)
+		if (lyr->vector_style->text_sym->placement->
+		    line->perpendicular_offset != 1.32)
 		  {
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected TextSymbolizerLinePlacementPerpendicularOffset %1.2f !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->text_sym->placement->line->
-			       perpendicular_offset);
+			       lyr->vector_style->text_sym->placement->
+			       line->perpendicular_offset);
 		      ret = -134;
 		      goto stop;
 		  }
@@ -1490,8 +1490,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected TextSymbolizerLinePlacementIsRepeated %d !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->text_sym->placement->line->
-			       repeated);
+			       lyr->vector_style->text_sym->placement->
+			       line->repeated);
 		      ret = -135;
 		      goto stop;
 		  }
@@ -1501,8 +1501,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected TextSymbolizerLinePlacementInitialGap %1.2f !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->text_sym->placement->line->
-			       initial_gap);
+			       lyr->vector_style->text_sym->placement->
+			       line->initial_gap);
 		      ret = -136;
 		      goto stop;
 		  }
@@ -1511,8 +1511,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected TextSymbolizerLinePlacementGap %1.2f !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->text_sym->placement->line->
-			       gap);
+			       lyr->vector_style->text_sym->placement->
+			       line->gap);
 		      ret = -137;
 		      goto stop;
 		  }
@@ -1521,8 +1521,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected TextSymbolizerLinePlacementIsAligned %d !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->text_sym->placement->line->
-			       aligned);
+			       lyr->vector_style->text_sym->placement->
+			       line->aligned);
 		      ret = -138;
 		      goto stop;
 		  }
@@ -1532,8 +1532,8 @@ test_map_config (const unsigned char *xml, int *retcode)
 		      fprintf (stderr,
 			       "Layer <%s><%s> unexpected TextSymbolizerLinePlacementGeneralizeLine %d !!\n",
 			       lyr->prefix, lyr->name,
-			       lyr->vector_style->text_sym->placement->line->
-			       generalize);
+			       lyr->vector_style->text_sym->placement->
+			       line->generalize);
 		      ret = -139;
 		      goto stop;
 		  }
@@ -1882,6 +1882,216 @@ do_load_xml ()
     return NULL;
 }
 
+static int
+test_rendering (sqlite3 * sqlite, const char *name, const char *mbr)
+{
+/* testing RL2_GetImageFromMapConfiguration() */
+    char *sql;
+    sqlite3_stmt *stmt;
+    int ret;
+    int ok = 0;
+
+    sql = sqlite3_mprintf ("SELECT RL2_GetImageFromMapConfiguration(%Q, %s, "
+			   "1024, 1024, 'image/jpeg', 85)", name, mbr);
+    ret = sqlite3_prepare_v2 (sqlite, sql, strlen (sql), &stmt, NULL);
+    sqlite3_free (sql);
+    if (ret != SQLITE_OK)
+      {
+	  fprintf (stderr, "ERROR: invalid SQL !!!\n");
+	  return -1;
+      }
+    while (1)
+      {
+	  /* scrolling the result set rows */
+	  ret = sqlite3_step (stmt);
+	  if (ret == SQLITE_DONE)
+	      break;		/* end of result set */
+	  if (ret == SQLITE_ROW)
+	    {
+		if (sqlite3_column_type (stmt, 0) == SQLITE_BLOB)
+		    ok = 1;
+		else
+		    fprintf (stderr, "'%s': returned value is not a BLOB !!!\n",
+			     name);
+	    }
+      }
+    sqlite3_finalize (stmt);
+    if (ok)
+	return 0;
+    else
+      {
+	  fprintf (stderr, "ERROR on RL2_GetImageFromMapConfiguration() '%s'\n",
+		   name);
+	  return -1;
+      }
+}
+
+static int
+do_test_rendering ()
+{
+    int result = 0;
+    int ret;
+    sqlite3 *db_handle;
+    void *cache = spatialite_alloc_connection ();
+    void *priv_data = rl2_alloc_private ();
+    const char *db_path = "./map_config.sqlite";
+
+/* opening and initializing the test DB */
+    ret = sqlite3_open_v2 (db_path, &db_handle, SQLITE_OPEN_READONLY, NULL);
+    if (ret != SQLITE_OK)
+      {
+	  fprintf (stderr, "sqlite3_open_v2() #2 error: %s\n",
+		   sqlite3_errmsg (db_handle));
+	  return -1;
+      }
+    spatialite_init_ex (db_handle, cache, 0);
+    rl2_init (db_handle, priv_data, 0);
+
+    ret =
+	test_rendering (db_handle, "test",
+			"BuildMbr(661080.36416380, 4847546.75435066, 661185.84211366, 4847652.23230052, 32632)");
+    if (ret < 0)
+      {
+	  result = ret;
+	  goto stop;
+      }
+
+    ret =
+	test_rendering (db_handle, "test_nir",
+			"BuildMbr(661080.36416380, 4847546.75435066, 661185.84211366, 4847652.23230052, 32632)");
+    if (ret < 0)
+      {
+	  result = ret;
+	  goto stop;
+      }
+
+    ret =
+	test_rendering (db_handle, "test_ndvi",
+			"BuildMbr(661080.36416380, 4847546.75435066, 661185.84211366, 4847652.23230052, 32632)");
+    if (ret < 0)
+      {
+	  result = ret;
+	  goto stop;
+      }
+
+    ret =
+	test_rendering (db_handle, "test_ndwi",
+			"BuildMbr(661080.36416380, 4847546.75435066, 661185.84211366, 4847652.23230052, 32632)");
+    if (ret < 0)
+      {
+	  result = ret;
+	  goto stop;
+      }
+
+    ret =
+	test_rendering (db_handle, "test_topo",
+			"BuildMbr(661080.36416380, 4847546.75435066, 661185.84211366, 4847652.23230052, 32632)");
+    if (ret < 0)
+      {
+	  result = ret;
+	  goto stop;
+      }
+
+    ret =
+	test_rendering (db_handle, "test_network",
+			"BuildMbr(661080.36416380, 4847546.75435066, 661185.84211366, 4847652.23230052, 32632)");
+    if (ret < 0)
+      {
+	  result = ret;
+	  goto stop;
+      }
+
+    ret =
+	test_rendering (db_handle, "test_etopo2",
+			"BuildMbr(1645836.00863381, 4739566.56487609, 1646963.24970982, 4740693.80595209, 3003)");
+    if (ret < 0)
+      {
+	  result = ret;
+	  goto stop;
+      }
+
+    ret =
+	test_rendering (db_handle, "test_srtm",
+			"BuildMbr(1645836.00863381, 4739566.56487609, 1646963.24970982, 4740693.80595209, 3003)");
+    if (ret < 0)
+      {
+	  result = ret;
+	  goto stop;
+      }
+
+    ret =
+	test_rendering (db_handle, "test_terrain",
+			"BuildMbr(1645836.00863381, 4739566.56487609, 1646963.24970982, 4740693.80595209, 3003)");
+    if (ret < 0)
+      {
+	  result = ret;
+	  goto stop;
+      }
+
+    ret =
+	test_rendering (db_handle, "test_aspect",
+			"BuildMbr(1645836.00863381, 4739566.56487609, 1646963.24970982, 4740693.80595209, 3003)");
+    if (ret < 0)
+      {
+	  result = ret;
+	  goto stop;
+      }
+
+    ret =
+	test_rendering (db_handle, "test_elevation",
+			"BuildMbr(1645836.00863381, 4739566.56487609, 1646963.24970982, 4740693.80595209, 3003)");
+    if (ret < 0)
+      {
+	  result = ret;
+	  goto stop;
+      }
+
+    ret =
+	test_rendering (db_handle, "test_rainbow",
+			"BuildMbr(1645836.00863381, 4739566.56487609, 1646963.24970982, 4740693.80595209, 3003)");
+    if (ret < 0)
+      {
+	  result = ret;
+	  goto stop;
+      }
+
+    ret =
+	test_rendering (db_handle, "test_wave",
+			"BuildMbr(1645836.00863381, 4739566.56487609, 1646963.24970982, 4740693.80595209, 3003)");
+    if (ret < 0)
+      {
+	  result = ret;
+	  goto stop;
+      }
+
+    ret =
+	test_rendering (db_handle, "test_sepia",
+			"BuildMbr(1645836.00863381, 4739566.56487609, 1646963.24970982, 4740693.80595209, 3003)");
+    if (ret < 0)
+      {
+	  result = ret;
+	  goto stop;
+      }
+
+    ret =
+	test_rendering (db_handle, "test_ramp",
+			"BuildMbr(1645836.00863381, 4739566.56487609, 1646963.24970982, 4740693.80595209, 3003)");
+    if (ret < 0)
+      {
+	  result = ret;
+	  goto stop;
+      }
+
+/* closing the DB */
+  stop:
+    sqlite3_close (db_handle);
+    spatialite_cleanup_ex (cache);
+    rl2_cleanup_private (priv_data);
+    spatialite_shutdown ();
+
+    return result;
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -1899,7 +2109,7 @@ main (int argc, char *argv[])
     ret = sqlite3_open_v2 (":memory:", &db_handle, SQLITE_OPEN_READONLY, NULL);
     if (ret != SQLITE_OK)
       {
-	  fprintf (stderr, "sqlite3_open_v2() error: %s\n",
+	  fprintf (stderr, "sqlite3_open_v2() #1 error: %s\n",
 		   sqlite3_errmsg (db_handle));
 	  return -1;
       }
@@ -1923,5 +2133,8 @@ main (int argc, char *argv[])
     spatialite_shutdown ();
     if (xml != NULL)
 	free (xml);
+
+/* testing RL2_GetImageFromMapConfiguration() */
+    result = do_test_rendering ();
     return result;
 }

@@ -1559,7 +1559,6 @@ extern "C"
     {
 	int type;
 	void *ref_ctx;
-	void *ref_ctx_labels;
 	void *ref_ctx_nodes;
 	void *ref_ctx_edges;
 	void *ref_ctx_links;
@@ -1568,7 +1567,6 @@ extern "C"
 	void *ref_ctx_link_seeds;
 	void *ref_ctx_face_seeds;
 	int ctx_ready;
-	int ctx_labels_ready;
 	int ctx_nodes_ready;
 	int ctx_edges_ready;
 	int ctx_links_ready;
@@ -1598,7 +1596,6 @@ extern "C"
 	char *xml_style;
 	unsigned char syntetic_band;
 	void *ctx;
-	void *ctx_labels;
 	void *ctx_nodes;
 	void *ctx_edges;
 	void *ctx_faces;
@@ -1608,6 +1605,7 @@ extern "C"
 	void *ctx_link_seeds;
 	rl2CanvasPtr canvas;
 	int valid;
+	int has_labels;
 	struct rl2_priv_map_layer *next;
     } rl2PrivMapLayer;
     typedef rl2PrivMapLayer *rl2PrivMapLayerPtr;
@@ -1634,8 +1632,23 @@ extern "C"
 	rl2PrivMapAttachedDbPtr last_db;
 	rl2PrivMapLayerPtr first_lyr;
 	rl2PrivMapLayerPtr last_lyr;
+	int has_labels;
+	int update_labels;
+	void *ctx_labels;
+	rl2CanvasPtr canvas_labels;
     } rl2PrivMapConfigAux;
     typedef rl2PrivMapConfigAux *rl2PrivMapConfigAuxPtr;
+
+    typedef struct rl2_aux_map_painter
+    {
+	void *opaque_thread_id;
+	char layer_type;
+	sqlite3 * sqlite;
+	const void *data;
+	rl2PrivMapLayerPtr aux_lyr;
+	rl2PrivMapConfigAuxPtr aux;
+    } rl2AuxMapPainter;
+    typedef rl2AuxMapPainter *rl2AuxMapPainterPtr;
 
     typedef struct rl2_wms_tile
     {
@@ -2697,16 +2710,15 @@ extern "C"
 
     RL2_PRIVATE void rl2_destroy_variant_value (rl2PrivVariantValuePtr value);
 
-    RL2_PRIVATE void rl2_draw_vector_feature (void *ctx, void *ctx_labels,
-					      sqlite3 * handle,
-					      const void *priv_data,
+    RL2_PRIVATE void rl2_draw_vector_feature (void *ctx, 
+					      sqlite3 * handle, const void *priv_data,
 					      rl2VectorSymbolizerPtr symbolizer,
 					      int height, double minx,
 					      double miny, double maxx,
 					      double maxy, double x_res,
 					      double y_res, rl2GeometryPtr geom,
 					      rl2VariantArrayPtr variant,
-					      int *has_labels);
+					      int mode_labels);
 
     RL2_PRIVATE rl2GeometryPtr
 	rl2_geometry_from_blob (const unsigned char *blob, int blob_sz);

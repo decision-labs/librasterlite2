@@ -8540,6 +8540,7 @@ do_run_concurrent_shadower (rl2AuxShadowerPtr aux, int max_threads)
     for (i = 0; i < max_threads; i++)
       {
 	  /* cleaning up a request slot */
+	  shadower = aux + i;
 	  if (shadower->opaque_thread_id != NULL)
 	      free (shadower->opaque_thread_id);
 	  shadower->opaque_thread_id = NULL;

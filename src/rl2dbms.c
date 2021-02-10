@@ -7992,7 +7992,8 @@ rl2_get_raw_raster_data_transparent (sqlite3 * handle, int max_threads,
 				     double miny, double maxx, double maxy,
 				     double x_res, double y_res,
 				     unsigned char **buffer, int *buf_size,
-				     unsigned char **mask, int *mask_size, unsigned char syntetic_band,
+				     unsigned char **mask, int *mask_size,
+				     unsigned char syntetic_band,
 				     rl2PalettePtr * palette,
 				     unsigned char *out_pixel,
 				     rl2PixelPtr no_data,
@@ -8712,19 +8713,19 @@ rl2_create_feature_type_style_from_dbms (sqlite3 * handle,
     stmt = NULL;
 
     if (name == NULL || xml == NULL)
-      {
-	  if (name != NULL)
-	      free (name);
-	  if (xml != NULL)
-	      free (xml);
-	  goto error;
-      }
+	goto error;
     stl = rl2_feature_type_style_from_xml (name, xml);
     if (stl == NULL)
 	goto error;
+    free (name);
+    free (xml);
     return stl;
 
   error:
+    if (name != NULL)
+	free (name);
+    if (xml != NULL)
+	free (xml);
     if (stmt != NULL)
 	sqlite3_finalize (stmt);
     if (stl != NULL)

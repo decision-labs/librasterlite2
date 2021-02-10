@@ -5310,7 +5310,7 @@ compute_ndvi (void *pixels, unsigned char sample_type,
 	      unsigned short row, unsigned short col,
 	      rl2PrivPixelPtr in_no_data, float out_no_data)
 {
-/* computing a Normalized Difference Vegetaion Index -NDVI */
+/* computing a Normalized Difference Vegetation Index -NDVI */
     float red;
     float nir;
     unsigned char *p8;
@@ -5338,6 +5338,41 @@ compute_ndvi (void *pixels, unsigned char sample_type,
     return (nir - red) / (nir + red);
 }
 
+static float
+compute_ndwi (void *pixels, unsigned char sample_type,
+	      unsigned char num_bands, unsigned short width,
+	      unsigned char green_band, unsigned char nir_band,
+	      unsigned short row, unsigned short col,
+	      rl2PrivPixelPtr in_no_data, float out_no_data)
+{
+/* computing a Normalized Difference Water Index -NDWI */
+    float green;
+    float nir;
+    unsigned char *p8;
+    unsigned short *p16;
+    if (sample_type == RL2_SAMPLE_UINT16)
+      {
+	  /* UINT16 samples */
+	  p16 = (unsigned short *) pixels;
+	  p16 += (row * width * num_bands) + (col * num_bands);
+	  if (is_ndvi_nodata_u16 (in_no_data, p16))
+	      return out_no_data;
+	  green = *(p16 + green_band);
+	  nir = *(p16 + nir_band);
+      }
+    else
+      {
+	  /* assuming UINT8 samples */
+	  p8 = (unsigned char *) pixels;
+	  p8 += (row * width * num_bands) + (col * num_bands);
+	  if (is_ndvi_nodata_u8 (in_no_data, p8))
+	      return out_no_data;
+	  green = *(p8 + green_band);
+	  nir = *(p8 + nir_band);
+      }
+    return (green - nir) / (green + nir);
+}
+
 static int
 export_ndvi_ascii_grid_common (int by_section, sqlite3 * handle,
 			       int max_threads, const char *dst_path,
@@ -5345,8 +5380,8 @@ export_ndvi_ascii_grid_common (int by_section, sqlite3 * handle,
 			       double res, double minx, double miny,
 			       double maxx, double maxy, unsigned int width,
 			       unsigned int height, int red_band,
-			       int nir_band, int is_centered,
-			       int decimal_digits)
+			       int green_band, int nir_band, int is_centered,
+			       int decimal_digits, int ndwi_mode)
 {
 /* exporting an NDVI ASCII Grid common implementation */
     rl2PalettePtr palette = NULL;
@@ -5386,14 +5421,24 @@ export_ndvi_ascii_grid_common (int by_section, sqlite3 * handle,
     if (pixel_type != RL2_PIXEL_MULTIBAND)
 	goto error;
 
-    if (red_band < 0 || red_band >= num_bands)
-	goto error;
-
-    if (nir_band < 0 || nir_band >= num_bands)
-	goto error;
-
-    if (red_band == nir_band)
-	goto error;
+    if (ndwi_mode)
+      {
+	  if (green_band < 0 || green_band >= num_bands)
+	      goto error;
+	  if (nir_band < 0 || nir_band >= num_bands)
+	      goto error;
+	  if (green_band == nir_band)
+	      goto error;
+      }
+    else
+      {
+	  if (red_band < 0 || red_band >= num_bands)
+	      goto error;
+	  if (nir_band < 0 || nir_band >= num_bands)
+	      goto error;
+	  if (red_band == nir_band)
+	      goto error;
+      }
 
     if (by_section)
       {
@@ -5422,12 +5467,26 @@ export_ndvi_ascii_grid_common (int by_section, sqlite3 * handle,
     po = (float *) out_pixels;
     for (row = 0; row < height; row++)
       {
-	  /* computing NDVI */
-	  for (col = 0; col < width; col++)
-	      *po++ =
-		  compute_ndvi (pixels, sample_type, num_bands, width,
-				red_band, nir_band, row, col,
-				(rl2PrivPixelPtr) in_no_data, out_no_data);
+	  if (ndwi_mode)
+	    {
+		/* computing NDWI */
+		for (col = 0; col < width; col++)
+		    *po++ =
+			compute_ndwi (pixels, sample_type, num_bands, width,
+				      green_band, nir_band, row, col,
+				      (rl2PrivPixelPtr) in_no_data,
+				      out_no_data);
+	    }
+	  else
+	    {
+		/* computing NDVI */
+		for (col = 0; col < width; col++)
+		    *po++ =
+			compute_ndvi (pixels, sample_type, num_bands, width,
+				      red_band, nir_band, row, col,
+				      (rl2PrivPixelPtr) in_no_data,
+				      out_no_data);
+	    }
       }
     free (pixels);
     pixels = NULL;
@@ -5474,14 +5533,16 @@ rl2_export_ndvi_ascii_grid_from_dbms (sqlite3 * handle, int max_threads,
 				      double minx, double miny, double maxx,
 				      double maxy, unsigned int width,
 				      unsigned int height, int red_band,
-				      int nir_band, int is_centered,
-				      int decimal_digits)
+				      int green_band, int nir_band,
+				      int is_centered, int decimal_digits,
+				      int ndwi_mode)
 {
 /* exporting an ASCII Grid from the DBMS into the file-system */
     return export_ndvi_ascii_grid_common (0, handle, max_threads, dst_path,
 					  cvg, 0, res, minx, miny, maxx, maxy,
-					  width, height, red_band, nir_band,
-					  is_centered, decimal_digits);
+					  width, height, red_band, green_band,
+					  nir_band, is_centered, decimal_digits,
+					  ndwi_mode);
 }
 
 RL2_DECLARE int
@@ -5494,16 +5555,16 @@ rl2_export_section_ndvi_ascii_grid_from_dbms (sqlite3 * handle,
 					      double miny, double maxx,
 					      double maxy, unsigned int width,
 					      unsigned int height,
-					      int red_band, int nir_band,
-					      int is_centered,
-					      int decimal_digits)
+					      int red_band, int green_band,
+					      int nir_band, int is_centered,
+					      int decimal_digits, int ndwi_mode)
 {
 /* exporting an ASCII Grid - Section */
     return export_ndvi_ascii_grid_common (1, handle, max_threads, dst_path,
 					  cvg, section_id, res, minx, miny,
 					  maxx, maxy, width, height, red_band,
-					  nir_band, is_centered,
-					  decimal_digits);
+					  green_band, nir_band, is_centered,
+					  decimal_digits, ndwi_mode);
 }
 
 static int

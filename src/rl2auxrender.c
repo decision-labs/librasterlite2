@@ -4554,22 +4554,19 @@ create_dyn_symbolizer (rl2PrivVectorSymbolizerPtr in,
 }
 
 RL2_PRIVATE void
-rl2_draw_vector_feature (void *p_ctx, void *p_ctx_labels, sqlite3 * handle,
-			 const void *priv_data,
+rl2_draw_vector_feature (void *p_ctx, sqlite3 * handle, const void *priv_data,
 			 rl2VectorSymbolizerPtr symbolizer, int height,
 			 double minx, double miny, double maxx, double maxy,
 			 double x_res, double y_res, rl2GeometryPtr geom,
-			 rl2VariantArrayPtr variant, int *has_labels)
+			 rl2VariantArrayPtr variant, int mode_labels)
 {
 /* drawing a vector feature on the current canvas */
     rl2PrivVectorSymbolizerItemPtr item;
     rl2GraphicsContextPtr ctx = (rl2GraphicsContextPtr) p_ctx;
-    rl2GraphicsContextPtr ctx_labels = (rl2GraphicsContextPtr) p_ctx_labels;
     rl2PrivVectorSymbolizerPtr sym = (rl2PrivVectorSymbolizerPtr) symbolizer;
     rl2PrivVectorSymbolizerPtr default_symbolizer = NULL;
     rl2PrivVectorSymbolizerPtr dyn_symbolizer = NULL;
 
-    *has_labels = 0;
     if (ctx == NULL || geom == NULL)
 	return;
 
@@ -4657,7 +4654,9 @@ rl2_draw_vector_feature (void *p_ctx, void *p_ctx_labels, sqlite3 * handle,
 	  sym = default_symbolizer;
       }
 
-/* we'll render all geometries first */
+if (!mode_labels)
+{
+	/* we'll render all geometries */
     if (geom->first_polygon != NULL)
 	draw_polygons (ctx, handle, sym, height, minx, miny, maxx, maxy,
 		       x_res, y_res, geom);
@@ -4667,10 +4666,12 @@ rl2_draw_vector_feature (void *p_ctx, void *p_ctx_labels, sqlite3 * handle,
     if (geom->first_point != NULL)
 	draw_points (ctx, handle, sym, height, minx, miny, maxx, maxy, x_res,
 		     y_res, geom);
-
-    if (sym != NULL && ctx_labels != NULL)
+}
+else
+{
+	  /* we'll render any eventual TextSymbolizer */
+    if (sym != NULL)
       {
-	  /* then we'll render any eventual TextSymbolizer */
 	  item = sym->first;
 	  while (item != NULL)
 	    {
@@ -4681,16 +4682,16 @@ rl2_draw_vector_feature (void *p_ctx, void *p_ctx_labels, sqlite3 * handle,
 			  (rl2PrivTextSymbolizerPtr) (item->symbolizer);
 		      if (text->label != NULL)
 			{
-			    draw_labels (ctx_labels, handle,
+			    draw_labels (ctx, handle,
 					 priv_data, text, height,
 					 minx, miny, maxx, maxy,
 					 x_res, y_res, geom);
-			    *has_labels = 1;
 			}
 		  }
 		item = item->next;
 	    }
       }
+  }
 
     if (default_symbolizer != NULL)
 	rl2_destroy_vector_symbolizer (default_symbolizer);

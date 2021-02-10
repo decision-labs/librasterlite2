@@ -107,7 +107,6 @@ do_paint_layer_vector (sqlite3 * sqlite, const void *data,
 	    {
 		if (sqlite3_column_type (stmt, 0) == SQLITE_BLOB)
 		  {
-		      int hasLabels;
 		      unsigned char *blob =
 			  (unsigned char *) sqlite3_column_blob (stmt, 0);
 		      int blob_sz = sqlite3_column_bytes (stmt, 0);
@@ -115,64 +114,136 @@ do_paint_layer_vector (sqlite3 * sqlite, const void *data,
 			  ret =
 			      rl2_map_image_paint_from_vector_ex (sqlite, data,
 								  (rl2CanvasPtr)
-								  aux_lyr->canvas,
-								  aux_lyr->prefix,
-								  aux_lyr->layer->
-								  name, blob,
-								  blob_sz, 0,
 								  aux_lyr->
-								  style_name,
+								  canvas,
+								  aux_lyr->
+								  prefix,
+								  aux_lyr->
+								  layer->name,
+								  blob, blob_sz,
+								  0,
+								  aux_lyr->style_name,
 								  (unsigned char
-								   *) aux_lyr->
-								  xml_style,
-								  aux_lyr->layer->topology_style->show_nodes,
-								  aux_lyr->layer->topology_style->show_edges,
-								  aux_lyr->layer->topology_style->show_faces,
-								  aux_lyr->layer->topology_style->show_edge_seeds,
-								  aux_lyr->layer->topology_style->show_face_seeds,
-								  &hasLabels);
+								   *)
+								  aux_lyr->xml_style,
+								  aux_lyr->
+								  layer->
+								  topology_style->
+								  show_nodes,
+								  aux_lyr->
+								  layer->
+								  topology_style->
+								  show_edges,
+								  aux_lyr->
+								  layer->
+								  topology_style->
+								  show_faces,
+								  aux_lyr->
+								  layer->
+								  topology_style->
+								  show_edge_seeds,
+								  aux_lyr->
+								  layer->
+								  topology_style->
+								  show_face_seeds);
 		      else if (aux_lyr->layer->type == RL2_MAP_LAYER_NETWORK)
 			  ret =
 			      rl2_map_image_paint_from_vector_ex (sqlite, data,
 								  (rl2CanvasPtr)
-								  aux_lyr->canvas,
-								  aux_lyr->prefix,
-								  aux_lyr->layer->
-								  name, blob,
-								  blob_sz, 0,
 								  aux_lyr->
-								  style_name,
+								  canvas,
+								  aux_lyr->
+								  prefix,
+								  aux_lyr->
+								  layer->name,
+								  blob, blob_sz,
+								  0,
+								  aux_lyr->style_name,
 								  (unsigned char
-								   *) aux_lyr->
-								  xml_style,
-								  aux_lyr->layer->network_style->show_nodes,
-								  aux_lyr->layer->network_style->show_links,
-								  0,
-								  aux_lyr->layer->network_style->show_link_seeds,
-								  0,
-								  &hasLabels);
+								   *)
+								  aux_lyr->xml_style,
+								  aux_lyr->
+								  layer->
+								  network_style->
+								  show_nodes,
+								  aux_lyr->
+								  layer->
+								  network_style->
+								  show_links, 0,
+								  aux_lyr->
+								  layer->
+								  network_style->
+								  show_link_seeds,
+								  0);
 		      else
 			  ret = rl2_map_image_paint_from_vector (sqlite, data,
 								 (rl2CanvasPtr)
-								 aux_lyr->canvas,
-								 aux_lyr->prefix,
-								 aux_lyr->layer->
-								 name, blob,
-								 blob_sz, 0,
 								 aux_lyr->
-								 style_name,
+								 canvas,
+								 aux_lyr->
+								 prefix,
+								 aux_lyr->
+								 layer->name,
+								 blob, blob_sz,
+								 0,
+								 aux_lyr->style_name,
 								 (unsigned char
-								  *) aux_lyr->
-								 xml_style,
-								 &hasLabels);
+								  *)
+								 aux_lyr->xml_style);
 		      if (ret == RL2_OK)
 			  ret = rl2_graph_merge (aux->ctx, aux_lyr->ctx);
-		      //if (hasLabels)
-		      //  layer->SetLabels(true);
-		      //if (quickStyle != NULL)
-		      //free (quickStyle);
-		      //layer->Validate(canvas);
-		      //rl2_destroy_canvas(canvas);
+		  }
+	    }
+      }
+    sqlite3_finalize (stmt);
+}
+
+static void
+do_paint_layer_labels (sqlite3 * sqlite, const void *data,
+		       rl2PrivMapLayerPtr aux_lyr, rl2PrivMapConfigAuxPtr aux)
+{
+/* rendering a MapConfiguration Layer Labels */
+    sqlite3_stmt *stmt = NULL;
+    const char *sql;
+    int ret;
+
+    if (aux_lyr == NULL)
+	return;
+    if (aux_lyr->layer == NULL)
+	return;
+
+/* building the Map's Bounding Box */
+    sql = "SELECT BuildMbr(?, ?, ?, ?, ?)";
+    ret = sqlite3_prepare_v2 (sqlite, sql, strlen (sql), &stmt, NULL);
+    if (ret != SQLITE_OK)
+	return;
+    sqlite3_reset (stmt);
+    sqlite3_clear_bindings (stmt);
+    sqlite3_bind_double (stmt, 1, aux->min_x);
+    sqlite3_bind_double (stmt, 2, aux->min_y);
+    sqlite3_bind_double (stmt, 3, aux->max_x);
+    sqlite3_bind_double (stmt, 4, aux->max_y);
+    sqlite3_bind_int (stmt, 5, aux->srid);
+    while (1)
+      {
+	  ret = sqlite3_step (stmt);
+	  if (ret == SQLITE_DONE)
+	      break;
+	  if (ret == SQLITE_ROW)
+	    {
+		if (sqlite3_column_type (stmt, 0) == SQLITE_BLOB)
+		  {
+		      unsigned char *blob =
+			  (unsigned char *) sqlite3_column_blob (stmt, 0);
+		      int blob_sz = sqlite3_column_bytes (stmt, 0);
+		      ret = rl2_map_image_paint_labels (sqlite, data,
+							aux->canvas_labels,
+							aux_lyr->prefix,
+							aux_lyr->layer->name,
+							blob, blob_sz, 0,
+							aux_lyr->style_name,
+							(unsigned char *)
+							aux_lyr->xml_style);
 		  }
 	    }
       }
@@ -226,8 +297,7 @@ do_paint_layer_raster (sqlite3 * sqlite, const void *data,
 							   aux_lyr->style_name,
 							   (unsigned char *)
 							   aux_lyr->xml_style,
-							   aux_lyr->
-							   syntetic_band);
+							   aux_lyr->syntetic_band);
 		      if (ret == RL2_OK)
 			  ret = rl2_graph_merge (aux->ctx, aux_lyr->ctx);
 		  }
@@ -528,6 +598,35 @@ do_paint_layer_wms (const void *data, rl2PrivMapLayerPtr aux_lyr,
       }
 }
 
+static void
+check_map_labels (sqlite3 * sqlite, rl2PrivMapLayerPtr lyr)
+{
+/* testing for Layers with Map Labels */
+    rl2MapLayerPtr layer = lyr->layer;
+    rl2MapVectorLayerStylePtr style = layer->vector_style;
+    lyr->has_labels = 0;
+    if (style != NULL)
+      {
+	  /* quick style */
+	  if (style->text_sym != NULL)
+	      lyr->has_labels = 1;
+      }
+    else if (layer->vector_style_internal_name != NULL)
+      {
+	  /* internal style name */
+	  rl2FeatureTypeStylePtr lyr_stl =
+	      rl2_create_feature_type_style_from_dbms (sqlite, layer->prefix,
+						       layer->name,
+						       layer->
+						       vector_style_internal_name);
+	  if (lyr_stl != NULL)
+	    {
+		lyr->has_labels = rl2_style_has_labels (lyr_stl);
+		rl2_destroy_feature_type_style (lyr_stl);
+	    }
+      }
+}
+
 RL2_PRIVATE int
 rl2_paint_map_config_aux (sqlite3 * sqlite, const void *data,
 			  rl2PrivMapConfigAuxPtr aux)
@@ -543,31 +642,95 @@ rl2_paint_map_config_aux (sqlite3 * sqlite, const void *data,
     if (aux == NULL)
 	return RL2_ERROR;
 
+    aux->has_labels = 0;
+    aux->update_labels = 0;
     aux_lyr = aux->first_lyr;
     while (aux_lyr != NULL)
       {
-	  if (aux_lyr->valid)
+	  /* testing for Map Labels */
+	  switch (aux_lyr->layer->type)
 	    {
-		switch (aux_lyr->layer->type)
-		  {
-		  case RL2_MAP_LAYER_WMS:
-		      do_paint_layer_wms (data, aux_lyr, aux);
-		      break;
-		  case RL2_MAP_LAYER_RASTER:
-		      do_paint_layer_raster (sqlite, data, aux_lyr, aux);
-		      break;
-		  case RL2_MAP_LAYER_VECTOR:
-		  case RL2_MAP_LAYER_VECTOR_VIEW:
-		  case RL2_MAP_LAYER_VECTOR_VIRTUAL:
-		  case RL2_MAP_LAYER_TOPOLOGY:
-		  case RL2_MAP_LAYER_NETWORK:
-		      do_paint_layer_vector (sqlite, data, aux_lyr, aux);
-		      break;
-		  default:
-		      break;
-		  };
-	    }
+	    case RL2_MAP_LAYER_VECTOR:
+	    case RL2_MAP_LAYER_VECTOR_VIEW:
+	    case RL2_MAP_LAYER_VECTOR_VIRTUAL:
+	    case RL2_MAP_LAYER_TOPOLOGY:
+	    case RL2_MAP_LAYER_NETWORK:
+		check_map_labels (sqlite, aux_lyr);
+		if (aux_lyr->has_labels)
+		    aux->has_labels = 1;
+		break;
+	    default:
+		break;
+	    };
 	  aux_lyr = aux_lyr->next;
+      }
+
+	  aux_lyr = aux->first_lyr;
+	  while (aux_lyr != NULL)
+	    {
+		/* painting Layers */
+		if (aux_lyr->valid)
+		  {
+		      switch (aux_lyr->layer->type)
+			{
+			case RL2_MAP_LAYER_WMS:
+			    do_paint_layer_wms (data, aux_lyr, aux);
+			    break;
+			case RL2_MAP_LAYER_RASTER:
+			    do_paint_layer_raster (sqlite, data, aux_lyr, aux);
+			    break;
+			case RL2_MAP_LAYER_VECTOR:
+			case RL2_MAP_LAYER_VECTOR_VIEW:
+			case RL2_MAP_LAYER_VECTOR_VIRTUAL:
+			case RL2_MAP_LAYER_TOPOLOGY:
+			case RL2_MAP_LAYER_NETWORK:
+			    do_paint_layer_vector (sqlite, data, aux_lyr, aux);
+			    if (aux_lyr->has_labels)
+				aux->update_labels = 1;
+			    break;
+			default:
+			    break;
+			};
+		  }
+		aux_lyr = aux_lyr->next;
+	    }
+
+    if (aux->has_labels && aux->update_labels)
+      {
+	  /* creating a Canvas for Map Labels */
+	  aux->ctx_labels =
+	      rl2_graph_create_context (data, aux->width, aux->height);
+	  if (aux->ctx_labels != NULL)
+	    {
+		rl2_prime_background (aux->ctx_labels, 0, 0, 0, 0);	/* transparent background */
+		aux->canvas_labels = rl2_create_raster_canvas (aux->ctx_labels);
+	    }
+	  if (aux->canvas_labels != NULL)
+	    {
+		aux_lyr = aux->first_lyr;
+		while (aux_lyr != NULL)
+		  {
+		      /* painting Layers with Map Labels */
+		      if (aux_lyr->valid && aux_lyr->has_labels)
+			{
+			    switch (aux_lyr->layer->type)
+			      {
+			      case RL2_MAP_LAYER_VECTOR:
+			      case RL2_MAP_LAYER_VECTOR_VIEW:
+			      case RL2_MAP_LAYER_VECTOR_VIRTUAL:
+			      case RL2_MAP_LAYER_TOPOLOGY:
+			      case RL2_MAP_LAYER_NETWORK:
+				  do_paint_layer_labels (sqlite, data, aux_lyr,
+							 aux);
+				  break;
+			      default:
+				  break;
+			      };
+			}
+		      aux_lyr = aux_lyr->next;
+		  }
+		rl2_graph_merge (aux->ctx, aux->ctx_labels);
+	    }
       }
 
 /* preparing the full rendered Map Image */

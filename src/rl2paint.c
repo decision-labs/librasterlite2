@@ -3851,6 +3851,8 @@ do_multi_thread_transform (rl2TransformParamsPtr params_array, int count)
 	  params->at_data = NULL;
 	  params->in = NULL;
 	  params->out = NULL;
+	  if (params->opaque_thread_id != NULL)
+	      free (params->opaque_thread_id);
 	  params->opaque_thread_id = NULL;
       }
 }
@@ -5292,8 +5294,7 @@ rl2_get_mem_pdf_buffer (rl2MemPdfPtr target, unsigned char **buffer, int *size)
 }
 
 RL2_DECLARE rl2CanvasPtr
-rl2_create_vector_canvas (rl2GraphicsContextPtr ref_ctx,
-			  rl2GraphicsContextPtr ref_ctx_labels)
+rl2_create_vector_canvas (rl2GraphicsContextPtr ref_ctx)
 {
 /* allocating and initializing a Canvas object (generic Vector) */
     rl2PrivCanvasPtr canvas = NULL;
@@ -5305,7 +5306,6 @@ rl2_create_vector_canvas (rl2GraphicsContextPtr ref_ctx,
 	return NULL;
     canvas->type = RL2_VECTOR_CANVAS;
     canvas->ref_ctx = ref_ctx;
-    canvas->ref_ctx_labels = ref_ctx_labels;
     canvas->ref_ctx_nodes = NULL;
     canvas->ref_ctx_edges = NULL;
     canvas->ref_ctx_links = NULL;
@@ -5314,7 +5314,6 @@ rl2_create_vector_canvas (rl2GraphicsContextPtr ref_ctx,
     canvas->ref_ctx_link_seeds = NULL;
     canvas->ref_ctx_face_seeds = NULL;
     canvas->ctx_ready = RL2_FALSE;
-    canvas->ctx_labels_ready = RL2_FALSE;
     canvas->ctx_nodes_ready = RL2_FALSE;
     canvas->ctx_edges_ready = RL2_FALSE;
     canvas->ctx_links_ready = RL2_FALSE;
@@ -5327,7 +5326,6 @@ rl2_create_vector_canvas (rl2GraphicsContextPtr ref_ctx,
 
 RL2_DECLARE rl2CanvasPtr
 rl2_create_topology_canvas (rl2GraphicsContextPtr ref_ctx,
-			    rl2GraphicsContextPtr ref_ctx_labels,
 			    rl2GraphicsContextPtr ref_ctx_nodes,
 			    rl2GraphicsContextPtr ref_ctx_edges,
 			    rl2GraphicsContextPtr ref_ctx_faces,
@@ -5347,7 +5345,6 @@ rl2_create_topology_canvas (rl2GraphicsContextPtr ref_ctx,
 	return NULL;
     canvas->type = RL2_TOPOLOGY_CANVAS;
     canvas->ref_ctx = ref_ctx;
-    canvas->ref_ctx_labels = ref_ctx_labels;
     canvas->ref_ctx_nodes = ref_ctx_nodes;
     canvas->ref_ctx_edges = ref_ctx_edges;
     canvas->ref_ctx_links = NULL;
@@ -5356,7 +5353,6 @@ rl2_create_topology_canvas (rl2GraphicsContextPtr ref_ctx,
     canvas->ref_ctx_link_seeds = NULL;
     canvas->ref_ctx_face_seeds = ref_ctx_face_seeds;
     canvas->ctx_ready = RL2_FALSE;
-    canvas->ctx_labels_ready = RL2_FALSE;
     canvas->ctx_nodes_ready = RL2_FALSE;
     canvas->ctx_edges_ready = RL2_FALSE;
     canvas->ctx_links_ready = RL2_FALSE;
@@ -5369,7 +5365,6 @@ rl2_create_topology_canvas (rl2GraphicsContextPtr ref_ctx,
 
 RL2_DECLARE rl2CanvasPtr
 rl2_create_network_canvas (rl2GraphicsContextPtr ref_ctx,
-			   rl2GraphicsContextPtr ref_ctx_labels,
 			   rl2GraphicsContextPtr ref_ctx_nodes,
 			   rl2GraphicsContextPtr ref_ctx_links,
 			   rl2GraphicsContextPtr ref_ctx_link_seeds)
@@ -5386,7 +5381,6 @@ rl2_create_network_canvas (rl2GraphicsContextPtr ref_ctx,
 	return NULL;
     canvas->type = RL2_NETWORK_CANVAS;
     canvas->ref_ctx = ref_ctx;
-    canvas->ref_ctx_labels = ref_ctx_labels;
     canvas->ref_ctx_nodes = ref_ctx_nodes;
     canvas->ref_ctx_edges = NULL;
     canvas->ref_ctx_links = ref_ctx_links;
@@ -5395,7 +5389,6 @@ rl2_create_network_canvas (rl2GraphicsContextPtr ref_ctx,
     canvas->ref_ctx_link_seeds = ref_ctx_link_seeds;
     canvas->ref_ctx_face_seeds = NULL;
     canvas->ctx_ready = RL2_FALSE;
-    canvas->ctx_labels_ready = RL2_FALSE;
     canvas->ctx_nodes_ready = RL2_FALSE;
     canvas->ctx_edges_ready = RL2_FALSE;
     canvas->ctx_links_ready = RL2_FALSE;
@@ -5419,7 +5412,6 @@ rl2_create_raster_canvas (rl2GraphicsContextPtr ref_ctx)
 	return NULL;
     canvas->type = RL2_RASTER_CANVAS;
     canvas->ref_ctx = ref_ctx;
-    canvas->ref_ctx_labels = NULL;
     canvas->ref_ctx_nodes = NULL;
     canvas->ref_ctx_edges = NULL;
     canvas->ref_ctx_links = NULL;
@@ -5428,7 +5420,6 @@ rl2_create_raster_canvas (rl2GraphicsContextPtr ref_ctx)
     canvas->ref_ctx_link_seeds = NULL;
     canvas->ref_ctx_face_seeds = NULL;
     canvas->ctx_ready = RL2_FALSE;
-    canvas->ctx_labels_ready = RL2_FALSE;
     canvas->ctx_nodes_ready = RL2_FALSE;
     canvas->ctx_edges_ready = RL2_FALSE;
     canvas->ctx_links_ready = RL2_FALSE;
@@ -5452,7 +5443,6 @@ rl2_create_wms_canvas (rl2GraphicsContextPtr ref_ctx)
 	return NULL;
     canvas->type = RL2_WMS_CANVAS;
     canvas->ref_ctx = ref_ctx;
-    canvas->ref_ctx_labels = NULL;
     canvas->ref_ctx_nodes = NULL;
     canvas->ref_ctx_edges = NULL;
     canvas->ref_ctx_links = NULL;
@@ -5461,7 +5451,6 @@ rl2_create_wms_canvas (rl2GraphicsContextPtr ref_ctx)
     canvas->ref_ctx_link_seeds = NULL;
     canvas->ref_ctx_face_seeds = NULL;
     canvas->ctx_ready = RL2_FALSE;
-    canvas->ctx_labels_ready = RL2_FALSE;
     canvas->ctx_nodes_ready = RL2_FALSE;
     canvas->ctx_edges_ready = RL2_FALSE;
     canvas->ctx_links_ready = RL2_FALSE;
@@ -5506,8 +5495,6 @@ rl2_is_canvas_ready (rl2CanvasPtr ptr, int which)
 	    {
 	    case RL2_CANVAS_BASE_CTX:
 		return canvas->ctx_ready;
-	    case RL2_CANVAS_LABELS_CTX:
-		return canvas->ctx_labels_ready;
 	    };
 	  break;
       case RL2_RASTER_CANVAS:
@@ -5523,8 +5510,6 @@ rl2_is_canvas_ready (rl2CanvasPtr ptr, int which)
 	    {
 	    case RL2_CANVAS_BASE_CTX:
 		return canvas->ctx_ready;
-	    case RL2_CANVAS_LABELS_CTX:
-		return canvas->ctx_labels_ready;
 	    case RL2_CANVAS_NODES_CTX:
 		return canvas->ctx_nodes_ready;
 	    case RL2_CANVAS_EDGES_CTX:
@@ -5542,8 +5527,6 @@ rl2_is_canvas_ready (rl2CanvasPtr ptr, int which)
 	    {
 	    case RL2_CANVAS_BASE_CTX:
 		return canvas->ctx_ready;
-	    case RL2_CANVAS_LABELS_CTX:
-		return canvas->ctx_labels_ready;
 	    case RL2_CANVAS_NODES_CTX:
 		return canvas->ctx_nodes_ready;
 	    case RL2_CANVAS_LINKS_CTX:
@@ -5559,7 +5542,7 @@ rl2_is_canvas_ready (rl2CanvasPtr ptr, int which)
 RL2_DECLARE rl2GraphicsContextPtr
 rl2_get_canvas_ctx (rl2CanvasPtr ptr, int which)
 {
-/* return a pointer to soma Graphics Context from a Canvas */
+/* return a pointer to some Graphics Context from a Canvas */
     rl2PrivCanvasPtr canvas = (rl2PrivCanvasPtr) ptr;
     if (canvas == NULL)
 	return NULL;
@@ -5570,8 +5553,6 @@ rl2_get_canvas_ctx (rl2CanvasPtr ptr, int which)
 	    {
 	    case RL2_CANVAS_BASE_CTX:
 		return canvas->ref_ctx;
-	    case RL2_CANVAS_LABELS_CTX:
-		return canvas->ref_ctx_labels;
 	    };
 	  break;
       case RL2_RASTER_CANVAS:
@@ -5587,8 +5568,6 @@ rl2_get_canvas_ctx (rl2CanvasPtr ptr, int which)
 	    {
 	    case RL2_CANVAS_BASE_CTX:
 		return canvas->ref_ctx;
-	    case RL2_CANVAS_LABELS_CTX:
-		return canvas->ref_ctx_labels;
 	    case RL2_CANVAS_NODES_CTX:
 		return canvas->ref_ctx_nodes;
 	    case RL2_CANVAS_EDGES_CTX:
@@ -5606,8 +5585,6 @@ rl2_get_canvas_ctx (rl2CanvasPtr ptr, int which)
 	    {
 	    case RL2_CANVAS_BASE_CTX:
 		return canvas->ref_ctx;
-	    case RL2_CANVAS_LABELS_CTX:
-		return canvas->ref_ctx_labels;
 	    case RL2_CANVAS_NODES_CTX:
 		return canvas->ref_ctx_nodes;
 	    case RL2_CANVAS_LINKS_CTX:

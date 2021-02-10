@@ -126,8 +126,6 @@ EXTRA_DIST = exportfont1.testcase \
 	writendviascii2.testcase \
 	writendviascii3.testcase \
 	writendviascii4.testcase \
-	writendviascii5.testcase \
-	writendviascii6.testcase \
 	writendviascii7.testcase \
 	writendviascii8.testcase \
 	writendviascii9.testcase \
@@ -145,8 +143,6 @@ EXTRA_DIST = exportfont1.testcase \
 	writesectionndviascii2.testcase \
 	writesectionndviascii3.testcase \
 	writesectionndviascii4.testcase \
-	writesectionndviascii5.testcase \
-	writesectionndviascii6.testcase \
 	writesectionndviascii7.testcase \
 	writesectionndviascii8.testcase \
 	writesectionndviascii9.testcase \
@@ -162,6 +158,42 @@ EXTRA_DIST = exportfont1.testcase \
 	writesectionndviascii19.testcase \
 	writesectionndviascii20.testcase \
 	writesectionndviascii21.testcase \
+	writendwiascii1.testcase \
+	writendwiascii2.testcase \
+	writendwiascii3.testcase \
+	writendwiascii4.testcase \
+	writendwiascii7.testcase \
+	writendwiascii8.testcase \
+	writendwiascii9.testcase \
+	writendwiascii10.testcase \
+	writendwiascii11.testcase \
+	writendwiascii12.testcase \
+	writendwiascii13.testcase \
+	writendwiascii14.testcase \
+	writendwiascii15.testcase \
+	writendwiascii16.testcase \
+	writendwiascii17.testcase \
+	writendwiascii18.testcase \
+	writendwiascii19.testcase \
+	writesectionndwiascii1.testcase \
+	writesectionndwiascii2.testcase \
+	writesectionndwiascii3.testcase \
+	writesectionndwiascii4.testcase \
+	writesectionndwiascii7.testcase \
+	writesectionndwiascii8.testcase \
+	writesectionndwiascii9.testcase \
+	writesectionndwiascii10.testcase \
+	writesectionndwiascii11.testcase \
+	writesectionndwiascii12.testcase \
+	writesectionndwiascii13.testcase \
+	writesectionndwiascii14.testcase \
+	writesectionndwiascii15.testcase \
+	writesectionndwiascii16.testcase \
+	writesectionndwiascii17.testcase \
+	writesectionndwiascii18.testcase \
+	writesectionndwiascii19.testcase \
+	writesectionndwiascii20.testcase \
+	writesectionndwiascii21.testcase \
 	writebandtiff1.testcase \
 	writebandtiff2.testcase \
 	writebandtiff3.testcase \

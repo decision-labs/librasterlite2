@@ -4699,8 +4699,10 @@ extern "C"
 					      double miny, double maxx,
 					      double maxy, unsigned int width,
 					      unsigned int height, int red_band,
-					      int nir_band, int is_centered,
-					      int decimal_digits);
+					      int green_band, int nir_band,
+					      int is_centered,
+					      int decimal_digits,
+					      int ndwi_mode);
 
     RL2_DECLARE int
 	rl2_export_section_ndvi_ascii_grid_from_dbms (sqlite3 * handle,
@@ -4714,9 +4716,11 @@ extern "C"
 						      unsigned int width,
 						      unsigned int height,
 						      int red_band,
+						      int green_band,
 						      int nir_band,
 						      int is_centered,
-						      int decimal_digits);
+						      int decimal_digits,
+						      int ndwi_mode);
 
     RL2_DECLARE int
 	rl2_export_jpeg_from_dbms (sqlite3 * handle, int max_threads,
@@ -5050,12 +5054,12 @@ extern "C"
 	rl2_rgba_to_pdf (const void *priv_data, unsigned int width,
 			 unsigned int height, unsigned char *rgba,
 			 unsigned char **pdf, int *pdf_size);
-			 
-			 
+
+
     RL2_DECLARE int
 	rl2_rgba_to_pdfazzo (const void *priv_data, unsigned int width,
-			 unsigned int height, unsigned char *rgba,
-			 unsigned char **pdf, int *pdf_size);
+			     unsigned int height, unsigned char *rgba,
+			     unsigned char **pdf, int *pdf_size);
 
 /**
  Exports an all-Gray PDF document
@@ -6198,8 +6202,7 @@ extern "C"
 						     int reaspect,
 						     const char *style_name,
 						     const unsigned char
-						     *xml_style,
-						     int *has_labels);
+						     *xml_style);
 
     RL2_DECLARE int rl2_map_image_paint_from_vector_ex (sqlite3 * sqlite,
 							const void *data,
@@ -6217,8 +6220,18 @@ extern "C"
 							int with_faces,
 							int
 							with_edge_or_link_seeds,
-							int with_face_seeds,
-							int *has_labels);
+							int with_face_seeds);
+
+    RL2_DECLARE int rl2_map_image_paint_labels (sqlite3 * sqlite,
+						const void *data,
+						rl2CanvasPtr canvas,
+						const char *db_prefix,
+						const char *cvg_name,
+						const unsigned char *blob,
+						int blob_sz,
+						int reaspect,
+						const char *style_name,
+						const unsigned char *xml_style);
 
     RL2_DECLARE unsigned char *rl2_map_image_from_wms (sqlite3 * sqlite,
 						       const char *db_prefix,
@@ -6234,17 +6247,17 @@ extern "C"
 						       int *image_size);
 
     RL2_DECLARE int rl2_image_blob_from_map_config (sqlite3 * sqlite,
-							   const void *data,
-							   const char *mapconf,
-							   const unsigned char
-							   *blob, int blob_sz,
-							   int width,
-							   int height,
-							   const char *format,
-							   int quality,
-							   int reaspect,
-							   unsigned char **img,
-							   int *img_size);
+						    const void *data,
+						    const char *mapconf,
+						    const unsigned char
+						    *blob, int blob_sz,
+						    int width,
+						    int height,
+						    const char *format,
+						    int quality,
+						    int reaspect,
+						    unsigned char **img,
+						    int *img_size);
 
     RL2_DECLARE rl2FeatureTypeStylePtr rl2_feature_type_style_from_xml (const
 									char
@@ -6269,9 +6282,9 @@ extern "C"
     RL2_DECLARE int rl2_serialize_map_config (rl2MapConfigPtr map_config_obj,
 					      unsigned char **blob,
 					      int *blob_sz);
-	
-#ifdef _WIN32				      
-	RL2_DECLARE FILE * rl2_win_fopen(const char *path, const char *mode);
+
+#ifdef _WIN32
+    RL2_DECLARE FILE *rl2_win_fopen (const char *path, const char *mode);
 #endif
 
 #ifdef __cplusplus

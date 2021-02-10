@@ -2343,7 +2343,8 @@ parse_graphic_fill_color_replacement (xmlNodePtr node,
 							  const char *value =
 							      (const char
 							       *)
-							      (grandchild2->content);
+							      (grandchild2->
+							       content);
 							  if (parse_hex_color
 							      (value, &red,
 							       &green, &blue))
@@ -3427,19 +3428,22 @@ parse_topology_internal_style (xmlNodePtr node, rl2MapLayerPtr lyr)
 			    const char *name;
 			    if (text->type == XML_TEXT_NODE)
 				name = (const char *) (text->content);
-			    if (lyr->topology_internal_style->
-				style_internal_name != NULL)
-				free (lyr->topology_internal_style->
-				      style_internal_name);
+			    if (lyr->
+				topology_internal_style->style_internal_name !=
+				NULL)
+				free (lyr->
+				      topology_internal_style->style_internal_name);
 			    lyr->topology_internal_style->style_internal_name =
 				NULL;
 			    if (name != NULL)
 			      {
 				  len = strlen (name);
-				  lyr->topology_internal_style->
-				      style_internal_name = malloc (len + 1);
-				  strcpy (lyr->topology_internal_style->
-					  style_internal_name, name);
+				  lyr->
+				      topology_internal_style->style_internal_name
+				      = malloc (len + 1);
+				  strcpy (lyr->
+					  topology_internal_style->style_internal_name,
+					  name);
 			      }
 			}
 		  }
@@ -3502,8 +3506,9 @@ parse_topology_internal_style (xmlNodePtr node, rl2MapLayerPtr lyr)
 				  if (strcmp
 				      ((const char *) (text->content),
 				       "true") == 0)
-				      lyr->topology_internal_style->
-					  show_edge_seeds = 1;
+				      lyr->
+					  topology_internal_style->show_edge_seeds
+					  = 1;
 			      }
 			}
 		  }
@@ -3518,8 +3523,9 @@ parse_topology_internal_style (xmlNodePtr node, rl2MapLayerPtr lyr)
 				  if (strcmp
 				      ((const char *) (text->content),
 				       "true") == 0)
-				      lyr->topology_internal_style->
-					  show_face_seeds = 1;
+				      lyr->
+					  topology_internal_style->show_face_seeds
+					  = 1;
 			      }
 			}
 		  }
@@ -3697,19 +3703,22 @@ parse_network_internal_style (xmlNodePtr node, rl2MapLayerPtr lyr)
 			    const char *name;
 			    if (text->type == XML_TEXT_NODE)
 				name = (const char *) (text->content);
-			    if (lyr->network_internal_style->
-				style_internal_name != NULL)
-				free (lyr->network_internal_style->
-				      style_internal_name);
+			    if (lyr->
+				network_internal_style->style_internal_name !=
+				NULL)
+				free (lyr->
+				      network_internal_style->style_internal_name);
 			    lyr->network_internal_style->style_internal_name =
 				NULL;
 			    if (name != NULL)
 			      {
 				  len = strlen (name);
-				  lyr->network_internal_style->
-				      style_internal_name = malloc (len + 1);
-				  strcpy (lyr->network_internal_style->
-					  style_internal_name, name);
+				  lyr->
+				      network_internal_style->style_internal_name
+				      = malloc (len + 1);
+				  strcpy (lyr->
+					  network_internal_style->style_internal_name,
+					  name);
 			      }
 			}
 		  }
@@ -3756,8 +3765,9 @@ parse_network_internal_style (xmlNodePtr node, rl2MapLayerPtr lyr)
 				  if (strcmp
 				      ((const char *) (text->content),
 				       "true") == 0)
-				      lyr->network_internal_style->
-					  show_link_seeds = 1;
+				      lyr->
+					  network_internal_style->show_link_seeds
+					  = 1;
 			      }
 			}
 		  }
@@ -4155,8 +4165,8 @@ parse_wms_style (xmlNodePtr node, rl2MapLayerPtr lyr)
 					if (lyr->wms_style->background_color !=
 					    NULL)
 					  {
-					      free (lyr->wms_style->
-						    background_color);
+					      free (lyr->
+						    wms_style->background_color);
 					      lyr->wms_style->background_color =
 						  NULL;
 					  }
@@ -4165,13 +4175,14 @@ parse_wms_style (xmlNodePtr node, rl2MapLayerPtr lyr)
 				    {
 					if (lyr->wms_style->background_color !=
 					    NULL)
-					    free (lyr->wms_style->
-						  background_color);
+					    free (lyr->
+						  wms_style->background_color);
 					len = strlen (value);
 					lyr->wms_style->background_color =
 					    malloc (len + 1);
-					strcpy (lyr->wms_style->
-						background_color, value);
+					strcpy (lyr->
+						wms_style->background_color,
+						value);
 				    }
 			      }
 			    text = text->next;
@@ -4646,8 +4657,8 @@ parse_map_background (xmlNodePtr node, rl2MapConfigPtr map_config)
 				  if (value != NULL)
 				    {
 					if (strcmp (value, "true") == 0)
-					    map_config->map_background_transparent
-						= 1;
+					    map_config->
+						map_background_transparent = 1;
 				    }
 			      }
 			}
@@ -7625,6 +7636,10 @@ rl2_create_map_config_aux (sqlite3 * sqlite, const void *data,
     aux->last_db = NULL;
     aux->first_lyr = NULL;
     aux->last_lyr = NULL;
+    aux->has_labels = 0;
+    aux->update_labels = 0;
+    aux->ctx_labels = NULL;
+    aux->canvas_labels = NULL;
     if (strcmp (format, "image/png") == 0)
       {
 	  format_id = RL2_OUTPUT_FORMAT_PNG;
@@ -7722,7 +7737,6 @@ rl2_create_map_config_aux (sqlite3 * sqlite, const void *data,
 	  aux_lyr->xml_style = NULL;
 	  aux_lyr->syntetic_band = RL2_SYNTETIC_NONE;
 	  aux_lyr->ctx = NULL;
-	  aux_lyr->ctx_labels = NULL;
 	  aux_lyr->ctx_nodes = NULL;
 	  aux_lyr->ctx_edges = NULL;
 	  aux_lyr->ctx_faces = NULL;
@@ -7732,6 +7746,7 @@ rl2_create_map_config_aux (sqlite3 * sqlite, const void *data,
 	  aux_lyr->ctx_link_seeds = NULL;
 	  aux_lyr->canvas = NULL;
 	  aux_lyr->valid = lyr->visible;
+	  aux_lyr->has_labels = 0;
 	  aux_lyr->next = NULL;
 
 	  if (aux->first_lyr == NULL)
@@ -7811,15 +7826,11 @@ rl2_create_map_config_aux (sqlite3 * sqlite, const void *data,
 		      /* creating a Canvas */
 		      aux_lyr->ctx =
 			  rl2_graph_create_context (data, width, height);
-		      aux_lyr->ctx_labels =
-			  rl2_graph_create_context (data, width, height);
-		      if (aux_lyr->ctx != NULL && aux_lyr->ctx_labels != NULL)
+		      if (aux_lyr->ctx != NULL)
 			{
 			    rl2_prime_background (aux_lyr->ctx, 0, 0, 0, 0);	/* transparent background */
-			    rl2_prime_background (aux_lyr->ctx_labels, 0, 0, 0, 0);	/* transparent background */
 			    aux_lyr->canvas =
-				rl2_create_vector_canvas (aux_lyr->ctx,
-							  aux_lyr->ctx_labels);
+				rl2_create_vector_canvas (aux_lyr->ctx);
 			}
 		      if (aux_lyr->canvas == NULL)
 			  aux_lyr->valid = 0;
@@ -7835,15 +7846,11 @@ rl2_create_map_config_aux (sqlite3 * sqlite, const void *data,
 		      /* creating a Canvas */
 		      aux_lyr->ctx =
 			  rl2_graph_create_context (data, width, height);
-		      aux_lyr->ctx_labels =
-			  rl2_graph_create_context (data, width, height);
-		      if (aux_lyr->ctx != NULL && aux_lyr->ctx_labels != NULL)
+		      if (aux_lyr->ctx != NULL)
 			{
 			    rl2_prime_background (aux_lyr->ctx, 0, 0, 0, 0);	/* transparent background */
-			    rl2_prime_background (aux_lyr->ctx_labels, 0, 0, 0, 0);	/* transparent background */
 			    aux_lyr->canvas =
-				rl2_create_vector_canvas (aux_lyr->ctx,
-							  aux_lyr->ctx_labels);
+				rl2_create_vector_canvas (aux_lyr->ctx);
 			}
 		      if (aux_lyr->canvas == NULL)
 			  aux_lyr->valid = 0;
@@ -7859,15 +7866,11 @@ rl2_create_map_config_aux (sqlite3 * sqlite, const void *data,
 		      /* creating a Canvas */
 		      aux_lyr->ctx =
 			  rl2_graph_create_context (data, width, height);
-		      aux_lyr->ctx_labels =
-			  rl2_graph_create_context (data, width, height);
-		      if (aux_lyr->ctx != NULL && aux_lyr->ctx_labels != NULL)
+		      if (aux_lyr->ctx != NULL)
 			{
 			    rl2_prime_background (aux_lyr->ctx, 0, 0, 0, 0);	/* transparent background */
-			    rl2_prime_background (aux_lyr->ctx_labels, 0, 0, 0, 0);	/* transparent background */
 			    aux_lyr->canvas =
-				rl2_create_vector_canvas (aux_lyr->ctx,
-							  aux_lyr->ctx_labels);
+				rl2_create_vector_canvas (aux_lyr->ctx);
 			}
 		      if (aux_lyr->canvas == NULL)
 			  aux_lyr->valid = 0;
@@ -7883,8 +7886,6 @@ rl2_create_map_config_aux (sqlite3 * sqlite, const void *data,
 		      /* creating all Topology Canvas */
 		      aux_lyr->ctx =
 			  rl2_graph_create_context (data, width, height);
-		      aux_lyr->ctx_labels =
-			  rl2_graph_create_context (data, width, height);
 		      aux_lyr->ctx_nodes =
 			  rl2_graph_create_context (data, width, height);
 		      aux_lyr->ctx_edges =
@@ -7895,15 +7896,13 @@ rl2_create_map_config_aux (sqlite3 * sqlite, const void *data,
 			  rl2_graph_create_context (data, width, height);
 		      aux_lyr->ctx_face_seeds =
 			  rl2_graph_create_context (data, width, height);
-		      if (aux_lyr->ctx != NULL && aux_lyr->ctx_labels != NULL
-			  && aux_lyr->ctx_nodes != NULL
+		      if (aux_lyr->ctx != NULL && aux_lyr->ctx_nodes != NULL
 			  && aux_lyr->ctx_edges != NULL
 			  && aux_lyr->ctx_faces != NULL
 			  && aux_lyr->ctx_edge_seeds != NULL
 			  && aux_lyr->ctx_face_seeds != NULL)
 			{
 			    rl2_prime_background (aux_lyr->ctx, 0, 0, 0, 0);	/* transparent background */
-			    rl2_prime_background (aux_lyr->ctx_labels, 0, 0, 0, 0);	/* transparent background */
 			    rl2_prime_background (aux_lyr->ctx_nodes, 0, 0, 0, 0);	/* transparent background */
 			    rl2_prime_background (aux_lyr->ctx_edges, 0, 0, 0, 0);	/* transparent background */
 			    rl2_prime_background (aux_lyr->ctx_faces, 0, 0, 0, 0);	/* transparent background */
@@ -7911,12 +7910,13 @@ rl2_create_map_config_aux (sqlite3 * sqlite, const void *data,
 			    rl2_prime_background (aux_lyr->ctx_face_seeds, 0, 0, 0, 0);	/* transparent background */
 			    aux_lyr->canvas =
 				rl2_create_topology_canvas (aux_lyr->ctx,
-							    aux_lyr->ctx_labels,
 							    aux_lyr->ctx_nodes,
 							    aux_lyr->ctx_edges,
 							    aux_lyr->ctx_faces,
-							    aux_lyr->ctx_edge_seeds,
-							    aux_lyr->ctx_face_seeds);
+							    aux_lyr->
+							    ctx_edge_seeds,
+							    aux_lyr->
+							    ctx_face_seeds);
 			}
 		      if (aux_lyr->canvas == NULL)
 			  aux_lyr->valid = 0;
@@ -7932,30 +7932,26 @@ rl2_create_map_config_aux (sqlite3 * sqlite, const void *data,
 		      /* creating all Network Canvas */
 		      aux_lyr->ctx =
 			  rl2_graph_create_context (data, width, height);
-		      aux_lyr->ctx_labels =
-			  rl2_graph_create_context (data, width, height);
 		      aux_lyr->ctx_nodes =
 			  rl2_graph_create_context (data, width, height);
 		      aux_lyr->ctx_links =
 			  rl2_graph_create_context (data, width, height);
 		      aux_lyr->ctx_link_seeds =
 			  rl2_graph_create_context (data, width, height);
-		      if (aux_lyr->ctx != NULL && aux_lyr->ctx_labels != NULL
-			  && aux_lyr->ctx_nodes != NULL
+		      if (aux_lyr->ctx != NULL && aux_lyr->ctx_nodes != NULL
 			  && aux_lyr->ctx_links != NULL
 			  && aux_lyr->ctx_link_seeds != NULL)
 			{
 			    rl2_prime_background (aux_lyr->ctx, 0, 0, 0, 0);	/* transparent background */
-			    rl2_prime_background (aux_lyr->ctx_labels, 0, 0, 0, 0);	/* transparent background */
 			    rl2_prime_background (aux_lyr->ctx_nodes, 0, 0, 0, 0);	/* transparent background */
 			    rl2_prime_background (aux_lyr->ctx_links, 0, 0, 0, 0);	/* transparent background */
 			    rl2_prime_background (aux_lyr->ctx_link_seeds, 0, 0, 0, 0);	/* transparent background */
 			    aux_lyr->canvas =
 				rl2_create_network_canvas (aux_lyr->ctx,
-							   aux_lyr->ctx_labels,
 							   aux_lyr->ctx_nodes,
 							   aux_lyr->ctx_links,
-							   aux_lyr->ctx_link_seeds);
+							   aux_lyr->
+							   ctx_link_seeds);
 			}
 		      if (aux_lyr->canvas == NULL)
 			  aux_lyr->valid = 0;
@@ -8027,8 +8023,6 @@ rl2_destroy_map_config_aux (rl2PrivMapConfigAuxPtr aux)
 	      rl2_destroy_canvas (lyr->canvas);
 	  if (lyr->ctx != NULL)
 	      rl2_graph_destroy_context (lyr->ctx);
-	  if (lyr->ctx_labels != NULL)
-	      rl2_graph_destroy_context (lyr->ctx_labels);
 	  if (lyr->ctx_nodes != NULL)
 	      rl2_graph_destroy_context (lyr->ctx_nodes);
 	  if (lyr->ctx_edges != NULL)
@@ -8048,6 +8042,10 @@ rl2_destroy_map_config_aux (rl2PrivMapConfigAuxPtr aux)
       }
 
     if (aux->ctx != NULL)
-	rl2_graph_destroy_context (aux->ctx);
+		rl2_graph_destroy_context (aux->ctx);
+    if (aux->canvas_labels != NULL)
+		rl2_destroy_canvas (aux->canvas_labels);
+    if (aux->ctx_labels != NULL)
+		rl2_graph_destroy_context (aux->ctx_labels);
     free (aux);
 }
