@@ -184,7 +184,8 @@ read_from_tiff (rl2PrivTiffOriginPtr origin, unsigned short width,
 		unsigned short height, unsigned char sample_type,
 		unsigned char pixel_type, unsigned char num_bands,
 		unsigned int startRow, unsigned int startCol,
-		unsigned char **pixels, int *pixels_sz, rl2PalettePtr palette);
+		unsigned char **pixels, int *pixels_sz,
+		rl2PalettePtr palette);
 
 static rl2PrivTiffOriginPtr
 create_tiff_origin (const char *path, unsigned char force_sample_type,
@@ -445,7 +446,8 @@ parse_worldfile (FILE * in, double *px, double *py, double *pres_x,
 }
 
 static void
-worldfile_tiff_origin (const char *path, rl2PrivTiffOriginPtr origin, int srid)
+worldfile_tiff_origin (const char *path, rl2PrivTiffOriginPtr origin,
+		       int srid)
 {
 /* attempting to retrieve georeferencing from a TIFF+TFW origin */
     FILE *tfw = NULL;
@@ -552,7 +554,8 @@ recover_incomplete_geotiff (rl2PrivTiffOriginPtr origin, TIFF * in,
 }
 
 static void
-geo_tiff_origin (const char *path, rl2PrivTiffOriginPtr origin, int force_srid)
+geo_tiff_origin (const char *path, rl2PrivTiffOriginPtr origin,
+		 int force_srid)
 {
 /* attempting to retrieve georeferencing from a GeoTIFF origin */
     uint32 width = 0;
@@ -868,7 +871,8 @@ check_tiff_origin_pixel_conversion (rl2PrivTiffOriginPtr origin)
 	  if (origin->sampleFormat == SAMPLEFORMAT_UINT
 	      && origin->samplesPerPixel == 1
 	      && origin->photometric == PHOTOMETRIC_PALETTE
-	      && origin->bitsPerSample <= 8 && check_grayscale_palette (origin))
+	      && origin->bitsPerSample <= 8
+	      && check_grayscale_palette (origin))
 	    {
 		origin->forced_conversion = RL2_CONVERT_PALETTE_TO_GRAYSCALE;
 		return 1;
@@ -1416,7 +1420,8 @@ init_tiff_origin (const char *path, rl2PrivTiffOriginPtr origin)
 	  origin->maxX =
 	      origin->minX + (origin->hResolution * (double) (origin->width));
 	  origin->minY =
-	      origin->maxY - (origin->vResolution * (double) (origin->height));
+	      origin->maxY -
+	      (origin->vResolution * (double) (origin->height));
       }
 
 /* retrieving pixel configuration */
@@ -2227,7 +2232,8 @@ rl2_eval_tiff_origin_compatibility (rl2CoveragePtr cvg, rl2TiffOriginPtr tiff,
 	      || hResolution > (coverage->hResolution + confidence))
 	    {
 		if (verbose)
-		    fprintf (stderr, "Mismatching Horizontal Resolution !!!\n");
+		    fprintf (stderr,
+			     "Mismatching Horizontal Resolution !!!\n");
 		return RL2_FALSE;
 	    }
 	  confidence = coverage->vResolution / 100.0;
@@ -2752,7 +2758,8 @@ read_raw_tiles (rl2PrivTiffOriginPtr origin, unsigned short width,
 		/* skipping any not required tile */
 		continue;
 	    }
-	  for (tile_x = 0; tile_x < origin->width; tile_x += origin->tileWidth)
+	  for (tile_x = 0; tile_x < origin->width;
+	       tile_x += origin->tileWidth)
 	    {
 		/* reading a TIFF tile */
 		unsigned int tiff_min_x = tile_x;
@@ -2802,7 +2809,8 @@ read_raw_tiles (rl2PrivTiffOriginPtr origin, unsigned short width,
 				  break;
 			      case RL2_SAMPLE_UINT8:
 				  p_in_u8 = (unsigned char *) tiff_tile;
-				  p_in_u8 += y * origin->tileWidth * num_bands;
+				  p_in_u8 +=
+				      y * origin->tileWidth * num_bands;
 				  p_in_u8 += x * num_bands;
 				  p_out_u8 = (unsigned char *) pixels;
 				  p_out_u8 +=
@@ -2821,7 +2829,8 @@ read_raw_tiles (rl2PrivTiffOriginPtr origin, unsigned short width,
 				  break;
 			      case RL2_SAMPLE_UINT16:
 				  p_in_u16 = (unsigned short *) tiff_tile;
-				  p_in_u16 += y * origin->tileWidth * num_bands;
+				  p_in_u16 +=
+				      y * origin->tileWidth * num_bands;
 				  p_in_u16 += x * num_bands;
 				  p_out_u16 = (unsigned short *) pixels;
 				  p_out_u16 +=
@@ -3587,7 +3596,8 @@ read_raw_separate_tiles (rl2PrivTiffOriginPtr origin, unsigned short width,
 		/* skipping any not required tile */
 		continue;
 	    }
-	  for (tile_x = 0; tile_x < origin->width; tile_x += origin->tileWidth)
+	  for (tile_x = 0; tile_x < origin->width;
+	       tile_x += origin->tileWidth)
 	    {
 		/* reading a TIFF tile */
 		unsigned int tiff_min_x = tile_x;
@@ -3606,7 +3616,8 @@ read_raw_separate_tiles (rl2PrivTiffOriginPtr origin, unsigned short width,
 		  {
 		      /* one component for each separate plane */
 		      if (TIFFReadTile
-			  (origin->in, tiff_tile, tile_x, tile_y, 0, band) < 0)
+			  (origin->in, tiff_tile, tile_x, tile_y, 0,
+			   band) < 0)
 			  goto error;
 		      for (y = 0; y < origin->tileHeight; y++)
 			{
@@ -3622,7 +3633,8 @@ read_raw_separate_tiles (rl2PrivTiffOriginPtr origin, unsigned short width,
 				      continue;
 				  if (sample_type == RL2_SAMPLE_UINT16)
 				    {
-					p_in_u16 = (unsigned short *) tiff_tile;
+					p_in_u16 =
+					    (unsigned short *) tiff_tile;
 					p_in_u16 += y * origin->tileWidth;
 					p_in_u16 += x;
 					p_out_u16 = (unsigned short *) pixels;
@@ -3805,7 +3817,8 @@ read_RGBA_tiles (rl2PrivTiffOriginPtr origin, unsigned short width,
 		/* skipping any not required tile */
 		continue;
 	    }
-	  for (tile_x = 0; tile_x < origin->width; tile_x += origin->tileWidth)
+	  for (tile_x = 0; tile_x < origin->width;
+	       tile_x += origin->tileWidth)
 	    {
 		/* reading a TIFF tile */
 		unsigned int tiff_min_x = tile_x;
@@ -3881,7 +3894,8 @@ read_RGBA_tiles (rl2PrivTiffOriginPtr origin, unsigned short width,
 				     RL2_CONVERT_PALETTE_TO_MONOCHROME)
 			      {
 				  /* forced conversion: PALETTE -> MONOCHROME */
-				  if (red == 255 && green == 255 && blue == 255)
+				  if (red == 255 && green == 255
+				      && blue == 255)
 				      *p_out++ = 0;
 				  else
 				      *p_out++ = 1;
@@ -4237,7 +4251,8 @@ rl2_get_tiff_origin_tile_size (rl2TiffOriginPtr tiff,
 }
 
 RL2_DECLARE int
-rl2_get_tiff_origin_strip_size (rl2TiffOriginPtr tiff, unsigned int *strip_size)
+rl2_get_tiff_origin_strip_size (rl2TiffOriginPtr tiff,
+				unsigned int *strip_size)
 {
 /* attempting to return the Strip dimension */
     rl2PrivTiffOriginPtr origin = (rl2PrivTiffOriginPtr) tiff;
@@ -4326,7 +4341,8 @@ rl2_get_tile_from_tiff_origin (rl2CoveragePtr cvg, rl2TiffOriginPtr tiff,
       }
     else if ((origin->photometric < PHOTOMETRIC_RGB
 	      && origin->forced_pixel_type == RL2_PIXEL_PALETTE)
-	     || origin->forced_conversion == RL2_CONVERT_MONOCHROME_TO_PALETTE)
+	     || origin->forced_conversion ==
+	     RL2_CONVERT_MONOCHROME_TO_PALETTE)
       {
 	  /* creating a remapped Palette */
 	  if (origin->remapMaxPalette == 0 && origin->maxPalette > 0
@@ -4687,7 +4703,8 @@ set_tiff_destination (rl2PrivTiffDestinationPtr destination,
 			SAMPLEFORMAT_UINT);
 	  TIFFSetField (destination->out, TIFFTAG_SAMPLESPERPIXEL, 1);
 	  TIFFSetField (destination->out, TIFFTAG_BITSPERSAMPLE, 1);
-	  TIFFSetField (destination->out, TIFFTAG_FILLORDER, FILLORDER_MSB2LSB);
+	  TIFFSetField (destination->out, TIFFTAG_FILLORDER,
+			FILLORDER_MSB2LSB);
 	  TIFFSetField (destination->out, TIFFTAG_PHOTOMETRIC,
 			PHOTOMETRIC_MINISWHITE);
 	  if (tiff_compression == RL2_COMPRESSION_CCITTFAX3)
@@ -4836,7 +4853,8 @@ set_tiff_destination (rl2PrivTiffDestinationPtr destination,
 	  TIFFSetField (destination->out, TIFFTAG_SAMPLESPERPIXEL, 3);
 	  TIFFSetField (destination->out, TIFFTAG_BITSPERSAMPLE,
 			destination->bitsPerSample);
-	  TIFFSetField (destination->out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
+	  TIFFSetField (destination->out, TIFFTAG_PHOTOMETRIC,
+			PHOTOMETRIC_RGB);
 	  if (tiff_compression == RL2_COMPRESSION_LZW)
 	    {
 		destination->compression = COMPRESSION_LZW;
@@ -5132,8 +5150,26 @@ is_projected_srs (const char *proj4text)
     return 1;
 }
 
+static int
+get_srs_uom (const char *proj4text)
+{
+/* attempts to retrieve a Linear Unit of Measure */
+    if (proj4text == NULL)
+	return -1;
+    if (strstr (proj4text, "+units=m ") != NULL)
+	return Linear_Meter;
+    if (strstr (proj4text, "+units=ft ") != NULL)
+	return Linear_Foot;
+    if (strstr (proj4text, "+units=us-ft ") != NULL)
+	return Linear_Foot_US_Survey;
+    if (strstr (proj4text, "+units=link ") != NULL)
+	return Linear_Link;
+    return -1;
+}
+
 static void
-fetch_crs_params (sqlite3 * handle, int srid, char **srs_name, char **proj4text)
+fetch_crs_params (sqlite3 * handle, int srid, char **srs_name,
+		  char **proj4text)
 {
     int ret;
     char **results;
@@ -5195,6 +5231,35 @@ destination_set_tfw_path (const char *path,
     destination->tfw_path = tfw;
 }
 
+static void
+do_set_geotiff_common (TIFF * out, GTIF * gtif, double pixsize[],
+		       double tiepoint[], int srid, const char *srs_name,
+		       int is_projected, int uom)
+{
+/* setting up the GeoTIFF Tags */
+    TIFFSetField (out, GTIFF_PIXELSCALE, 3, pixsize);
+    TIFFSetField (out, GTIFF_TIEPOINTS, 6, tiepoint);
+    if (srs_name != NULL)
+	TIFFSetField (out, GTIFF_ASCIIPARAMS, srs_name);
+    GTIFKeySet (gtif, GTRasterTypeGeoKey, TYPE_SHORT, 1, RasterPixelIsArea);
+    if (is_projected)
+	GTIFKeySet (gtif, GTModelTypeGeoKey, TYPE_SHORT, 1,
+		    ModelTypeProjected);
+    else
+	GTIFKeySet (gtif, GTModelTypeGeoKey, TYPE_SHORT, 1,
+		    ModelTypeGeographic);
+    if (!is_projected)
+	GTIFKeySet (gtif, GeographicTypeGeoKey, TYPE_SHORT, 1, srid);
+    if (srs_name != NULL)
+	GTIFKeySet (gtif, GTCitationGeoKey, TYPE_ASCII, 0, srs_name);
+    if (is_projected && uom > 0)
+	GTIFKeySet (gtif, GeogLinearUnitsGeoKey, TYPE_SHORT, 1, uom);
+    GTIFKeySet (gtif, GeogAngularUnitsGeoKey, TYPE_SHORT, 1, Angular_Degree);
+    if (is_projected)
+	GTIFKeySet (gtif, ProjectedCSTypeGeoKey, TYPE_SHORT, 1, srid);
+    GTIFWriteKeys (gtif);
+}
+
 RL2_DECLARE rl2TiffDestinationPtr
 rl2_create_geotiff_destination (const char *path, sqlite3 * handle,
 				unsigned int width, unsigned int height,
@@ -5213,6 +5278,8 @@ rl2_create_geotiff_destination (const char *path, sqlite3 * handle,
     double pixsize[3];
     char *srs_name = NULL;
     char *proj4text = NULL;
+    int is_projected = 0;
+    int uom = -1;
     if (!check_color_model
 	(sample_type, pixel_type, num_bands, plt, tiff_compression))
       {
@@ -5261,6 +5328,8 @@ rl2_create_geotiff_destination (const char *path, sqlite3 * handle,
     fetch_crs_params (handle, srid, &srs_name, &proj4text);
     if (srs_name == NULL || proj4text == NULL)
 	goto error;
+    is_projected = is_projected_srs (proj4text);
+    uom = get_srs_uom (proj4text);
 
 /* setting georeferencing infos */
     destination->Srid = srid;
@@ -5280,25 +5349,14 @@ rl2_create_geotiff_destination (const char *path, sqlite3 * handle,
     pixsize[0] = hResolution;
     pixsize[1] = vResolution;
     pixsize[2] = 0.0;
-    TIFFSetField (destination->out, GTIFF_PIXELSCALE, 3, pixsize);
     tiepoint[0] = 0.0;
     tiepoint[1] = 0.0;
     tiepoint[2] = 0.0;
     tiepoint[3] = minX;
     tiepoint[4] = maxY;
     tiepoint[5] = 0.0;
-    TIFFSetField (destination->out, GTIFF_TIEPOINTS, 6, tiepoint);
-    if (srs_name != NULL)
-	TIFFSetField (destination->out, GTIFF_ASCIIPARAMS, srs_name);
-    if (proj4text != NULL)
-	GTIFSetFromProj4 (destination->gtif, proj4text);
-    if (srs_name != NULL)
-	GTIFKeySet (destination->gtif, GTCitationGeoKey, TYPE_ASCII, 0,
-		    srs_name);
-    if (is_projected_srs (proj4text))
-	GTIFKeySet (destination->gtif, ProjectedCSTypeGeoKey, TYPE_SHORT, 1,
-		    srid);
-    GTIFWriteKeys (destination->gtif);
+    do_set_geotiff_common (destination->out, destination->gtif, pixsize,
+			   tiepoint, srid, srs_name, is_projected, uom);
     destination->isGeoReferenced = 1;
 
     return (rl2TiffDestinationPtr) destination;
@@ -6509,7 +6567,8 @@ rl2_write_tiff_tile (rl2TiffDestinationPtr tiff, rl2RasterPtr raster,
 	     && destination->tileWidth == rst->width
 	     && destination->tileHeight == rst->height)
 	ret =
-	    tiff_write_tile_multiband16 (destination, rst, startRow, startCol);
+	    tiff_write_tile_multiband16 (destination, rst, startRow,
+					 startCol);
     else if (destination->sampleFormat == SAMPLEFORMAT_UINT
 	     && destination->samplesPerPixel >= 2
 	     && destination->bitsPerSample == 8
@@ -6518,7 +6577,8 @@ rl2_write_tiff_tile (rl2TiffDestinationPtr tiff, rl2RasterPtr raster,
 	     && rst->nBands == destination->samplesPerPixel
 	     && destination->tileWidth == rst->width
 	     && destination->tileHeight == rst->height)
-	ret = tiff_write_tile_multiband8 (destination, rst, startRow, startCol);
+	ret =
+	    tiff_write_tile_multiband8 (destination, rst, startRow, startCol);
     else if (destination->sampleFormat == SAMPLEFORMAT_UINT
 	     && destination->samplesPerPixel >= 2
 	     && destination->bitsPerSample == 16
@@ -6528,7 +6588,8 @@ rl2_write_tiff_tile (rl2TiffDestinationPtr tiff, rl2RasterPtr raster,
 	     && destination->tileWidth == rst->width
 	     && destination->tileHeight == rst->height)
 	ret =
-	    tiff_write_tile_multiband16 (destination, rst, startRow, startCol);
+	    tiff_write_tile_multiband16 (destination, rst, startRow,
+					 startCol);
     else if (destination->sampleFormat == SAMPLEFORMAT_UINT
 	     && destination->samplesPerPixel == 1
 	     && destination->photometric < 2
@@ -6558,7 +6619,8 @@ rl2_write_tiff_tile (rl2TiffDestinationPtr tiff, rl2RasterPtr raster,
 	     && rst->pixelType == RL2_PIXEL_MONOCHROME && rst->nBands == 1
 	     && destination->tileWidth == rst->width
 	     && destination->tileHeight == rst->height)
-	ret = tiff_write_tile_monochrome (destination, rst, startRow, startCol);
+	ret =
+	    tiff_write_tile_monochrome (destination, rst, startRow, startCol);
     else if (destination->sampleFormat == SAMPLEFORMAT_INT
 	     && destination->samplesPerPixel == 1
 	     && destination->photometric < 2
@@ -7087,6 +7149,8 @@ output_rgb_geotiff (const unsigned char *buffer,
     char *proj4text = NULL;
     GTIF *gtif = (GTIF *) 0;
     TIFF *out = (TIFF *) 0;
+    int is_projected = 0;
+    int uom = -1;
 
 /* suppressing TIFF warnings */
     TIFFSetWarningHandler (NULL);
@@ -7111,28 +7175,21 @@ output_rgb_geotiff (const unsigned char *buffer,
     fetch_crs_params (handle, srid, &srs_name, &proj4text);
     if (srs_name == NULL || proj4text == NULL)
 	goto error;
+    is_projected = is_projected_srs (proj4text);
+    uom = get_srs_uom (proj4text);
 
 /* setting up the GeoTIFF Tags */
     pixsize[0] = hResolution;
     pixsize[1] = vResolution;
     pixsize[2] = 0.0;
-    TIFFSetField (out, GTIFF_PIXELSCALE, 3, pixsize);
     tiepoint[0] = 0.0;
     tiepoint[1] = 0.0;
     tiepoint[2] = 0.0;
     tiepoint[3] = minx;
     tiepoint[4] = maxy;
     tiepoint[5] = 0.0;
-    TIFFSetField (out, GTIFF_TIEPOINTS, 6, tiepoint);
-    if (srs_name != NULL)
-	TIFFSetField (out, GTIFF_ASCIIPARAMS, srs_name);
-    if (proj4text != NULL)
-	GTIFSetFromProj4 (gtif, proj4text);
-    if (srs_name != NULL)
-	GTIFKeySet (gtif, GTCitationGeoKey, TYPE_ASCII, 0, srs_name);
-    if (is_projected_srs (proj4text))
-	GTIFKeySet (gtif, ProjectedCSTypeGeoKey, TYPE_SHORT, 1, srid);
-    GTIFWriteKeys (gtif);
+    do_set_geotiff_common (out, gtif, pixsize, tiepoint, srid, srs_name,
+			   is_projected, uom);
 
     if (!rgb_tiff_common (out, buffer, width, height))
 	goto error;
@@ -7313,6 +7370,8 @@ output_palette_geotiff (const unsigned char *buffer,
     char *proj4text = NULL;
     GTIF *gtif = (GTIF *) 0;
     TIFF *out = (TIFF *) 0;
+    int is_projected = 0;
+    int uom = -1;
 
 /* suppressing TIFF warnings */
     TIFFSetWarningHandler (NULL);
@@ -7337,28 +7396,21 @@ output_palette_geotiff (const unsigned char *buffer,
     fetch_crs_params (handle, srid, &srs_name, &proj4text);
     if (srs_name == NULL || proj4text == NULL)
 	goto error;
+    is_projected = is_projected_srs (proj4text);
+    uom = get_srs_uom (proj4text);
 
 /* setting up the GeoTIFF Tags */
     pixsize[0] = hResolution;
     pixsize[1] = vResolution;
     pixsize[2] = 0.0;
-    TIFFSetField (out, GTIFF_PIXELSCALE, 3, pixsize);
     tiepoint[0] = 0.0;
     tiepoint[1] = 0.0;
     tiepoint[2] = 0.0;
     tiepoint[3] = minx;
     tiepoint[4] = maxy;
     tiepoint[5] = 0.0;
-    TIFFSetField (out, GTIFF_TIEPOINTS, 6, tiepoint);
-    if (srs_name != NULL)
-	TIFFSetField (out, GTIFF_ASCIIPARAMS, srs_name);
-    if (proj4text != NULL)
-	GTIFSetFromProj4 (gtif, proj4text);
-    if (srs_name != NULL)
-	GTIFKeySet (gtif, GTCitationGeoKey, TYPE_ASCII, 0, srs_name);
-    if (is_projected_srs (proj4text))
-	GTIFKeySet (gtif, ProjectedCSTypeGeoKey, TYPE_SHORT, 1, srid);
-    GTIFWriteKeys (gtif);
+    do_set_geotiff_common (out, gtif, pixsize, tiepoint, srid, srs_name,
+			   is_projected, uom);
 
     if (!palette_tiff_common
 	(out, buffer, width, height, red, green, blue, max_palette))
@@ -7391,7 +7443,8 @@ output_palette_geotiff (const unsigned char *buffer,
 static int
 test_palette_tiff (unsigned short width, unsigned short height,
 		   const unsigned char *rgb, unsigned char *red,
-		   unsigned char *green, unsigned char *blue, int *max_palette)
+		   unsigned char *green, unsigned char *blue,
+		   int *max_palette)
 {
 /* testing for an eventual Palette */
     int next_palette = 0;
@@ -7448,7 +7501,8 @@ test_palette_tiff (unsigned short width, unsigned short height,
 
 RL2_DECLARE int
 rl2_rgb_to_tiff (unsigned int width, unsigned int height,
-		 const unsigned char *rgb, unsigned char **tiff, int *tiff_size)
+		 const unsigned char *rgb, unsigned char **tiff,
+		 int *tiff_size)
 {
 /* creating a TIFF in-memory image from an RGB buffer */
     unsigned char red[256];
@@ -7458,7 +7512,8 @@ rl2_rgb_to_tiff (unsigned int width, unsigned int height,
     if (rgb == NULL)
 	return RL2_ERROR;
 
-    if (test_palette_tiff (width, height, rgb, red, green, blue, &max_palette))
+    if (test_palette_tiff
+	(width, height, rgb, red, green, blue, &max_palette))
       {
 	  if (!output_palette_tiff
 	      (rgb, width, height, red, green, blue, max_palette, tiff,
@@ -7487,7 +7542,8 @@ rl2_rgb_to_geotiff (unsigned int width, unsigned int height,
     if (rgb == NULL)
 	return RL2_ERROR;
 
-    if (test_palette_tiff (width, height, rgb, red, green, blue, &max_palette))
+    if (test_palette_tiff
+	(width, height, rgb, red, green, blue, &max_palette))
       {
 	  if (!output_palette_geotiff
 	      (rgb, width, height, handle, minx, miny, maxx, maxy, srid, red,
@@ -7615,6 +7671,8 @@ output_gray_geotiff (const unsigned char *buffer,
     char *proj4text = NULL;
     GTIF *gtif = (GTIF *) 0;
     TIFF *out = (TIFF *) 0;
+    int is_projected = 0;
+    int uom = -1;
 
 /* suppressing TIFF warnings */
     TIFFSetWarningHandler (NULL);
@@ -7639,28 +7697,21 @@ output_gray_geotiff (const unsigned char *buffer,
     fetch_crs_params (handle, srid, &srs_name, &proj4text);
     if (srs_name == NULL || proj4text == NULL)
 	goto error;
+    is_projected = is_projected_srs (proj4text);
+    uom = get_srs_uom (proj4text);
 
 /* setting up the GeoTIFF Tags */
     pixsize[0] = hResolution;
     pixsize[1] = vResolution;
     pixsize[2] = 0.0;
-    TIFFSetField (out, GTIFF_PIXELSCALE, 3, pixsize);
     tiepoint[0] = 0.0;
     tiepoint[1] = 0.0;
     tiepoint[2] = 0.0;
     tiepoint[3] = minx;
     tiepoint[4] = maxy;
     tiepoint[5] = 0.0;
-    TIFFSetField (out, GTIFF_TIEPOINTS, 6, tiepoint);
-    if (srs_name != NULL)
-	TIFFSetField (out, GTIFF_ASCIIPARAMS, srs_name);
-    if (proj4text != NULL)
-	GTIFSetFromProj4 (gtif, proj4text);
-    if (srs_name != NULL)
-	GTIFKeySet (gtif, GTCitationGeoKey, TYPE_ASCII, 0, srs_name);
-    if (is_projected_srs (proj4text))
-	GTIFKeySet (gtif, ProjectedCSTypeGeoKey, TYPE_SHORT, 1, srid);
-    GTIFWriteKeys (gtif);
+    do_set_geotiff_common (out, gtif, pixsize, tiepoint, srid, srs_name,
+			   is_projected, uom);
 
     if (!gray_tiff_common (out, buffer, width, height))
 	goto error;
@@ -7848,7 +7899,8 @@ rl2_build_tiff_xml_summary (rl2TiffOriginPtr tiff)
     sqlite3_free (prev);
     prev = xml;
     if (org->isGeoTiff)
-	xml = sqlite3_mprintf ("%s<RasterFormat>GeoTIFF</RasterFormat>", prev);
+	xml =
+	    sqlite3_mprintf ("%s<RasterFormat>GeoTIFF</RasterFormat>", prev);
     else if (org->isGeoReferenced)
 	xml =
 	    sqlite3_mprintf ("%s<RasterFormat>TIFF+WorldFile</RasterFormat>",
@@ -7857,7 +7909,8 @@ rl2_build_tiff_xml_summary (rl2TiffOriginPtr tiff)
 	xml = sqlite3_mprintf ("%s<RasterFormat>TIFF</RasterFormat>", prev);
     sqlite3_free (prev);
     prev = xml;
-    xml = sqlite3_mprintf ("%s<RasterWidth>%u</RasterWidth>", prev, org->width);
+    xml =
+	sqlite3_mprintf ("%s<RasterWidth>%u</RasterWidth>", prev, org->width);
     sqlite3_free (prev);
     prev = xml;
     xml =
@@ -7956,11 +8009,14 @@ rl2_build_tiff_xml_summary (rl2TiffOriginPtr tiff)
     if (org->compression == COMPRESSION_NONE)
 	xml = sqlite3_mprintf ("%s<Compression>none</Compression>", prev);
     else if (org->compression == COMPRESSION_CCITTRLE)
-	xml = sqlite3_mprintf ("%s<Compression>CCITT RLE</Compression>", prev);
+	xml =
+	    sqlite3_mprintf ("%s<Compression>CCITT RLE</Compression>", prev);
     else if (org->compression == COMPRESSION_CCITTFAX3)
-	xml = sqlite3_mprintf ("%s<Compression>CCITT Fax3</Compression>", prev);
+	xml =
+	    sqlite3_mprintf ("%s<Compression>CCITT Fax3</Compression>", prev);
     else if (org->compression == COMPRESSION_CCITTFAX4)
-	xml = sqlite3_mprintf ("%s<Compression>CCITT Fax4</Compression>", prev);
+	xml =
+	    sqlite3_mprintf ("%s<Compression>CCITT Fax4</Compression>", prev);
     else if (org->compression == COMPRESSION_LZW)
 	xml = sqlite3_mprintf ("%s<Compression>LZW</Compression>", prev);
     else if (org->compression == COMPRESSION_OJPEG)
@@ -7976,7 +8032,8 @@ rl2_build_tiff_xml_summary (rl2TiffOriginPtr tiff)
     else if (org->compression == COMPRESSION_JBIG)
 	xml = sqlite3_mprintf ("%s<Compression>JBIG</Compression>", prev);
     else if (org->compression == COMPRESSION_JP2000)
-	xml = sqlite3_mprintf ("%s<Compression>JPEG 2000</Compression>", prev);
+	xml =
+	    sqlite3_mprintf ("%s<Compression>JPEG 2000</Compression>", prev);
     else
 	xml =
 	    sqlite3_mprintf ("%s<Compression>%u</Compression>", prev,

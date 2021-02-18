@@ -130,6 +130,7 @@ struct aux_vector_render
     int with_edge_or_link_seeds;
     int with_face_seeds;
     int mode_labels;
+    int immediate_labels;
     struct aux_raster_image *output;
 };
 
@@ -7952,6 +7953,7 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
     int srid;
     int ok_style;
     int ok_format;
+    int has_labels = 0;
     unsigned char *image = NULL;
     int image_size;
     unsigned char format_id = RL2_OUTPUT_FORMAT_UNKNOWN;
@@ -8097,6 +8099,15 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
       }
     rl2_is_multilayer_topogeo (multi, &is_topogeo);
     rl2_is_multilayer_toponet (multi, &is_toponet);
+    if (lyr_stl != NULL && aux->immediate_labels)
+      {
+	  /* checking if the Style has Text Labels */
+	  has_labels = rl2_style_has_labels (lyr_stl);
+	  if (has_labels)
+	      ctx_labels = rl2_graph_create_context (aux->data, width, height);
+	  if (ctx_labels != NULL)
+	      rl2_prime_background (ctx_labels, 0, 0, 0, 0);	/* labels layer: always transparent */
+      }
 
     for (j = 0; j < rl2_get_multilayer_count (multi); j++)
       {
@@ -8711,13 +8722,42 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
 				    rl2_get_symbolizer_from_feature_type_style
 				    (lyr_stl, scale, variant, &scale_forbidden);
 			    if (!scale_forbidden)
-			    {
-				rl2_draw_vector_feature (ctx, sqlite, priv_data,
-							 symbolizer, height,
-							 minx, miny, maxx, maxy,
-							 x_res, y_res, geom,
-							 variant, aux->mode_labels);
-						 }
+			      {
+				  if (ctx_labels != NULL && has_labels)
+				    {
+					/* immediately painting Text Labels */
+					rl2_draw_vector_feature (ctx, sqlite,
+								 priv_data,
+								 symbolizer,
+								 height, minx,
+								 miny, maxx,
+								 maxy, x_res,
+								 y_res, geom,
+								 variant, 0);
+					rl2_draw_vector_feature (ctx_labels,
+								 sqlite,
+								 priv_data,
+								 symbolizer,
+								 height, minx,
+								 miny, maxx,
+								 maxy, x_res,
+								 y_res, geom,
+								 variant, 1);
+				    }
+				  else
+				    {
+					/* painting eventual Text Labels in a later step */
+					rl2_draw_vector_feature (ctx, sqlite,
+								 priv_data,
+								 symbolizer,
+								 height, minx,
+								 miny, maxx,
+								 maxy, x_res,
+								 y_res, geom,
+								 variant,
+								 aux->mode_labels);
+				    }
+			      }
 			    rl2_destroy_geometry (geom);
 			}
 		  }
@@ -8800,6 +8840,7 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
   done:
     if (aux->output == NULL)
       {
+	  fprintf (stderr, "*** medrallami\n");
 	  rl2_destroy_multi_layer (multi);
 	  if (lyr_stl != NULL)
 	      rl2_destroy_feature_type_style (lyr_stl);
@@ -8828,6 +8869,8 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
 		    rl2_graph_merge (ctx_out, ctx_in);
 		do_set_canvas_ready (canvas, RL2_CANVAS_BASE_CTX);
 	    }
+	  if (ctx_labels != NULL)
+	      rl2_graph_destroy_context (ctx_labels);
 	  if (is_toponet)
 	    {
 		/* merging Network sub-Layers */
@@ -8845,8 +8888,11 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
 		    rl2_graph_merge (ctx_out, ctx_in);
 		do_set_canvas_ready (canvas, RL2_CANVAS_BASE_CTX);
 	    }
+	  if (ctx_labels != NULL)
+	      rl2_graph_destroy_context (ctx_labels);
 	  return RL2_OK;
       }
+    fprintf (stderr, "*** non medrallami\n");
 
     if (is_topogeo)
       {
@@ -8891,11 +8937,10 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
     if (ctx_labels != NULL)
       {
 	  /* merging Label sub-layer */
-	  rl2GraphicsContextPtr ctx_in =
-	      rl2_get_canvas_ctx (canvas, RL2_CANVAS_LABELS_CTX);
+	  fprintf (stderr, "********* merging\n");
 	  rl2GraphicsContextPtr ctx_out =
 	      rl2_get_canvas_ctx (canvas, RL2_CANVAS_BASE_CTX);
-	  rl2_graph_merge (ctx_out, ctx_in);
+	  rl2_graph_merge (ctx_out, ctx_labels);
       }
 
     rl2_destroy_multi_layer (multi);
@@ -8923,6 +8968,8 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
 	free (alpha);
     aux->output->img = image;
     aux->output->img_size = image_size;
+    if (ctx_labels != NULL)
+	rl2_graph_destroy_context (ctx_labels);
     return RL2_OK;
 
   error:
@@ -8935,6 +8982,8 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
 	  if (ctx != NULL)
 	      rl2_graph_destroy_context (ctx);
       }
+    if (ctx_labels != NULL)
+	rl2_graph_destroy_context (ctx_labels);
     rl2_destroy_multi_layer (multi);
     multi = NULL;
     if (lyr_stl != NULL)
@@ -8942,12 +8991,12 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
     if (variant != NULL)
 	rl2_destroy_variant_array (variant);
     if (stmt != NULL)
-		sqlite3_finalize (stmt);
-	if (aux->output != NULL)
-	{
-		aux->output->img = NULL;
-		aux->output->img_size = 0;
-	}
+	sqlite3_finalize (stmt);
+    if (aux->output != NULL)
+      {
+	  aux->output->img = NULL;
+	  aux->output->img_size = 0;
+      }
     return RL2_ERROR;
 }
 
@@ -9050,7 +9099,6 @@ rl2_map_image_blob_from_vector (sqlite3 * sqlite, const void *data,
     int is_topogeo = do_check_topogeo (sqlite, db_prefix, cvg_name);
     int is_toponet = do_check_toponet (sqlite, db_prefix, cvg_name);
     rl2GraphicsContextPtr ctx = NULL;
-    rl2GraphicsContextPtr ctx_labels = NULL;
     rl2GraphicsContextPtr ctx_nodes = NULL;
     rl2GraphicsContextPtr ctx_edges = NULL;
     rl2GraphicsContextPtr ctx_edge_seeds = NULL;
@@ -9076,6 +9124,7 @@ rl2_map_image_blob_from_vector (sqlite3 * sqlite, const void *data,
     aux.with_edge_or_link_seeds = 1;
     aux.with_face_seeds = 1;
     aux.mode_labels = 0;
+    aux.immediate_labels = 1;
     aux.output = malloc (sizeof (struct aux_raster_image));
     aux.output->bg_red = 255;
     aux.output->bg_green = 255;
@@ -9108,9 +9157,6 @@ rl2_map_image_blob_from_vector (sqlite3 * sqlite, const void *data,
 /* creating a Canvas */
     ctx = rl2_graph_create_context (data, width, height);
     if (ctx == NULL)
-	goto error;
-    ctx_labels = rl2_graph_create_context (data, width, height);
-    if (ctx_labels == NULL)
 	goto error;
     if (is_topogeo)
       {
@@ -9176,7 +9222,6 @@ rl2_map_image_blob_from_vector (sqlite3 * sqlite, const void *data,
 
 /* priming the background */
     rl2_prime_background (ctx, bg_red, bg_green, bg_blue, bg_alpha);
-    rl2_prime_background (ctx_labels, 0, 0, 0, 0);	/* labels layer: always transparent */
     if (ctx_nodes != NULL)
 	rl2_prime_background (ctx_nodes, 0, 0, 0, 0);	/* Nodes layer: always transparent */
     if (ctx_edges != NULL)
@@ -9195,7 +9240,6 @@ rl2_map_image_blob_from_vector (sqlite3 * sqlite, const void *data,
     if (do_paint_map_from_vector (&aux) == RL2_OK)
       {
 	  rl2_graph_destroy_context (ctx);
-	  rl2_graph_destroy_context (ctx_labels);
 	  if (ctx_nodes != NULL)
 	      rl2_graph_destroy_context (ctx_nodes);
 	  if (ctx_edges != NULL)
@@ -9222,8 +9266,6 @@ rl2_map_image_blob_from_vector (sqlite3 * sqlite, const void *data,
 	free (aux.output);
     if (ctx != NULL)
 	rl2_graph_destroy_context (ctx);
-    if (ctx_labels != NULL)
-	rl2_graph_destroy_context (ctx_labels);
     if (ctx_nodes != NULL)
 	rl2_graph_destroy_context (ctx_nodes);
     if (ctx_edges != NULL)
@@ -9291,6 +9333,7 @@ rl2_styled_map_image_blob_from_vector (sqlite3 * sqlite, const void *data,
     aux.with_edge_or_link_seeds = 1;
     aux.with_face_seeds = 1;
     aux.mode_labels = 0;
+    aux.immediate_labels = 1;
     aux.output = malloc (sizeof (struct aux_raster_image));
     aux.output->bg_red = 255;
     aux.output->bg_green = 255;
@@ -9520,6 +9563,7 @@ rl2_map_image_paint_from_vector (sqlite3 * sqlite, const void *data,
     aux.with_edge_or_link_seeds = 1;
     aux.with_face_seeds = 1;
     aux.mode_labels = 0;
+    aux.immediate_labels = 0;
     ret = do_paint_map_from_vector (&aux);
     return ret;
 }
@@ -9587,17 +9631,18 @@ rl2_map_image_paint_from_vector_ex (sqlite3 * sqlite, const void *data,
     aux.with_edge_or_link_seeds = with_edge_or_link_seeds;
     aux.with_face_seeds = with_face_seeds;
     aux.mode_labels = 0;
+    aux.immediate_labels = 0;
     ret = do_paint_map_from_vector (&aux);
     return ret;
 }
 
 RL2_DECLARE int
 rl2_map_image_paint_labels (sqlite3 * sqlite, const void *data,
-				 rl2CanvasPtr canvas, const char *db_prefix,
-				 const char *cvg_name,
-				 const unsigned char *blob, int blob_sz,
-				 int reaspect, const char *style_name,
-				 const unsigned char *xml_style)
+			    rl2CanvasPtr canvas, const char *db_prefix,
+			    const char *cvg_name,
+			    const unsigned char *blob, int blob_sz,
+			    int reaspect, const char *style_name,
+			    const unsigned char *xml_style)
 {
 /* rendering Labels from a Vector Coverage - Graphics Context */
     struct aux_vector_render aux;
@@ -9651,6 +9696,7 @@ rl2_map_image_paint_labels (sqlite3 * sqlite, const void *data,
     aux.with_edge_or_link_seeds = 1;
     aux.with_face_seeds = 1;
     aux.mode_labels = 1;
+    aux.immediate_labels = 0;
     ret = do_paint_map_from_vector (&aux);
     return ret;
 }
