@@ -1670,13 +1670,28 @@ extern "C"
 				     rl2GraphicsContextPtr ctx_in);
 
 /**
+ Creates an RGBA Array corresponding to the current Canvas
+
+ \param context the pointer to a valid Graphics Context (aka Canvas).
+
+ \return the pointer to the RGBA Array: NULL on failure.
+ 
+ \sa rl2_graph_get_context_rgb_array, rl2_graph_get_context_alpha_array
+ 
+ \note you are responsible to destroy (before or after) any RGBA Array
+ returned by rl2_graph_get_context_rgb_array() by invoking free().
+ */
+    RL2_DECLARE unsigned char
+	*rl2_graph_get_context_rgba_array (rl2GraphicsContextPtr context);
+
+/**
  Creates an RGB Array corresponding to the current Canvas
 
  \param context the pointer to a valid Graphics Context (aka Canvas).
 
  \return the pointer to the RGB Array: NULL on failure.
  
- \sa rl2_graph_get_context_alpha_array
+ \sa rl2_graph_get_context_alpha_array, rl2_graph_get_context_rgb_array
  
  \note you are responsible to destroy (before or after) any RGB Array
  returned by rl2_graph_get_context_rgb_array() by invoking free().
@@ -1694,7 +1709,7 @@ extern "C"
 
  \return the pointer to the Array of Alpha Values: NULL on failure.
  
- \sa rl2_graph_get_context_rgb_array
+ \sa rl2_graph_get_context_rgb_array, rl2_graph_get_context_rgb_array
  
  \note you are responsible to destroy (before or after) any RGB Array
  returned by rl2_graph_get_context_alpha_array() by invoking free().
@@ -1711,7 +1726,7 @@ extern "C"
  \return the pointer to newly created Canvas Object: NULL on failure.
  
  \sa rl2_destroy_canvas, rl2_create_topology_canvas, rl2_create_network_canvas, 
- rl2_create_raster_canves, rl2_create_wms_canvas, rl2_get_canvas_type,
+ rl2_create_raster_canvas, rl2_create_wms_canvas, rl2_get_canvas_type,
  rl2_get_canvas_ctx, rl2_is_canvas_ready, rl2_is_canvas_error
  
  \note you are responsible to destroy (before or after) any allocated 
@@ -1733,7 +1748,7 @@ extern "C"
  \return the pointer to newly created Canvas Object: NULL on failure.
  
  \sa rl2_destroy_canvas, rl2_create_vector_canvas, rl2_create_network_canvas, 
- rl2_create_raster_canves, rl2_create_wms_canvas, rl2_get_canvas_type,
+ rl2_create_raster_canvas, rl2_create_wms_canvas, rl2_get_canvas_type,
  rl2_get_canvas_ctx, rl2_is_canvas_ready, rl2_is_canvas_error
  
  \note you are responsible to destroy (before or after) any allocated 
@@ -1763,7 +1778,7 @@ extern "C"
  \return the pointer to newly created Canvas Object: NULL on failure.
  
  \sa rl2_destroy_canvas, rl2_create_vector_canvas, rl2_create_topology_canvas, 
- rl2_create_raster_canves, rl2_create_wms_canvas, rl2_get_canvas_type,
+ rl2_create_raster_canvas, rl2_create_wms_canvas, rl2_get_canvas_type,
  rl2_get_canvas_ctx, rl2_is_canvas_ready, rl2_is_canvas_error
  
  \note you are responsible to destroy (before or after) any allocated 
@@ -1818,7 +1833,7 @@ extern "C"
  \param canvas pointer to object to be destroyed
 
  \sa rl2_create_vector_canvas, rl2_create_topology_canvas, rl2_create_network_canvas, 
- rl2_create_raster_canves, rl2_create_wms_canvas
+ rl2_create_raster_canvas, rl2_create_wms_canvas
  */
     RL2_DECLARE void rl2_destroy_canvas (rl2CanvasPtr canvas);
 

@@ -209,6 +209,7 @@ typedef struct wmsLayerStruct
 /* a struct wrapping a WMS Layer */
     int Queryable;
     int Opaque;
+    int Cascaded;
     char *Name;
     char *Title;
     char *Abstract;
@@ -324,7 +325,7 @@ wmsAllocCachedItem (const char *url, const unsigned char *item, int size,
 		    const char *image_format)
 {
 /* creating a WMS Cached Item */
-    int len;
+    unsigned int len;
     time_t xtime;
     wmsCachedItemPtr ptr = malloc (sizeof (wmsCachedItem));
     len = strlen (url);
@@ -368,7 +369,7 @@ wmsAllocCachedCapabilities (const char *url, const unsigned char *response,
 {
 /* creating a WMS Cached GetCapabilities response */
     wmsCachedCapabilitiesPtr ptr = malloc (sizeof (wmsCachedCapabilities));
-    int len = strlen (url);
+    unsigned int len = strlen (url);
     ptr->Url = malloc (len + 1);
     strcpy (ptr->Url, url);
     ptr->Response = malloc (size + 1);
@@ -785,7 +786,7 @@ static wmsFormatPtr
 wmsAllocFormat (const char *format)
 {
 /* allocating an empty WMS Format object */
-    int len;
+    unsigned int len;
     wmsFormatPtr fmt = malloc (sizeof (wmsFormat));
     fmt->FormatCode = WMS_FORMAT_UNKNOWN;
     if (strcmp (format, "image/jpeg") == 0)
@@ -830,7 +831,7 @@ static wmsCrsPtr
 wmsAllocCrs (const char *crs_str)
 {
 /* allocating a WMS CRS object */
-    int len;
+    unsigned int len;
     wmsCrsPtr crs = malloc (sizeof (wmsCrs));
     crs->Crs = NULL;
     if (crs != NULL)
@@ -859,7 +860,7 @@ wmsAllocBBox (const char *crs_str, double minx, double maxx, double miny,
 	      double maxy)
 {
 /* allocating a WMS Bounding Box object */
-    int len;
+    unsigned int len;
     wmsBBoxPtr bbox = malloc (sizeof (wmsBBox));
     bbox->Crs = NULL;
     if (bbox != NULL)
@@ -891,7 +892,7 @@ static wmsStylePtr
 wmsAllocStyle (const char *name, const char *title, const char *abstract)
 {
 /* allocating a WMS Style object */
-    int len;
+    unsigned int len;
     wmsStylePtr stl = malloc (sizeof (wmsStyle));
     stl->Name = NULL;
     stl->Title = NULL;
@@ -938,10 +939,11 @@ wmsAllocLayer (const char *name, const char *title, const char *abstract,
 	       wmsLayerPtr parent)
 {
 /* allocating a WMS Layer object */
-    int len;
+    unsigned int len;
     wmsLayerPtr lyr = malloc (sizeof (wmsLayer));
     lyr->Queryable = -1;
     lyr->Opaque = -1;
+    lyr->Cascaded = -1;
     lyr->Name = NULL;
     lyr->Title = NULL;
     lyr->Abstract = NULL;
@@ -1066,7 +1068,7 @@ add_url_argument (wmsTilePatternPtr ptr, const char *pattern)
     const char *p = pattern;
     const char *p_eq = pattern;
     wmsUrlArgumentPtr arg;
-    int len;
+    unsigned int len;
 
 /* splitting arg Name and Value */
     while (1)
@@ -1458,7 +1460,7 @@ static wmsFeatureAttributePtr
 wmsAllocFeatureAttribute (const char *name, char *value)
 {
 /* allocating and initializing a GML Feature Attribute object */
-    int len;
+    unsigned int len;
     wmsFeatureAttributePtr attr = malloc (sizeof (wmsFeatureAttribute));
     len = strlen (name);
     attr->name = malloc (len + 1);
@@ -1489,7 +1491,7 @@ static wmsFeatureMemberPtr
 wmsAllocFeatureMember (const char *name)
 {
 /* allocating an empty GML Feature Member object */
-    int len;
+    unsigned int len;
     wmsFeatureMemberPtr member = malloc (sizeof (wmsFeatureMember));
     len = strlen (name);
     member->layer_name = malloc (len + 1);
@@ -1764,7 +1766,10 @@ parse_http_format (wmsMemBufferPtr buf)
 	return NULL;
     for (i = 0; i < (int) (buf->WriteOffset) - 15; i++)
       {
-	  if (memcmp (buf->Buffer + i, "Content-Type: ", 14) == 0)
+	  char dummy[16];
+	  memcpy (dummy, buf->Buffer + i, 14);
+	  dummy[14] = '\0';
+	  if (strcasecmp (dummy, "Content-Type: ") == 0)
 	    {
 		p_in = buf->Buffer + i + 14;
 		break;
@@ -1840,19 +1845,27 @@ check_http_header (wmsMemBufferPtr buf, int *http_status, char **http_code)
     int size_status = 0;
     int size_code = 0;
     char *tmp;
+    int http_len;
 
     *http_status = -1;
     *http_code = NULL;
     if (buf->Buffer == NULL)
 	return;
+
     if (buf->WriteOffset < 10)
-	return;
-    if (memcmp (buf->Buffer, "HTTP/1.1 ", 9) != 0
-	&& memcmp (buf->Buffer, "HTTP/1.0 ", 9) != 0)
 	return;
 
 /* attempting to retrieve the HTTP status */
-    p_in = buf->Buffer + 9;
+    if (memcmp (buf->Buffer, "HTTP/1.1 ", 9) == 0
+	|| memcmp (buf->Buffer, "HTTP/1.0 ", 9) == 0)
+	http_len = 9;
+    else if (memcmp (buf->Buffer, "HTTP/2 ", 7) == 0)
+	http_len = 7;
+    else
+	return;
+
+/* attempting to retrieve the HTTP status */
+    p_in = buf->Buffer + http_len;
     base_status = p_in;
     while ((size_t) (p_in - buf->Buffer) < buf->WriteOffset)
       {
@@ -1870,7 +1883,7 @@ check_http_header (wmsMemBufferPtr buf, int *http_status, char **http_code)
     free (tmp);
 
 /* attempting to retrieve the HTTP code */
-    p_in = buf->Buffer + 10 + size_status;
+    p_in = buf->Buffer + http_len + size_status;
     base_code = p_in;
     while ((size_t) (p_in - buf->Buffer) < buf->WriteOffset)
       {
@@ -2039,7 +2052,7 @@ clean_xml (wmsMemBuffer * in)
 		else if (*(p_in + i) == '&')
 		    wmsMemBufferAppend (&outbuf,
 					(const unsigned char *) "&amp;", 5);
-		else if (*(p_in + i) == '>')
+		else if (*(p_in + i) == '"')
 		    wmsMemBufferAppend (&outbuf,
 					(const unsigned char *) "&quot;", 6);
 		else
@@ -2068,11 +2081,11 @@ clean_xml_str (const char *p_in)
 /* cleaning the XML payload by removing useless whitespaces */
     wmsMemBuffer outbuf;
     char *out;
-    int i;
+    unsigned int i;
     int j;
     int cdata = 0;
     int ignore = 0;
-    int len = strlen (p_in);
+    unsigned int len = strlen (p_in);
     if (len <= 0)
 	return NULL;
     wmsMemBufferInitialize (&outbuf);
@@ -2458,6 +2471,12 @@ parse_wms_layer_in_layer (xmlNodePtr node, struct _xmlAttr *properties,
 		      if (text->type == XML_TEXT_NODE)
 			  lyr->Opaque = atoi ((const char *) (text->content));
 		  }
+		if (strcmp ((const char *) (attr->name), "cascaded") == 0)
+		  {
+		      text = attr->children;
+		      if (text->type == XML_TEXT_NODE)
+			  lyr->Cascaded = atoi ((const char *) (text->content));
+		  }
 	    }
 	  attr = attr->next;
       }
@@ -2607,6 +2626,12 @@ parse_wms_layer (xmlNodePtr node, struct _xmlAttr *properties,
 		      text = attr->children;
 		      if (text->type == XML_TEXT_NODE)
 			  lyr->Opaque = atoi ((const char *) (text->content));
+		  }
+		if (strcmp ((const char *) (attr->name), "cascaded") == 0)
+		  {
+		      text = attr->children;
+		      if (text->type == XML_TEXT_NODE)
+			  lyr->Cascaded = atoi ((const char *) (text->content));
 		  }
 	    }
 	  attr = attr->next;
@@ -2897,7 +2922,7 @@ parse_wms_service (xmlNodePtr node, wmsCapabilitiesPtr cap)
     int layer_limit = -1;
     int maxWidth = -1;
     int maxHeight = -1;
-    int len;
+    unsigned int len;
 
     for (cur_node = node; cur_node; cur_node = cur_node->next)
       {
@@ -3168,7 +3193,7 @@ parse_wms_GetMap_HTTP_Post (xmlNodePtr node, wmsCapabilitiesPtr cap)
 {
 /* recursively parsing the GetCapabilities/Capability/Request/GetMap/DCPType/HTTP/Post node */
     xmlNodePtr cur_node = NULL;
-    int len;
+    unsigned int len;
     const char *p;
 
     for (cur_node = node; cur_node; cur_node = cur_node->next)
@@ -3216,7 +3241,7 @@ parse_wms_GetTileService_HTTP_Get (xmlNodePtr node, wmsCapabilitiesPtr cap)
 {
 /* recursively parsing the GetCapabilities/Capability/Request/GetTileService/DCPType/HTTP/Get node */
     xmlNodePtr cur_node = NULL;
-    int len;
+    unsigned int len;
     const char *p;
 
     for (cur_node = node; cur_node; cur_node = cur_node->next)
@@ -3267,7 +3292,7 @@ parse_wms_GetTileService_HTTP_Post (xmlNodePtr node, wmsCapabilitiesPtr cap)
 {
 /* recursively parsing the GetCapabilities/Capability/Request/GetTileService/DCPType/HTTP/Post node */
     xmlNodePtr cur_node = NULL;
-    int len;
+    unsigned int len;
     const char *p;
 
     for (cur_node = node; cur_node; cur_node = cur_node->next)
@@ -3319,7 +3344,7 @@ parse_wms_GetInfo_HTTP_Get (xmlNodePtr node, wmsCapabilitiesPtr cap)
 {
 /* recursively parsing the GetCapabilities/Capability/Request/GetFeatureInfo/DCPType/HTTP/Get node */
     xmlNodePtr cur_node = NULL;
-    int len;
+    unsigned int len;
     const char *p;
 
     for (cur_node = node; cur_node; cur_node = cur_node->next)
@@ -3372,7 +3397,7 @@ parse_wms_GetInfo_HTTP_Post (xmlNodePtr node, wmsCapabilitiesPtr cap)
 {
 /* recursively parsing the GetCapabilities/Capability/Request/GetFeatureInfo/DCPType/HTTP/Post node */
     xmlNodePtr cur_node = NULL;
-    int len;
+    unsigned int len;
     const char *p;
 
     for (cur_node = node; cur_node; cur_node = cur_node->next)
@@ -3594,7 +3619,8 @@ parse_wms_getInfo (xmlNodePtr node, wmsCapabilitiesPtr cap)
 					    ok = 1;
 					if (ok)
 					  {
-					      int len = strlen (format);
+					      unsigned int len =
+						  strlen (format);
 					      cap->GmlMimeType =
 						  malloc (len + 1);
 					      strcpy (cap->GmlMimeType, format);
@@ -3610,7 +3636,8 @@ parse_wms_getInfo (xmlNodePtr node, wmsCapabilitiesPtr cap)
 					    ok = 1;
 					if (ok)
 					  {
-					      int len = strlen (format);
+					      unsigned int len =
+						  strlen (format);
 					      cap->XmlMimeType =
 						  malloc (len + 1);
 					      strcpy (cap->XmlMimeType, format);
@@ -3725,7 +3752,7 @@ parse_version (xmlNodePtr node, wmsCapabilitiesPtr cap)
       }
     if (version != NULL)
       {
-	  int len = strlen (version);
+	  unsigned int len = strlen (version);
 	  if (cap->Version != NULL)
 	      free (cap->Version);
 	  cap->Version = malloc (len + 1);
@@ -4282,7 +4309,7 @@ parse_tile_service_info (xmlNodePtr node, wmsCapabilitiesPtr cap)
       {
 	  if (cur_node->type == XML_ELEMENT_NODE)
 	    {
-		int len;
+		unsigned int len;
 		xmlNodePtr child_node;
 		const char *value = NULL;
 		if (strcmp ((const char *) (cur_node->name), "Name") == 0)
@@ -4620,7 +4647,7 @@ make_feature_name (const char *layer_name)
 {
 /* building the expected feature name */
     char *name;
-    int len = strlen (layer_name);
+    unsigned int len = strlen (layer_name);
     if (len <= 6)
 	return NULL;
     if (strcmp (layer_name + len - 6, "_layer") != 0)
@@ -4886,6 +4913,9 @@ query_TileService (rl2WmsCachePtr cache_handle,
 		curl_easy_setopt (curl, CURLOPT_PROXY, proxy);
 	    }
 
+	  /* enabling System CA cert store (Windows / Mac OsX */
+	  curl_easy_setopt (curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
+
 	  /* no progress meter please */
 	  curl_easy_setopt (curl, CURLOPT_NOPROGRESS, 1L);
 	  /* setting the output callback function */
@@ -4989,6 +5019,9 @@ create_wms_catalog (rl2WmsCachePtr cache_handle, const char *url,
 		curl_easy_setopt (curl, CURLOPT_PROXY, proxy);
 	    }
 
+	  /* enabling System CA cert store (Windows / Mac OsX */
+	  curl_easy_setopt (curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
+
 	  /* no progress meter please */
 	  curl_easy_setopt (curl, CURLOPT_NOPROGRESS, 1L);
 	  /* setting the output callback function */
@@ -5007,7 +5040,7 @@ create_wms_catalog (rl2WmsCachePtr cache_handle, const char *url,
 
 	  /* verifying the HTTP status code */
 	  check_http_header (&headerBuf, &http_status, &http_code);
-	  if (http_status == 302)
+	  if (http_status == 301 || http_status == 302)
 	    {
 		while (1)
 		  {
@@ -5032,7 +5065,7 @@ create_wms_catalog (rl2WmsCachePtr cache_handle, const char *url,
 			}
 		      free (redir);
 		      check_http_header (&headerBuf, &http_status, &http_code);
-		      if (http_status == 302)
+		      if (http_status == 301 || http_status == 302)
 			  continue;
 		      break;
 		  }
@@ -5802,7 +5835,7 @@ clone_wms_tile_pattern (rl2WmsTilePatternPtr handle)
 {
 /* clones a WMS TilePattern object */
     char *str;
-    int len;
+    unsigned int len;
     wmsTilePatternPtr clone;
     wmsTilePatternPtr pattern = (wmsTilePatternPtr) handle;
     if (pattern == NULL)
@@ -5977,7 +6010,7 @@ get_wms_tile_pattern_sample_url (rl2WmsTilePatternPtr handle)
 {
 /* return the sample URL for some TilePattern */
     char *url = NULL;
-    int len;
+    unsigned int len;
     char *xurl;
     wmsUrlArgumentPtr arg;
     wmsTilePatternPtr ptr = (wmsTilePatternPtr) handle;
@@ -6427,6 +6460,36 @@ is_wms_layer_queryable (rl2WmsLayerPtr handle)
 	return ptr->Queryable;
     wms_parent_queryable (ptr->Parent, &queryable);
     return queryable;
+}
+
+static void
+wms_parent_cascaded (wmsLayerPtr lyr, int *cascaded)
+{
+/* recursively testing the Cascaded property from a parent Layer (inheritance) */
+    if (lyr == NULL)
+	return;
+
+    if (lyr->Cascaded >= 0)
+      {
+	  *cascaded = lyr->Cascaded;
+	  return;
+      }
+    wms_parent_cascaded (lyr->Parent, cascaded);
+}
+
+RL2_DECLARE int
+get_wms_layer_cascaded (rl2WmsLayerPtr handle)
+{
+/* Tests if some WMS-Layer object declares the Cascaded property */
+    int cascaded = -1;
+    wmsLayerPtr ptr = (wmsLayerPtr) handle;
+    if (ptr == NULL)
+	return -1;
+
+    if (ptr->Cascaded >= 0)
+	return ptr->Cascaded;
+    wms_parent_cascaded (ptr->Parent, &cascaded);
+    return cascaded;
 }
 
 RL2_DECLARE double
@@ -7170,6 +7233,7 @@ do_wms_GetMap_get (rl2WmsCachePtr cache_handle, const char *url,
 	  sqlite3_free (request);
 	  return NULL;
       }
+    fprintf (stderr, "%s\n", request);
 
     curl = curl_easy_init ();
     if (curl)
@@ -7182,6 +7246,9 @@ do_wms_GetMap_get (rl2WmsCachePtr cache_handle, const char *url,
 		/* setting up the required proxy */
 		curl_easy_setopt (curl, CURLOPT_PROXY, proxy);
 	    }
+
+	  /* enabling System CA cert store (Windows / Mac OsX */
+	  curl_easy_setopt (curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
 
 	  /* no progress meter please */
 	  curl_easy_setopt (curl, CURLOPT_NOPROGRESS, 1L);
@@ -7205,7 +7272,7 @@ do_wms_GetMap_get (rl2WmsCachePtr cache_handle, const char *url,
 
 	  /* verifying the HTTP status code */
 	  check_http_header (&headerBuf, &http_status, &http_code);
-	  if (http_status == 302)
+	  if (http_status == 301 || http_status == 302)
 	    {
 		while (1)
 		  {
@@ -7230,7 +7297,7 @@ do_wms_GetMap_get (rl2WmsCachePtr cache_handle, const char *url,
 			}
 		      free (redir);
 		      check_http_header (&headerBuf, &http_status, &http_code);
-		      if (http_status == 302)
+		      if (http_status == 301 || http_status == 302)
 			  continue;
 		      break;
 		  }
@@ -7411,6 +7478,9 @@ do_wms_GetMap_blob (const char *url, const char *version, const char *layer,
 	  /* setting the URL */
 	  curl_easy_setopt (curl, CURLOPT_URL, request);
 
+	  /* enabling System CA cert store (Windows / Mac OsX */
+	  curl_easy_setopt (curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
+
 	  /* no progress meter please */
 	  curl_easy_setopt (curl, CURLOPT_NOPROGRESS, 1L);
 	  /* setting the output callback function */
@@ -7433,7 +7503,7 @@ do_wms_GetMap_blob (const char *url, const char *version, const char *layer,
 
 	  /* verifying the HTTP status code */
 	  check_http_header (&headerBuf, &http_status, &http_code);
-	  if (http_status == 302)
+	  if (http_status == 301 || http_status == 302)
 	    {
 		while (1)
 		  {
@@ -7456,7 +7526,7 @@ do_wms_GetMap_blob (const char *url, const char *version, const char *layer,
 			}
 		      free (redir);
 		      check_http_header (&headerBuf, &http_status, &http_code);
-		      if (http_status == 302)
+		      if (http_status == 301 || http_status == 302)
 			  continue;
 		      break;
 		  }
@@ -7557,6 +7627,9 @@ do_wms_GetMap_TileService_get (rl2WmsCachePtr cache_handle, const char *url,
 		curl_easy_setopt (curl, CURLOPT_PROXY, proxy);
 	    }
 
+	  /* enabling System CA cert store (Windows / Mac OsX */
+	  curl_easy_setopt (curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
+
 	  /* no progress meter please */
 	  curl_easy_setopt (curl, CURLOPT_NOPROGRESS, 1L);
 	  /* setting the output callback function */
@@ -7579,7 +7652,7 @@ do_wms_GetMap_TileService_get (rl2WmsCachePtr cache_handle, const char *url,
 
 	  /* verifying the HTTP status code */
 	  check_http_header (&headerBuf, &http_status, &http_code);
-	  if (http_status == 302)
+	  if (http_status == 301 || http_status == 302)
 	    {
 		while (1)
 		  {
@@ -7604,7 +7677,7 @@ do_wms_GetMap_TileService_get (rl2WmsCachePtr cache_handle, const char *url,
 			}
 		      free (redir);
 		      check_http_header (&headerBuf, &http_status, &http_code);
-		      if (http_status == 302)
+		      if (http_status == 301 || http_status == 302)
 			  continue;
 		      break;
 		  }
@@ -7777,6 +7850,9 @@ do_wms_GetFeatureInfo_get (const char *url, const char *proxy,
 		curl_easy_setopt (curl, CURLOPT_PROXY, proxy);
 	    }
 
+	  /* enabling System CA cert store (Windows / Mac OsX */
+	  curl_easy_setopt (curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
+
 	  /* no progress meter please */
 	  curl_easy_setopt (curl, CURLOPT_NOPROGRESS, 1L);
 	  /* setting the output callback function */
@@ -7799,7 +7875,7 @@ do_wms_GetFeatureInfo_get (const char *url, const char *proxy,
 
 	  /* verifying the HTTP status code */
 	  check_http_header (&headerBuf, &http_status, &http_code);
-	  if (http_status == 302)
+	  if (http_status == 301 || http_status == 302)
 	    {
 		while (1)
 		  {
@@ -7824,7 +7900,7 @@ do_wms_GetFeatureInfo_get (const char *url, const char *proxy,
 			}
 		      free (redir);
 		      check_http_header (&headerBuf, &http_status, &http_code);
-		      if (http_status == 302)
+		      if (http_status == 301 || http_status == 302)
 			  continue;
 		      break;
 		  }

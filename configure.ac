@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT(librasterlite2, 1.1.0-beta2, a.furieri@lqt.it)
+AC_INIT(librasterlite2, 2.0.0-devel, a.furieri@lqt.it)
 AC_LANG(C)
 AC_CONFIG_AUX_DIR([.])
 AC_CONFIG_MACRO_DIR([m4])
@@ -42,6 +42,8 @@ AH_TEMPLATE([OMIT_WEBP],
             [Should be defined in order to disable WebP support.])
 AH_TEMPLATE([OMIT_OPENJPEG],
             [Should be defined in order to disable OpenJpeg support.])
+AH_TEMPLATE([OMIT_LEPTONICA],
+            [Should be defined in order to disable Leptonica support.])
 
 # Checks for header files.
 AC_CHECK_HEADERS(stdlib.h,, [AC_MSG_ERROR([cannot find stdlib.h, bailing out])])
@@ -57,6 +59,7 @@ AC_CHECK_HEADERS(sqlite3.h,, [AC_MSG_ERROR([cannot find sqlite3.h, bailing out])
 AC_CHECK_HEADERS(sqlite3ext.h,, [AC_MSG_ERROR([cannot find sqlite3ext.h, bailing out])])
 AC_CHECK_HEADERS(zlib.h,, [AC_MSG_ERROR([cannot find zlib.h, bailing out])])
 AC_CHECK_HEADERS(gif_lib.h,, [AC_MSG_ERROR([cannot find gif_lib.h, bailing out])])
+AC_CHECK_HEADERS(fcgi_stdio.h,, [AC_MSG_ERROR([cannot fcgi_stdio.h, bailing out])])
 
 
 #
@@ -136,6 +139,10 @@ AC_CHECK_LIB(jpeg,jpeg_start_compress,,AC_MSG_ERROR(['libjpeg' is required but i
 AC_CHECK_LIB(gif,DGifSlurp,,AC_MSG_ERROR(['libgif' is required but it doesn't seems to be installed on this system.]),-lm)
 AC_CHECK_LIB(tiff,TIFFClientOpen,,AC_MSG_ERROR(['libtiff' is required but it doesn't seems to be installed on this system.]),-lm)
 AC_CHECK_LIB(geotiff,GTIFSetFromProj4,,AC_MSG_ERROR(['libgeotiff' [>= v.1.2.5] is required but it doesn't seems to be installed on this system.]),-lm)
+AC_CHECK_LIB(fcgi,FCGI_Accept,,AC_MSG_ERROR(['libfcgi' is required but it doesn't seems to be installed on this system.]))
+
+PKG_CHECK_MODULES([SQLITE3], [sqlite3], , AC_MSG_ERROR(['libsqlite3' is required but it doesn't seem to be installed on this system.]))
+AC_SUBST(SQLITE3_LIBS)
 
 #-----------------------------------------------------------------------
 #   --enable-openjpeg
@@ -211,7 +218,7 @@ else
 fi
 #-----------------------------------------------------------------------
 
-PKG_CHECK_MODULES([LIBSPATIALITE], [spatialite], , AC_MSG_ERROR(['libspatialite' is required but it doesn't seem to be installed on this system.]))
+PKG_CHECK_MODULES([LIBSPATIALITE], [spatialite >= 5.1], , AC_MSG_ERROR(['libspatialite' >= 5.1.0 is required but it doesn't seem to be installed on this system.]))
 AC_SUBST(LIBSPATIALITE_CFLAGS)
 AC_SUBST(LIBSPATIALITE_LIBS)
 
@@ -242,6 +249,21 @@ AC_SUBST(LIBPIXMAN_LIBS)
 PKG_CHECK_MODULES([LIBCAIRO], [cairo], , AC_MSG_ERROR(['libcairo' is required but it doesn't seems to be installed on this system.]))
 AC_SUBST(LIBCAIRO_CFLAGS)
 AC_SUBST(LIBCAIRO_LIBS)
+
+#-----------------------------------------------------------------------
+#   --enable-leptonica
+#
+AC_ARG_ENABLE(leptonica, [AS_HELP_STRING(
+  [--enable-leptonica], [enables Leptonica inclusion [default=yes]])],
+  [], [enable_leptonica=yes])
+if test x"$enable_leptonica" != "xno"; then
+  AC_CHECK_HEADERS(leptonica/allheaders.h,, [AC_MSG_ERROR([cannot find allheaders.h <Leptonica>, bailing out])])
+  AC_SEARCH_LIBS(pixOctreeColorQuant,leptonica,,AC_MSG_ERROR(['leptonica' is required but it doesn't seems to be installed on this system.]), $LIBPNG_LIBS $LIBWEBP_LIBS $LIBOPENJP2_LIBS)
+else
+  AC_DEFINE(OMIT_LEPTONICA)
+fi
+#-----------------------------------------------------------------------
+
 
 # Checking for MinGW
 AM_CONDITIONAL([MINGW], [test "$target_alias" = "mingw32"])

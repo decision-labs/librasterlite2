@@ -20,5 +20,4 @@
 #define RL2_TARGET_CPU "x86_64-redhat-linux"
 
 /* the Version of this package */
-#define RL2_VERSION "1.1.0-beta2"
-
+#define RL2_VERSION "2.0.0-devel"

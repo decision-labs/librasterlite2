@@ -14,7 +14,9 @@ rl2sniff_SOURCES = rl2sniff.c
 
 rl2tool_SOURCES = rl2tool.c
 
-wmslite_SOURCES = wmslite.c
+wmslite_SOURCES = wmslite.h wmslitecgi.c wmslite_config.c \
+	wmslite_miniserver.c wmslite_sql.c wmslite_capabilities.c \
+	wmslite_common.c
 
 rl2sniff_LDADD = @LIBPNG_LIBS@ @LIBWEBP_LIBS@ @LIBLZMA_LIBS@ \
 	@LIBLZ4_LIBS@ @LIBZSTD_LIBS@ @LIBOPENJP2_LIBS@ \
@@ -45,5 +47,3 @@ wmslite_LDADD = @LIBPNG_LIBS@ @LIBWEBP_LIBS@ @LIBLZMA_LIBS@ \
 	@LIBSPATIALITE_LIBS@ \
 	-lrasterlite2 -lsqlite3 -lpthread -lm 
 endif
-
-

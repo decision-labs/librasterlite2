@@ -4,6 +4,9 @@
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
 
+/* Define to 1 if you have the <fcgi_stdio.h> header file. */
+#define HAVE_FCGI_STDIO_H 1
+
 /* Define to 1 if you have the <float.h> header file. */
 #define HAVE_FLOAT_H 1
 
@@ -24,6 +27,12 @@
 
 /* Define to 1 if you have the <jpeglib.h> header file. */
 #define HAVE_JPEGLIB_H 1
+
+/* Define to 1 if you have the <leptonica/allheaders.h> header file. */
+#define HAVE_LEPTONICA_ALLHEADERS_H 1
+
+/* Define to 1 if you have the `fcgi' library (-lfcgi). */
+#define HAVE_LIBFCGI 1
 
 /* Define to 1 if you have the `geotiff' library (-lgeotiff). */
 #define HAVE_LIBGEOTIFF 1
@@ -119,6 +128,9 @@
 /* Must be defined in order to disable debug mode. */
 #define NDEBUG 1
 
+/* Should be defined in order to disable Leptonica support. */
+/* #undef OMIT_LEPTONICA */
+
 /* Should be defined in order to disable LZ4 support. */
 /* #undef OMIT_LZ4 */
 
@@ -141,7 +153,7 @@
 #define PACKAGE_NAME "librasterlite2"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "librasterlite2 1.1.0-beta2"
+#define PACKAGE_STRING "librasterlite2 2.0.0-devel"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "librasterlite2"
@@ -150,13 +162,13 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.1.0-beta2"
+#define PACKAGE_VERSION "2.0.0-devel"
 
 /* Should contain a text-string describing the intended target CPU */
 #define RL2_TARGET_CPU "x86_64-redhat-linux"
 
 /* the Version of this package. */
-#define RL2_VERSION "1.1.0-beta2"
+#define RL2_VERSION "2.0.0-devel"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1

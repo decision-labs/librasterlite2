@@ -45,8 +45,6 @@ the terms of any one of the MPL, the GPL or the LGPL.
 #include <stdio.h>
 #include <string.h>
 #include <float.h>
-#include <stdint.h>
-#include <inttypes.h>
 #include <limits.h>
 
 #ifdef _WIN32
@@ -278,6 +276,22 @@ fnct_rl2_openJPEG_version (sqlite3_context * context, int argc,
     RL2_UNUSED ();		/* LCOV_EXCL_LINE */
     len = strlen (p_result);
     sqlite3_result_text (context, p_result, len, SQLITE_TRANSIENT);
+}
+
+static void
+fnct_rl2_leptonica_version (sqlite3_context * context, int argc,
+			    sqlite3_value ** argv)
+{
+/* SQL function:
+/ rl2_leptonica_version()
+/
+/ return a text string representing the current LeptonicaG version
+*/
+    int len;
+    const char *p_result = rl2_leptonica_version ();
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+    len = strlen (p_result);
+    sqlite3_result_text (context, p_result, len, free);
 }
 
 static void
@@ -533,6 +547,23 @@ fnct_rl2_has_codec_ll_jp2 (sqlite3_context * context, int argc,
     RL2_UNUSED ();		/* LCOV_EXCL_LINE */
     if (ret < 0)
 	ret = 0;
+    sqlite3_result_int (context, ret);
+}
+
+static void
+fnct_rl2_has_leptonica (sqlite3_context * context, int argc,
+			sqlite3_value ** argv)
+{
+/* SQL function:
+/ rl2_has_leptonica()
+/
+/ will return 1 (TRUE) or 0 (FALSE) depending of OMIT_LEPTONICA
+*/
+    int ret = 1;
+#ifdef OMIT_LEPTONICA
+    ret = 0;
+#endif
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
     sqlite3_result_int (context, ret);
 }
 
@@ -3201,6 +3232,22 @@ fnct_CreateRasterCoverage (sqlite3_context * context, int argc,
 /                      int strict_resolution, int mixed_resolutions,
 /                      int section_paths, int section_md5,
 /                      int section_summary, int is_queryable)
+/ CreateRasterCoverage(text coverage, text sample_type, text pixel_type,
+/                      int num_bands, text compression, int quality,
+/                      int tile_width, int tile_height, int srid,
+/                      double horz_res, double vert_res, BLOB no_data,
+/                      int strict_resolution, int mixed_resolutions,
+/                      int section_paths, int section_md5,
+/                      int section_summary, int is_queryable,
+/                      int is_opaque)
+/ CreateRasterCoverage(text coverage, text sample_type, text pixel_type,
+/                      int num_bands, text compression, int quality,
+/                      int tile_width, int tile_height, int srid,
+/                      double horz_res, double vert_res, BLOB no_data,
+/                      int strict_resolution, int mixed_resolutions,
+/                      int section_paths, int section_md5,
+/                      int section_summary, int is_queryable,
+/                      int is_opaque, double min_scale, double max_scale)
 /
 / will return 1 (TRUE, success) or 0 (FALSE, failure)
 / or -1 (INVALID ARGS)
@@ -3227,6 +3274,9 @@ fnct_CreateRasterCoverage (sqlite3_context * context, int argc,
     int section_md5 = 0;
     int section_summary = 0;
     int is_queryable = 0;
+    int is_opaque = 0;
+    double min_scale = -1.0;
+    double max_scale = -1.0;
     sqlite3 *sqlite;
     int ret;
     rl2PixelPtr no_data = NULL;
@@ -3278,6 +3328,20 @@ fnct_CreateRasterCoverage (sqlite3_context * context, int argc,
 	err = 1;
     if (argc > 17 && sqlite3_value_type (argv[17]) != SQLITE_INTEGER)
 	err = 1;
+    if (argc > 18 && sqlite3_value_type (argv[18]) != SQLITE_INTEGER)
+	err = 1;
+    if (argc > 20)
+      {
+	  if ((sqlite3_value_type (argv[19]) == SQLITE_INTEGER
+	       || sqlite3_value_type (argv[19]) == SQLITE_FLOAT
+	       || sqlite3_value_type (argv[19]) == SQLITE_NULL)
+	      && (sqlite3_value_type (argv[20]) == SQLITE_INTEGER
+		  || sqlite3_value_type (argv[20]) == SQLITE_FLOAT
+		  || sqlite3_value_type (argv[19]) == SQLITE_NULL))
+	      ;
+	  else
+	      err = 1;
+      }
     if (err)
 	goto error;
 
@@ -3354,6 +3418,30 @@ fnct_CreateRasterCoverage (sqlite3_context * context, int argc,
 	  is_queryable = sqlite3_value_int (argv[17]);
 	  if (is_queryable)
 	      is_queryable = 1;
+      }
+    if (argc > 18)
+      {
+	  is_opaque = sqlite3_value_int (argv[18]);
+	  if (is_opaque)
+	      is_opaque = 1;
+      }
+    if (argc > 20)
+      {
+	  int val;
+	  if (sqlite3_value_type (argv[19]) == SQLITE_INTEGER)
+	    {
+		val = sqlite3_value_int (argv[19]);
+		min_scale = val;
+	    }
+	  if (sqlite3_value_type (argv[19]) == SQLITE_FLOAT)
+	      min_scale = sqlite3_value_double (argv[19]);
+	  if (sqlite3_value_type (argv[20]) == SQLITE_INTEGER)
+	    {
+		val = sqlite3_value_int (argv[20]);
+		max_scale = val;
+	    }
+	  if (sqlite3_value_type (argv[20]) == SQLITE_FLOAT)
+	      max_scale = sqlite3_value_double (argv[20]);
       }
 
 /* preliminary arg checking */
@@ -3464,7 +3552,8 @@ fnct_CreateRasterCoverage (sqlite3_context * context, int argc,
 				    horz_res, vert_res, no_data, palette,
 				    strict_resolution, mixed_resolutions,
 				    section_paths, section_md5,
-				    section_summary, is_queryable);
+				    section_summary, is_queryable, is_opaque,
+				    min_scale, max_scale);
     if (ret == RL2_OK)
 	sqlite3_result_int (context, 1);
     else
@@ -3490,9 +3579,12 @@ fnct_SetRasterCoverageInfos (sqlite3_context * context, int argc,
 /* SQL function:
 / SetRasterCoverageInfos(String coverage_name, String title, 
 /		   String abstract)
-/    of
+/    or
 / SetRasterCoverageInfos(String coverage_name, String title, 
 /		   String abstract, Bool is_queryable)
+/    or
+/ SetRasterCoverageInfos(String coverage_name, String title, 
+/		   String abstract, Bool is_queryable, Bool is_opaque)
 /
 / inserts or updates the descriptive infos supporting a Raster Coverage
 / returns 1 on success
@@ -3503,6 +3595,7 @@ fnct_SetRasterCoverageInfos (sqlite3_context * context, int argc,
     const char *title = NULL;
     const char *abstract = NULL;
     int is_queryable = -1;
+    int is_opaque = -1;
     sqlite3 *sqlite = sqlite3_context_db_handle (context);
     RL2_UNUSED ();		/* LCOV_EXCL_LINE */
     if (sqlite3_value_type (argv[0]) != SQLITE_TEXT)
@@ -3532,9 +3625,18 @@ fnct_SetRasterCoverageInfos (sqlite3_context * context, int argc,
 	    }
 	  is_queryable = sqlite3_value_int (argv[3]);
       }
+    if (argc >= 5)
+      {
+	  if (sqlite3_value_type (argv[4]) != SQLITE_INTEGER)
+	    {
+		sqlite3_result_int (context, -1);
+		return;
+	    }
+	  is_opaque = sqlite3_value_int (argv[4]);
+      }
     ret =
 	set_coverage_infos (sqlite, coverage_name, title, abstract,
-			    is_queryable);
+			    is_queryable, is_opaque);
     sqlite3_result_int (context, ret);
 }
 
@@ -3756,6 +3858,168 @@ fnct_IsRasterCoverageAutoNdviEnabled (sqlite3_context * context, int argc,
 	sqlite3_result_int (context, 1);
     else if (ret == RL2_FALSE)
 	sqlite3_result_int (context, 0);
+    else
+	sqlite3_result_int (context, -1);
+}
+
+static void
+fnct_SetRasterCoverageVisibilityRange (sqlite3_context * context, int argc,
+				       sqlite3_value ** argv)
+{
+/* SQL function:
+/ SetRasterCoverageVisibilityRange(String coverage_name, double min_scale,
+/                                  double max_scale)
+/
+/ sets the Visibility Range Min and Max values for a Raster Coverage
+/ returns 1 on success
+/ 0 on failure, -1 on invalid arguments
+*/
+    const char *coverage_name;
+    int val;
+    double min_scale = -1.0;
+    double max_scale = -1.0;
+    int ret;
+    sqlite3 *sqlite = sqlite3_context_db_handle (context);
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+    if (sqlite3_value_type (argv[0]) != SQLITE_TEXT)
+      {
+	  sqlite3_result_int (context, -1);
+	  return;
+      }
+    coverage_name = (const char *) sqlite3_value_text (argv[0]);
+    if (sqlite3_value_type (argv[1]) == SQLITE_INTEGER)
+      {
+	  val = sqlite3_value_int (argv[1]);
+	  min_scale = val;
+      }
+    else if (sqlite3_value_type (argv[1]) == SQLITE_FLOAT)
+	min_scale = sqlite3_value_double (argv[1]);
+    else if (sqlite3_value_type (argv[1]) == SQLITE_NULL)
+	;
+    else
+      {
+	  sqlite3_result_int (context, -1);
+	  return;
+      }
+    if (sqlite3_value_type (argv[2]) == SQLITE_INTEGER)
+      {
+	  val = sqlite3_value_int (argv[2]);
+	  max_scale = val;
+      }
+    else if (sqlite3_value_type (argv[2]) == SQLITE_FLOAT)
+	max_scale = sqlite3_value_double (argv[2]);
+    else if (sqlite3_value_type (argv[2]) == SQLITE_NULL)
+	;
+    else
+      {
+	  sqlite3_result_int (context, -1);
+	  return;
+      }
+    ret =
+	rl2_set_dbms_coverage_visibility_range (sqlite, coverage_name,
+						min_scale, max_scale);
+    if (ret == RL2_TRUE)
+	sqlite3_result_int (context, 1);
+    else if (ret == RL2_FALSE)
+	sqlite3_result_int (context, 0);
+    else
+	sqlite3_result_int (context, -1);
+}
+
+static void
+fnct_GetRasterCoverageMinScaleDenominator (sqlite3_context * context, int argc,
+					   sqlite3_value ** argv)
+{
+/* SQL function:
+/ GetRasterCoverageMinScaleDenominator(String db_prefix, String coverage_name)
+/
+/ will return the Raster Coverage Visibility Range MinScale
+/ returns a Double value (if set) or NULL (if unset)
+/ -1 on invalid arguments or if the Raster Coverage does not exist
+*/
+    const char *db_prefix = NULL;
+    const char *coverage_name;
+    double min_scale;
+    double max_scale;
+    int ret;
+    sqlite3 *sqlite = sqlite3_context_db_handle (context);
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+    if (sqlite3_value_type (argv[0]) == SQLITE_TEXT
+	|| sqlite3_value_type (argv[0]) == SQLITE_NULL)
+	;
+    else
+      {
+	  sqlite3_result_int (context, -1);
+	  return;
+      }
+    if (sqlite3_value_type (argv[1]) != SQLITE_TEXT)
+      {
+	  sqlite3_result_int (context, -1);
+	  return;
+      }
+    if (sqlite3_value_type (argv[0]) == SQLITE_TEXT)
+	db_prefix = (const char *) sqlite3_value_text (argv[0]);
+    coverage_name = (const char *) sqlite3_value_text (argv[1]);
+    ret =
+	rl2_get_dbms_coverage_visibility_range (sqlite, db_prefix,
+						coverage_name, &min_scale,
+						&max_scale);
+    if (ret == RL2_TRUE)
+      {
+	  if (min_scale < 0.0)
+	      sqlite3_result_null (context);
+	  else
+	      sqlite3_result_double (context, min_scale);
+      }
+    else
+	sqlite3_result_int (context, -1);
+}
+
+static void
+fnct_GetRasterCoverageMaxScaleDenominator (sqlite3_context * context, int argc,
+					   sqlite3_value ** argv)
+{
+/* SQL function:
+/ GetRasterCoverageMaxScaleDenominator(String db_prefix, String coverage_name)
+/
+/ will return the Raster Coverage Visibility Range MaxScale
+/ returns a Double value (if set) or NULL (if unset)
+/ -1 on invalid arguments or if the Raster Coverage does not exist
+*/
+    const char *db_prefix = NULL;
+    const char *coverage_name;
+    double min_scale;
+    double max_scale;
+    int ret;
+    sqlite3 *sqlite = sqlite3_context_db_handle (context);
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+    if (sqlite3_value_type (argv[0]) == SQLITE_TEXT
+	|| sqlite3_value_type (argv[0]) == SQLITE_NULL)
+	;
+    else
+      {
+	  sqlite3_result_int (context, -1);
+	  return;
+      }
+    if (sqlite3_value_type (argv[1]) != SQLITE_TEXT)
+      {
+	  sqlite3_result_int (context, -1);
+	  return;
+      }
+    if (sqlite3_value_type (argv[0]) == SQLITE_TEXT)
+	db_prefix = (const char *) sqlite3_value_text (argv[0]);
+    coverage_name = (const char *) sqlite3_value_text (argv[1]);
+    ret =
+	rl2_get_dbms_coverage_visibility_range (sqlite, db_prefix,
+						coverage_name, &min_scale,
+						&max_scale);
+    if (ret == RL2_TRUE)
+      {
+	  if (max_scale < 0.0)
+	      sqlite3_result_null (context);
+	  else
+	      sqlite3_result_double (context, max_scale);
+      }
     else
 	sqlite3_result_int (context, -1);
 }
@@ -9448,6 +9712,7 @@ fnct_GetMapImageFromRaster (sqlite3_context * context, int argc,
     int blob_sz;
     const char *style = "default";
     const char *format = "image/png";
+    int valid_mime = 0;
     const char *bg_color = "#ffffff";
     int transparent = 0;
     int quality = 80;
@@ -9512,12 +9777,44 @@ fnct_GetMapImageFromRaster (sqlite3_context * context, int argc,
     if (argc > 10)
 	reaspect = sqlite3_value_int (argv[10]);
 
+/* checking MIME for validity */
+    if (strcasecmp (format, "image/png") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/jpeg") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/tiff") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/geotiff") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "application/pdf") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "application/x-pdf") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/vnd.rl2rgba") == 0)
+	valid_mime = 1;
+#ifndef OMIT_LEPTONICA
+    if (strcasecmp (format, "image/png8") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/gif") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/tiff8") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/geotiff8") == 0)
+	valid_mime = 1;
+#endif
+    if (!valid_mime)
+      {
+	  sqlite3_result_null (context);
+	  return;
+      }
+
     sqlite = sqlite3_context_db_handle (context);
     data = sqlite3_user_data (context);
 
-    if (strcasecmp (format, "image/png") != 0)
+    if (strcasecmp (format, "image/png") != 0
+	&& strcasecmp (format, "image/vnd.rl2rgba") != 0)
       {
-	  /* only PNG can support real transparencies */
+	  /* only PNG  or RGBA can support real transparencies */
 	  transparent = 0;
       }
 
@@ -9566,6 +9863,7 @@ fnct_GetStyledMapImageFromRaster (sqlite3_context * context, int argc,
     int blob_sz;
     const unsigned char *xml_style = NULL;
     const char *format = "image/png";
+    int valid_mime = 0;
     const char *bg_color = "#ffffff";
     int transparent = 0;
     int quality = 80;
@@ -9629,12 +9927,44 @@ fnct_GetStyledMapImageFromRaster (sqlite3_context * context, int argc,
     if (argc > 10)
 	reaspect = sqlite3_value_int (argv[10]);
 
+/* checking MIME for validity */
+    if (strcasecmp (format, "image/png") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/jpeg") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/tiff") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/geotiff") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "application/pdf") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "application/x-pdf") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/vnd.rl2rgba") == 0)
+	valid_mime = 1;
+#ifndef OMIT_LEPTONICA
+    if (strcasecmp (format, "image/png8") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/gif") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/tiff8") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/geotiff8") == 0)
+	valid_mime = 1;
+#endif
+    if (!valid_mime)
+      {
+	  sqlite3_result_null (context);
+	  return;
+      }
+
     sqlite = sqlite3_context_db_handle (context);
     data = sqlite3_user_data (context);
 
-    if (strcasecmp (format, "image/png") != 0)
+    if (strcasecmp (format, "image/png") != 0
+	&& strcasecmp (format, "image/vnd.rl2rgba") != 0)
       {
-	  /* only PNG can support real transparencies */
+	  /* only PNG  or RGBA can support real transparencies */
 	  transparent = 0;
       }
 
@@ -9685,6 +10015,7 @@ fnct_GetMapImageFromVector (sqlite3_context * context, int argc,
     int blob_sz;
     const char *style = "default";
     const char *format = "image/png";
+    int valid_mime = 0;
     const char *bg_color = "#ffffff";
     int transparent = 0;
     int quality = 80;
@@ -9749,12 +10080,44 @@ fnct_GetMapImageFromVector (sqlite3_context * context, int argc,
     if (argc > 10)
 	reaspect = sqlite3_value_int (argv[10]);
 
+/* checking MIME for validity */
+    if (strcasecmp (format, "image/png") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/jpeg") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/tiff") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/geotiff") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "application/pdf") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "application/x-pdf") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/vnd.rl2rgba") == 0)
+	valid_mime = 1;
+#ifndef OMIT_LEPTONICA
+    if (strcasecmp (format, "image/png8") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/gif") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/tiff8") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/geotiff8") == 0)
+	valid_mime = 1;
+#endif
+    if (!valid_mime)
+      {
+	  sqlite3_result_null (context);
+	  return;
+      }
+
     sqlite = sqlite3_context_db_handle (context);
     data = sqlite3_user_data (context);
 
-    if (strcasecmp (format, "image/png") != 0)
+    if (strcasecmp (format, "image/png") != 0
+	&& strcasecmp (format, "image/vnd.rl2rgba") != 0)
       {
-	  /* only PNG can support real transparencies */
+	  /* only PNG  or RGBA can support real transparencies */
 	  transparent = 0;
       }
 
@@ -9804,6 +10167,7 @@ fnct_GetStyledMapImageFromVector (sqlite3_context * context, int argc,
     int blob_sz;
     const unsigned char *xml_style = NULL;
     const char *format = "image/png";
+    int valid_mime = 0;
     const char *bg_color = "#ffffff";
     int transparent = 0;
     int quality = 80;
@@ -9867,12 +10231,44 @@ fnct_GetStyledMapImageFromVector (sqlite3_context * context, int argc,
     if (argc > 10)
 	reaspect = sqlite3_value_int (argv[10]);
 
+/* checking MIME for validity */
+    if (strcasecmp (format, "image/png") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/jpeg") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/tiff") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/geotiff") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "application/pdf") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "application/x-pdf") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/vnd.rl2rgba") == 0)
+	valid_mime = 1;
+#ifndef OMIT_LEPTONICA
+    if (strcasecmp (format, "image/png8") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/gif") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/tiff8") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/geotiff8") == 0)
+	valid_mime = 1;
+#endif
+    if (!valid_mime)
+      {
+	  sqlite3_result_null (context);
+	  return;
+      }
+
     sqlite = sqlite3_context_db_handle (context);
     data = sqlite3_user_data (context);
 
-    if (strcasecmp (format, "image/png") != 0)
+    if (strcasecmp (format, "image/png") != 0
+	&& strcasecmp (format, "image/vnd.rl2rgba") != 0)
       {
-	  /* only PNG can support real transparencies */
+	  /* only PNG  or RGBA can support real transparencies */
 	  transparent = 0;
       }
 
@@ -9911,6 +10307,7 @@ fnct_GetMapImageFromWMS (sqlite3_context * context, int argc,
     const char *version = "1.0.0";
     const char *style = "default";
     const char *format = "image/png";
+    int valid_mime = 0;
     const char *bg_color = "#ffffff";
     int transparent = 0;
     sqlite3 *sqlite;
@@ -9968,11 +10365,43 @@ fnct_GetMapImageFromWMS (sqlite3_context * context, int argc,
     if (argc > 9)
 	transparent = sqlite3_value_int (argv[9]);
 
+/* checking MIME for validity */
+    if (strcasecmp (format, "image/png") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/jpeg") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/tiff") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/geotiff") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "application/pdf") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "application/x-pdf") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/vnd.rl2rgba") == 0)
+	valid_mime = 1;
+#ifndef OMIT_LEPTONICA
+    if (strcasecmp (format, "image/png8") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/gif") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/tiff8") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/geotiff8") == 0)
+	valid_mime = 1;
+#endif
+    if (!valid_mime)
+      {
+	  sqlite3_result_null (context);
+	  return;
+      }
+
     sqlite = sqlite3_context_db_handle (context);
 
-    if (strcasecmp (format, "image/png") != 0)
+    if (strcasecmp (format, "image/png") != 0
+	&& strcasecmp (format, "image/vnd.rl2rgba") != 0)
       {
-	  /* only PNG can support real transparencies */
+	  /* only PNG  or RGBA can support real transparencies */
 	  transparent = 0;
       }
 
@@ -10060,6 +10489,270 @@ fnct_GetImageFromMapConfiguration (sqlite3_context * context, int argc,
     if (rl2_image_blob_from_map_config
 	(sqlite, data, mapconf, blob, blob_sz, width, height, format, quality,
 	 reaspect, &image, &image_size) != RL2_OK)
+	sqlite3_result_null (context);
+    else
+	sqlite3_result_blob (context, image, image_size, free);
+}
+
+static void
+fnct_GetRasterLegendGraphic (sqlite3_context * context, int argc,
+			     sqlite3_value ** argv)
+{
+/* SQL function:
+/ GetRasterLegendGraphic(text db_prefix, text coverage, text type, text style,
+/					int width, int height, text format, text font_name,
+/					double font_size, bool font_italic, bool font_bold,
+/					text font_color)
+/
+/ will return a BLOB containing the LegendGraphic payload from a Raster Style
+/ or NULL (INVALID ARGS)
+/
+*/
+    int err = 0;
+    const char *db_prefix = NULL;
+    const char *cvg_name;
+    const char *type;
+    int xtype = RL2_PIXEL_UNKNOWN;
+    int width;
+    int height;
+    const char *style = "default";
+    const char *format = "image/png";
+    int valid_mime = 0;
+    const char *font_name;
+    double font_size;
+    int font_italic = 0;
+    int font_bold = 0;
+    const char *font_color = "#ffffff";
+    sqlite3 *sqlite;
+    unsigned char *image = NULL;
+    int image_size;
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+
+/* testing arguments for validity */
+    err = 0;
+    if (sqlite3_value_type (argv[0]) == SQLITE_TEXT
+	|| sqlite3_value_type (argv[0]) == SQLITE_NULL)
+	;
+    else
+	err = 1;
+    if (sqlite3_value_type (argv[1]) != SQLITE_TEXT)
+	err = 1;
+    if (sqlite3_value_type (argv[2]) != SQLITE_TEXT)
+	err = 1;
+    if (sqlite3_value_type (argv[3]) != SQLITE_TEXT)
+	err = 1;
+    if (sqlite3_value_type (argv[4]) != SQLITE_INTEGER)
+	err = 1;
+    if (sqlite3_value_type (argv[5]) != SQLITE_INTEGER)
+	err = 1;
+    if (sqlite3_value_type (argv[6]) != SQLITE_TEXT)
+	err = 1;
+    if (sqlite3_value_type (argv[7]) != SQLITE_TEXT)
+	err = 1;
+    if (sqlite3_value_type (argv[8]) != SQLITE_INTEGER
+	&& sqlite3_value_type (argv[7]) != SQLITE_FLOAT)
+	err = 1;
+    if (sqlite3_value_type (argv[9]) != SQLITE_INTEGER)
+	err = 1;
+    if (sqlite3_value_type (argv[10]) != SQLITE_INTEGER)
+	err = 1;
+    if (sqlite3_value_type (argv[11]) != SQLITE_TEXT)
+	err = 1;
+    if (err != 0)
+      {
+	  sqlite3_result_null (context);
+	  return;
+      }
+
+/* retrieving the arguments */
+    if (sqlite3_value_type (argv[0]) == SQLITE_TEXT)
+	db_prefix = (const char *) sqlite3_value_text (argv[0]);
+    cvg_name = (const char *) sqlite3_value_text (argv[1]);
+    type = (const char *) sqlite3_value_text (argv[2]);
+    style = (const char *) sqlite3_value_text (argv[3]);
+    width = sqlite3_value_int (argv[4]);
+    height = sqlite3_value_int (argv[5]);
+    format = (const char *) sqlite3_value_text (argv[6]);
+    font_name = (const char *) sqlite3_value_text (argv[7]);
+    if (sqlite3_value_type (argv[8]) == SQLITE_FLOAT)
+	font_size = sqlite3_value_int (argv[8]);
+    else
+      {
+	  int sz = sqlite3_value_int (argv[8]);
+	  font_size = sz;
+      }
+    font_italic = sqlite3_value_int (argv[9]);
+    font_bold = sqlite3_value_int (argv[10]);
+    font_color = (const char *) sqlite3_value_text (argv[11]);
+
+/* checking TYPE for validity */
+    if (strcasecmp (type, "MONOCHROME") == 0)
+	xtype = RL2_PIXEL_MONOCHROME;
+    if (strcasecmp (type, "PALETTE") == 0)
+	xtype = RL2_PIXEL_PALETTE;
+    if (strcasecmp (type, "GRAYSCALE") == 0)
+	xtype = RL2_PIXEL_GRAYSCALE;
+    if (strcasecmp (type, "RGB") == 0)
+	xtype = RL2_PIXEL_RGB;
+    if (strcasecmp (type, "MULTIBAND") == 0)
+	xtype = RL2_PIXEL_MULTIBAND;
+    if (strcasecmp (type, "DATAGRID") == 0)
+	xtype = RL2_PIXEL_DATAGRID;
+    if (xtype == RL2_PIXEL_UNKNOWN)
+      {
+	  sqlite3_result_null (context);
+	  return;
+      }
+
+/* checking MIME for validity */
+    if (strcasecmp (format, "image/png") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/jpeg") == 0)
+	valid_mime = 1;
+    if (!valid_mime)
+      {
+	  sqlite3_result_null (context);
+	  return;
+      }
+
+    sqlite = sqlite3_context_db_handle (context);
+
+    if (rl2_raster_legend_graphic
+	(sqlite, db_prefix, cvg_name, xtype, style, width, height, format,
+	 font_name, font_size, font_italic, font_bold, font_color, &image,
+	 &image_size) != RL2_OK)
+	sqlite3_result_null (context);
+    else
+	sqlite3_result_blob (context, image, image_size, free);
+}
+
+static void
+fnct_GetVectorLegendGraphic (sqlite3_context * context, int argc,
+			     sqlite3_value ** argv)
+{
+/* SQL function:
+/ GetVectorLegendGraphic(text db_prefix, text coverage,  text type, text style,
+/					int width, int height, text format, text font_name,
+/					double font_size, bool font_italic, bool font_bold,
+/					text font_color)
+/
+/ will return a BLOB containing the LegendGraphic payload from a Vector Style
+/ or NULL (INVALID ARGS)
+/
+*/
+    int err = 0;
+    const char *db_prefix = NULL;
+    const char *cvg_name;
+    const char *type;
+    int xtype = RL2_GEOM_UNKNOWN;
+    int width;
+    int height;
+    const char *style = "default";
+    const char *format = "image/png";
+    int valid_mime = 0;
+    const char *font_name;
+    double font_size;
+    int font_italic = 0;
+    int font_bold = 0;
+    const char *font_color = "#ffffff";
+    sqlite3 *sqlite;
+    unsigned char *image = NULL;
+    int image_size;
+    RL2_UNUSED ();		/* LCOV_EXCL_LINE */
+
+/* testing arguments for validity */
+    err = 0;
+    if (sqlite3_value_type (argv[0]) == SQLITE_TEXT
+	|| sqlite3_value_type (argv[0]) == SQLITE_NULL)
+	;
+    else
+	err = 1;
+    if (sqlite3_value_type (argv[1]) != SQLITE_TEXT)
+	err = 1;
+    if (sqlite3_value_type (argv[2]) != SQLITE_TEXT)
+	err = 1;
+    if (sqlite3_value_type (argv[3]) != SQLITE_TEXT)
+	err = 1;
+    if (sqlite3_value_type (argv[4]) != SQLITE_INTEGER)
+	err = 1;
+    if (sqlite3_value_type (argv[5]) != SQLITE_INTEGER)
+	err = 1;
+    if (sqlite3_value_type (argv[6]) != SQLITE_TEXT)
+	err = 1;
+    if (sqlite3_value_type (argv[7]) != SQLITE_TEXT)
+	err = 1;
+    if (sqlite3_value_type (argv[8]) != SQLITE_INTEGER
+	&& sqlite3_value_type (argv[7]) != SQLITE_FLOAT)
+	err = 1;
+    if (sqlite3_value_type (argv[9]) != SQLITE_INTEGER)
+	err = 1;
+    if (sqlite3_value_type (argv[10]) != SQLITE_INTEGER)
+	err = 1;
+    if (sqlite3_value_type (argv[11]) != SQLITE_TEXT)
+	err = 1;
+    if (err != 0)
+      {
+	  sqlite3_result_null (context);
+	  return;
+      }
+
+/* retrieving the arguments */
+    if (sqlite3_value_type (argv[0]) == SQLITE_TEXT)
+	db_prefix = (const char *) sqlite3_value_text (argv[0]);
+    cvg_name = (const char *) sqlite3_value_text (argv[1]);
+    type = (const char *) sqlite3_value_text (argv[2]);
+    style = (const char *) sqlite3_value_text (argv[3]);
+    width = sqlite3_value_int (argv[4]);
+    height = sqlite3_value_int (argv[5]);
+    format = (const char *) sqlite3_value_text (argv[6]);
+    font_name = (const char *) sqlite3_value_text (argv[7]);
+    if (sqlite3_value_type (argv[8]) == SQLITE_FLOAT)
+	font_size = sqlite3_value_int (argv[8]);
+    else
+      {
+	  int sz = sqlite3_value_int (argv[8]);
+	  font_size = sz;
+      }
+    font_italic = sqlite3_value_int (argv[9]);
+    font_bold = sqlite3_value_int (argv[10]);
+    font_color = (const char *) sqlite3_value_text (argv[11]);
+
+/* checking TYPE for validity */
+    if (strcasecmp (type, "POINT") == 0)
+	xtype = RL2_GEOM_POINT;
+    if (strcasecmp (type, "LINESTRING") == 0)
+	xtype = RL2_GEOM_LINESTRING;
+    if (strcasecmp (type, "POLYGON") == 0)
+	xtype = RL2_GEOM_POLYGON;
+    if (strcasecmp (type, "COLLECTION") == 0)
+	xtype = RL2_GEOM_COLLECTION;
+    if (strcasecmp (type, "TOPOLOGY") == 0)
+	xtype = RL2_GEOM_TOPOLOGY;
+    if (strcasecmp (type, "NETWORK") == 0)
+	xtype = RL2_GEOM_NETWORK;
+    if (xtype == RL2_GEOM_UNKNOWN)
+      {
+	  sqlite3_result_null (context);
+	  return;
+      }
+
+/* checking MIME for validity */
+    if (strcasecmp (format, "image/png") == 0)
+	valid_mime = 1;
+    if (strcasecmp (format, "image/jpeg") == 0)
+	valid_mime = 1;
+    if (!valid_mime)
+      {
+	  sqlite3_result_null (context);
+	  return;
+      }
+
+    sqlite = sqlite3_context_db_handle (context);
+
+    if (rl2_vector_legend_graphic
+	(sqlite, db_prefix, cvg_name, xtype, style, width, height, format,
+	 font_name, font_size, font_italic, font_bold, font_color, &image,
+	 &image_size) != RL2_OK)
 	sqlite3_result_null (context);
     else
 	sqlite3_result_blob (context, image, image_size, free);
@@ -11483,6 +12176,9 @@ register_rl2_sql_functions (void *p_db, const void *p_data)
     sqlite3_create_function (db, "rl2_openJpeg_version", 0,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, 0,
 			     fnct_rl2_openJPEG_version, 0, 0);
+    sqlite3_create_function (db, "rl2_leptonica_version", 0,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, 0,
+			     fnct_rl2_leptonica_version, 0, 0);
     sqlite3_create_function (db, "rl2_target_cpu", 0,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, 0,
 			     fnct_rl2_target_cpu, 0, 0);
@@ -11534,6 +12230,9 @@ register_rl2_sql_functions (void *p_db, const void *p_data)
     sqlite3_create_function (db, "rl2_has_codec_ll_jp2", 0,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, 0,
 			     fnct_rl2_has_codec_ll_jp2, 0, 0);
+    sqlite3_create_function (db, "rl2_has_leptonica", 0,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, 0,
+			     fnct_rl2_has_leptonica, 0, 0);
     sqlite3_create_function (db, "RL2_GetMaxThreads", 0,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
 			     fnct_GetMaxThreads, 0, 0);
@@ -11664,6 +12363,10 @@ register_rl2_sql_functions (void *p_db, const void *p_data)
 			     SQLITE_UTF8, 0, fnct_CreateRasterCoverage, 0, 0);
     sqlite3_create_function (db, "CreateRasterCoverage", 18,
 			     SQLITE_UTF8, 0, fnct_CreateRasterCoverage, 0, 0);
+    sqlite3_create_function (db, "CreateRasterCoverage", 19,
+			     SQLITE_UTF8, 0, fnct_CreateRasterCoverage, 0, 0);
+    sqlite3_create_function (db, "CreateRasterCoverage", 21,
+			     SQLITE_UTF8, 0, fnct_CreateRasterCoverage, 0, 0);
     sqlite3_create_function (db, "RL2_CreateRasterCoverage", 10,
 			     SQLITE_UTF8, 0, fnct_CreateRasterCoverage, 0, 0);
     sqlite3_create_function (db, "RL2_CreateRasterCoverage", 11,
@@ -11673,6 +12376,10 @@ register_rl2_sql_functions (void *p_db, const void *p_data)
     sqlite3_create_function (db, "RL2_CreateRasterCoverage", 17,
 			     SQLITE_UTF8, 0, fnct_CreateRasterCoverage, 0, 0);
     sqlite3_create_function (db, "RL2_CreateRasterCoverage", 18,
+			     SQLITE_UTF8, 0, fnct_CreateRasterCoverage, 0, 0);
+    sqlite3_create_function (db, "RL2_CreateRasterCoverage", 19,
+			     SQLITE_UTF8, 0, fnct_CreateRasterCoverage, 0, 0);
+    sqlite3_create_function (db, "RL2_CreateRasterCoverage", 21,
 			     SQLITE_UTF8, 0, fnct_CreateRasterCoverage, 0, 0);
     sqlite3_create_function (db, "CopyRasterCoverage", 2,
 			     SQLITE_UTF8, 0, fnct_CopyRasterCoverage, 0, 0);
@@ -11702,9 +12409,13 @@ register_rl2_sql_functions (void *p_db, const void *p_data)
 			     SQLITE_UTF8, 0, fnct_SetRasterCoverageInfos, 0, 0);
     sqlite3_create_function (db, "SetRasterCoverageInfos", 4,
 			     SQLITE_UTF8, 0, fnct_SetRasterCoverageInfos, 0, 0);
+    sqlite3_create_function (db, "SetRasterCoverageInfos", 5,
+			     SQLITE_UTF8, 0, fnct_SetRasterCoverageInfos, 0, 0);
     sqlite3_create_function (db, "RL2_SetRasterCoverageInfos", 3, SQLITE_UTF8,
 			     0, fnct_SetRasterCoverageInfos, 0, 0);
     sqlite3_create_function (db, "RL2_SetRasterCoverageInfos", 4, SQLITE_UTF8,
+			     0, fnct_SetRasterCoverageInfos, 0, 0);
+    sqlite3_create_function (db, "RL2_SetRasterCoverageInfos", 5, SQLITE_UTF8,
 			     0, fnct_SetRasterCoverageInfos, 0, 0);
     sqlite3_create_function (db, "SetRasterCoverageCopyright", 2, SQLITE_ANY,
 			     0, fnct_SetRasterCoverageCopyright, 0, 0);
@@ -11733,6 +12444,24 @@ register_rl2_sql_functions (void *p_db, const void *p_data)
     sqlite3_create_function (db, "RL2_IsRasterCoverageAutoNdviEnabled", 2,
 			     SQLITE_UTF8, 0,
 			     fnct_IsRasterCoverageAutoNdviEnabled, 0, 0);
+    sqlite3_create_function (db, "SetRasterCoverageVisibilityRange", 3,
+			     SQLITE_UTF8, 0,
+			     fnct_SetRasterCoverageVisibilityRange, 0, 0);
+    sqlite3_create_function (db, "RL2_SetRasterCoverageVisibilityRange", 3,
+			     SQLITE_UTF8, 0,
+			     fnct_SetRasterCoverageVisibilityRange, 0, 0);
+    sqlite3_create_function (db, "GetRasterCoverageMinScaleDenominator", 2,
+			     SQLITE_UTF8, 0,
+			     fnct_GetRasterCoverageMinScaleDenominator, 0, 0);
+    sqlite3_create_function (db, "RL2_GetRasterCoverageMinScaleDenominator", 2,
+			     SQLITE_UTF8, 0,
+			     fnct_GetRasterCoverageMinScaleDenominator, 0, 0);
+    sqlite3_create_function (db, "GetRasterCoverageMaxScaleDenominator", 2,
+			     SQLITE_UTF8, 0,
+			     fnct_GetRasterCoverageMaxScaleDenominator, 0, 0);
+    sqlite3_create_function (db, "RL2_GetRasterCoverageMaxScaleDenominator", 2,
+			     SQLITE_UTF8, 0,
+			     fnct_GetRasterCoverageMaxScaleDenominator, 0, 0);
     sqlite3_create_function (db, "GetPaletteNumEntries", 1,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, 0,
 			     fnct_GetPaletteNumEntries, 0, 0);
@@ -12176,6 +12905,18 @@ register_rl2_sql_functions (void *p_db, const void *p_data)
     sqlite3_create_function (db, "RL2_GetImageFromMapConfiguration", 7,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
 			     fnct_GetImageFromMapConfiguration, 0, 0);
+    sqlite3_create_function (db, "GetRasterLegendGraphic", 12,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_GetRasterLegendGraphic, 0, 0);
+    sqlite3_create_function (db, "RL2_GetRasterLegendGraphic", 12,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_GetRasterLegendGraphic, 0, 0);
+    sqlite3_create_function (db, "GetVectorLegendGraphic", 12,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_GetVectorLegendGraphic, 0, 0);
+    sqlite3_create_function (db, "RL2_GetVectorLegendGraphic", 12,
+			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
+			     fnct_GetVectorLegendGraphic, 0, 0);
     sqlite3_create_function (db, "GetTileImage", 3,
 			     SQLITE_UTF8 | SQLITE_DETERMINISTIC, priv_data,
 			     fnct_GetTileImage, 0, 0);

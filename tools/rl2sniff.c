@@ -635,7 +635,7 @@ do_sniff_jpeg2000_image (const char *src_path, int worldfile, int with_md5)
 #endif /* end OpenJpeg conditional */
 
 static int
-recover_incomplete_geotiff (TIFF * in, uint32 width, uint32 height,
+recover_incomplete_geotiff (TIFF * in, uint32_t width, uint32_t height,
 			    double *minX, double *minY, double *maxX,
 			    double *maxY, double *hResolution,
 			    double *vResolution)
@@ -643,7 +643,7 @@ recover_incomplete_geotiff (TIFF * in, uint32 width, uint32 height,
 /* final desperate attempt to recover an incomplete GeoTIFF */
     double *tie_points;
     double *scale;
-    uint16 count;
+    uint16_t count;
     double res_x = DBL_MAX;
     double res_y = DBL_MAX;
     double x = DBL_MAX;
@@ -681,12 +681,12 @@ recover_incomplete_geotiff (TIFF * in, uint32 width, uint32 height,
 }
 
 static void
-sniff_tiff_pixel (TIFF * in, uint16 * bitspersample, uint16 * samplesperpixel,
-		  uint16 * photometric, uint16 * sampleformat,
-		  uint16 * compression)
+sniff_tiff_pixel (TIFF * in, uint16_t * bitspersample,
+		  uint16_t * samplesperpixel, uint16_t * photometric,
+		  uint16_t * sampleformat, uint16_t * compression)
 {
 /* retrieving the TIFF sample and pixel type */
-    uint16 value16;
+    uint16_t value16;
     if (TIFFGetField (in, TIFFTAG_BITSPERSAMPLE, &value16) != 0)
 	*bitspersample = value16;
     else
@@ -714,13 +714,13 @@ static void
 do_sniff_geotiff_image (const char *src_path, int with_md5)
 {
 /* sniffing a GeoTIFF image */
-    uint32 width = 0;
-    uint32 height = 0;
-    uint16 bitspersample;
-    uint16 bands;
-    uint16 photometric;
-    uint16 sampleformat;
-    uint16 tiff_compression;
+    uint32_t width = 0;
+    uint32_t height = 0;
+    uint16_t bitspersample;
+    uint16_t bands;
+    uint16_t photometric;
+    uint16_t sampleformat;
+    uint16_t tiff_compression;
     const char *sample = "unknown";
     const char *pixel = "unknown";
     const char *compression = "unknown";
@@ -949,13 +949,13 @@ static void
 do_sniff_tiff_image (const char *src_path, int with_md5)
 {
 /* sniffing a TIFF image */
-    uint32 width = 0;
-    uint32 height = 0;
-    uint16 bitspersample;
-    uint16 bands;
-    uint16 photometric;
-    uint16 sampleformat;
-    uint16 tiff_compression;
+    uint32_t width = 0;
+    uint32_t height = 0;
+    uint16_t bitspersample;
+    uint16_t bands;
+    uint16_t photometric;
+    uint16_t sampleformat;
+    uint16_t tiff_compression;
     const char *sample = "unknown";
     const char *pixel = "unknown";
     const char *compression = "unknown";

@@ -232,9 +232,12 @@ do_create_map_config ()
     if (map_config == NULL)
 	return NULL;
 
+    map_config->valid = 1;
     map_config->name = NULL;
     map_config->title = NULL;
     map_config->abstract = NULL;
+    map_config->min_scale = -1.0;
+    map_config->max_scale = -1.0;
     map_config->multithread_enabled = 0;
     map_config->max_threads = 1;
     map_config->srid = 0;
@@ -4942,6 +4945,88 @@ parse_map_options (xmlNodePtr node, rl2MapConfigPtr map_config)
 }
 
 static void
+parse_map_min_scale (xmlNodePtr node, rl2MapConfigPtr map_config)
+{
+/* parsing a <MinScaleDenominator> tag */
+    const char *value;
+    while (node)
+      {
+	  if (node->type == XML_ELEMENT_NODE)
+	    {
+		const char *name = (const char *) (node->name);
+		if (strcmp (name, "MinScaleDenominator") == 0)
+		  {
+		      xmlNode *text = node->children;
+		      map_config->min_scale = -1.0;
+		      while (text)
+			{
+			    if (text->type == XML_TEXT_NODE)
+			      {
+				  value = (const char *) (text->content);
+				  if (value == NULL)
+				      map_config->min_scale = -1.0;
+				  else
+				      map_config->min_scale = atof (value);
+			      }
+			    text = text->next;
+			}
+		  }
+	    }
+	  node = node->next;
+      }
+}
+
+static void
+parse_map_max_scale (xmlNodePtr node, rl2MapConfigPtr map_config)
+{
+/* parsing a <MaxScaleDenominator> tag */
+    const char *value;
+    while (node)
+      {
+	  if (node->type == XML_ELEMENT_NODE)
+	    {
+		const char *name = (const char *) (node->name);
+		if (strcmp (name, "MaxScaleDenominator") == 0)
+		  {
+		      xmlNode *text = node->children;
+		      map_config->max_scale = -1.0;
+		      while (text)
+			{
+			    if (text->type == XML_TEXT_NODE)
+			      {
+				  value = (const char *) (text->content);
+				  if (value == NULL)
+				      map_config->max_scale = -1.0;
+				  else
+				      map_config->max_scale = atof (value);
+			      }
+			    text = text->next;
+			}
+		  }
+	    }
+	  node = node->next;
+      }
+}
+
+static void
+parse_map_visibility (xmlNodePtr node, rl2MapConfigPtr map_config)
+{
+/* parsing a <VisibilityScaleRange> tag */
+    while (node)
+      {
+	  if (node->type == XML_ELEMENT_NODE)
+	    {
+		const char *name = (const char *) (node->name);
+		if (strcmp (name, "MinScaleDenominator") == 0)
+		    parse_map_min_scale (node, map_config);
+		if (strcmp (name, "MaxScaleDenominator") == 0)
+		    parse_map_max_scale (node, map_config);
+	    }
+	  node = node->next;
+      }
+}
+
+static void
 parse_map_config_description (xmlNodePtr node, rl2MapConfigPtr map_config)
 {
 /* parsing a <RL2MapConfig><Description> tag */
@@ -5056,6 +5141,8 @@ parse_map_config (xmlNodePtr node, rl2MapConfigPtr map_config)
 		    parse_map_config_description (node->children, map_config);
 		if (strcmp (name, "MapOptions") == 0)
 		    parse_map_options (node->children, map_config);
+		if (strcmp (name, "VisibilityScaleRange") == 0)
+		    parse_map_visibility (node->children, map_config);
 		if (strcmp (name, "MapBoundingBox") == 0)
 		    parse_map_bbox (node, map_config);
 		if (strcmp (name, "MapAttachedDatabases") == 0)
@@ -5855,6 +5942,8 @@ rl2_clone_map_config (rl2MapConfigPtr old_conf)
 	  new_conf->abstract = malloc (len + 1);
 	  strcpy (new_conf->abstract, old_conf->abstract);
       }
+    new_conf->min_scale = old_conf->min_scale;
+    new_conf->max_scale = old_conf->max_scale;
     new_conf->multithread_enabled = old_conf->multithread_enabled;
     new_conf->max_threads = old_conf->max_threads;
     new_conf->srid = old_conf->srid;
@@ -5911,6 +6000,20 @@ cmp_strings (const char *str1, const char *str2)
     if (strcmp (str1, str2) == 0)
 	return 1;
     return 0;
+}
+
+static int
+cmp_visibility_range (rl2MapConfigPtr conf1, rl2MapConfigPtr conf2)
+{
+/* comparison of Visibility Range */
+    if (conf1->min_scale < 0.0 && conf2->min_scale < 0.0
+	&& conf1->max_scale < 0.0 && conf2->max_scale < 0.0)
+	return 1;
+    if (conf1->min_scale != conf2->min_scale)
+	return 0;
+    if (conf1->max_scale != conf2->max_scale)
+	return 0;
+    return 1;
 }
 
 static int
@@ -6717,6 +6820,8 @@ rl2_compare_map_configs (rl2MapConfigPtr conf1, rl2MapConfigPtr conf2)
 	add_change (changes, "MapConfig LabelAutoRotate");
     if (conf1->label_shift_position != conf2->label_shift_position)
 	add_change (changes, "MapConfig LabelAutoShift");
+    if (!cmp_visibility_range (conf1, conf2))
+	add_change (changes, "VisibilityScaleRange");
     if (!cmp_bbox (conf1->bbox, conf2->bbox))
 	add_change (changes, "MapConfig BBOX");
 
@@ -7655,7 +7760,8 @@ rl2_create_map_config_aux (sqlite3 * sqlite, const void *data,
 	  format_id = RL2_OUTPUT_FORMAT_TIFF;
 	  ok_format = 1;
       }
-    if (strcmp (format, "application/x-pdf") == 0)
+    if (strcmp (format, "application/x-pdf") == 0
+	|| strcmp (format, "application/pdf") == 0)
       {
 	  format_id = RL2_OUTPUT_FORMAT_PDF;
 	  ok_format = 1;
@@ -8042,10 +8148,10 @@ rl2_destroy_map_config_aux (rl2PrivMapConfigAuxPtr aux)
       }
 
     if (aux->ctx != NULL)
-		rl2_graph_destroy_context (aux->ctx);
+	rl2_graph_destroy_context (aux->ctx);
     if (aux->canvas_labels != NULL)
-		rl2_destroy_canvas (aux->canvas_labels);
+	rl2_destroy_canvas (aux->canvas_labels);
     if (aux->ctx_labels != NULL)
-		rl2_graph_destroy_context (aux->ctx_labels);
+	rl2_graph_destroy_context (aux->ctx_labels);
     free (aux);
 }

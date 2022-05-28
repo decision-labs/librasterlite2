@@ -1,4 +1,4 @@
-
+	
 AM_CFLAGS = @LIBPNG_CFLAGS@ @LIBWEBP_CFLAGS@ @LIBLZMA_CFLAGS@ \
 	@LIBLZ4_CFLAGS@ @LIBZSTD_CFLAGS@ @LIBOPENJP2_CFLAGS@ \
 	@LIBCURL_CFLAGS@ @LIBXML2_CFLAGS@ @LIBFONTCONFIG_CFLAGS@ \
@@ -18,18 +18,20 @@ librasterlite2_la_SOURCES = rasterlite2.c rl2raw.c rl2codec.c \
 	rl2svgaux.c rl2symbolizer.c rl2symbaux.c rl2rastersym.c \
 	rl2version.c rl2md5.c md5.c rl2openjpeg.c rl2auxgeom.c \
 	rl2auxfont.c rl2symclone.c rl2_internal_data.c rl2draping.c \
-	rl2map_config.c rl2map_config_paint.c
+	rl2map_config.c rl2map_config_paint.c rl2quantize.c \
+	rl2legend.c
 
 librasterlite2_la_LIBADD = @LIBPNG_LIBS@ @LIBWEBP_LIBS@ @LIBLZMA_LIBS@ \
 	@LIBLZ4_LIBS@ @LIBZSTD_LIBS@ @LIBOPENJP2_LIBS@ \
 	@LIBCURL_LIBS@ @LIBXML2_LIBS@ @LIBFONTCONFIG_LIBS@ \
-	@LIBFREETYPE2_LIBS@ @LIBPIXMAN_LIBS@ @LIBCAIRO_LIBS@
+	@LIBFREETYPE2_LIBS@ @LIBPIXMAN_LIBS@ @LIBCAIRO_LIBS@ \
+	@SQLITE3_LIBS@
 
 if MINGW
 librasterlite2_la_LDFLAGS = -avoid-version -no-undefined
 librasterlite2_la_LIBADD += -lm
 else
-librasterlite2_la_LDFLAGS = -version-info 1:0:0
+librasterlite2_la_LDFLAGS = -version-info 2:0:0
 librasterlite2_la_LIBADD += -lpthread -lm
 endif
 
@@ -40,7 +42,8 @@ mod_rasterlite2_la_SOURCES = rasterlite2.c rl2raw.c rl2codec.c \
 	rl2svgaux.c rl2symbolizer.c rl2symbaux.c rl2rastersym.c \
 	rl2version.c rl2md5.c md5.c rl2openjpeg.c rl2auxgeom.c \
 	rl2auxfont.c rl2symclone.c rl2_internal_data.c rl2draping.c \
-	rl2map_config.c rl2map_config_paint.c
+	rl2map_config.c rl2map_config_paint.c rl2quantize.c \
+	rl2legend.c
 
 mod_rasterlite2_la_LIBADD = @LIBPNG_LIBS@ @LIBWEBP_LIBS@ @LIBLZMA_LIBS@ \
 	@LIBLZ4_LIBS@ @LIBZSTD_LIBS@ @LIBOPENJP2_LIBS@ \

@@ -51,7 +51,7 @@ the terms of any one of the MPL, the GPL or the LGPL.
 #include "config.h"
 
 #ifdef _WIN32
-#include <Windows.h>
+#include <windows.h>
 #endif
 
 #include "rasterlite2/rasterlite2.h"

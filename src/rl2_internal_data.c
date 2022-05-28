@@ -166,7 +166,7 @@ do_cleanup_advanced_labeling (struct rl2_advanced_labeling *ptr)
       {
 	  pLRn = pLR->next;
 	  if (pLR->blob != NULL)
-		free(pLR->blob);
+	      free (pLR->blob);
 	  free (pLR);
 	  pLR = pLRn;
       }

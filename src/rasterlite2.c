@@ -949,7 +949,7 @@ rl2_create_vector_layer (const char *db_prefix, const char *f_table_name,
 	  vector->view_rowid = malloc (len + 1);
 	  strcpy (vector->view_rowid, view_rowid);
       }
-    vector->geometry_type = geometry_type; 
+    vector->geometry_type = geometry_type;
     vector->srid = srid;
     vector->spatial_index = spatial_index;
     vector->visible = 1;
@@ -3507,4 +3507,83 @@ rl2_get_band_statistics (rl2RasterStatisticsPtr stats, unsigned char band,
 	*variance = st_band->sum_sq_diff / (st->count - 1.0);
     *standard_deviation = sqrt (*variance);
     return RL2_OK;
+}
+
+RL2_PRIVATE char *
+rl2_clean_xml (const char *dirty)
+{
+/* cleaning an XML string by masking illegal chars */
+    int count = 0;
+    const char *in = dirty;
+    char *out;
+    char *clean = NULL;
+    if (dirty == NULL)
+	return NULL;
+    while (*in != '\0')
+      {
+	  /* counting how many illegal chars */
+	  switch (*in)
+	    {
+	    case '<':
+		count += 4;
+		break;
+	    case '>':
+		count += 4;
+		break;
+	    case '&':
+		count += 5;
+		break;
+	    case '"':
+		count += 6;
+		break;
+	    default:
+		count++;
+		break;
+	    };
+	  in++;
+      }
+
+    clean = malloc (count + 1);
+    out = clean;
+    in = dirty;
+    while (*in != '\0')
+      {
+	  /* masking illegal chars */
+	  switch (*in)
+	    {
+	    case '<':
+		*out++ = '&';
+		*out++ = 'l';
+		*out++ = 't';
+		*out++ = ';';
+		break;
+	    case '>':
+		*out++ = '&';
+		*out++ = 'g';
+		*out++ = 't';
+		*out++ = ';';
+		break;
+	    case '&':
+		*out++ = '&';
+		*out++ = 'a';
+		*out++ = 'm';
+		*out++ = 'p';
+		*out++ = ';';
+		break;
+	    case '"':
+		*out++ = '&';
+		*out++ = 'q';
+		*out++ = 'u';
+		*out++ = 'o';
+		*out++ = 't';
+		*out++ = ';';
+		break;
+	    default:
+		*out++ = *in;
+		break;
+	    };
+	  in++;
+      }
+    *out = '\0';
+    return clean;
 }

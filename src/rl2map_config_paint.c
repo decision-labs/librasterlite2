@@ -45,7 +45,7 @@ the terms of any one of the MPL, the GPL or the LGPL.
 #include <string.h>
 
 #ifdef _WIN32
-#include <Windows.h>
+#include <windows.h>
 #else
 #include <unistd.h>
 #endif
@@ -665,35 +665,35 @@ rl2_paint_map_config_aux (sqlite3 * sqlite, const void *data,
 	  aux_lyr = aux_lyr->next;
       }
 
-	  aux_lyr = aux->first_lyr;
-	  while (aux_lyr != NULL)
+    aux_lyr = aux->first_lyr;
+    while (aux_lyr != NULL)
+      {
+	  /* painting Layers */
+	  if (aux_lyr->valid)
 	    {
-		/* painting Layers */
-		if (aux_lyr->valid)
+		switch (aux_lyr->layer->type)
 		  {
-		      switch (aux_lyr->layer->type)
-			{
-			case RL2_MAP_LAYER_WMS:
-			    do_paint_layer_wms (data, aux_lyr, aux);
-			    break;
-			case RL2_MAP_LAYER_RASTER:
-			    do_paint_layer_raster (sqlite, data, aux_lyr, aux);
-			    break;
-			case RL2_MAP_LAYER_VECTOR:
-			case RL2_MAP_LAYER_VECTOR_VIEW:
-			case RL2_MAP_LAYER_VECTOR_VIRTUAL:
-			case RL2_MAP_LAYER_TOPOLOGY:
-			case RL2_MAP_LAYER_NETWORK:
-			    do_paint_layer_vector (sqlite, data, aux_lyr, aux);
-			    if (aux_lyr->has_labels)
-				aux->update_labels = 1;
-			    break;
-			default:
-			    break;
-			};
-		  }
-		aux_lyr = aux_lyr->next;
+		  case RL2_MAP_LAYER_WMS:
+		      do_paint_layer_wms (data, aux_lyr, aux);
+		      break;
+		  case RL2_MAP_LAYER_RASTER:
+		      do_paint_layer_raster (sqlite, data, aux_lyr, aux);
+		      break;
+		  case RL2_MAP_LAYER_VECTOR:
+		  case RL2_MAP_LAYER_VECTOR_VIEW:
+		  case RL2_MAP_LAYER_VECTOR_VIRTUAL:
+		  case RL2_MAP_LAYER_TOPOLOGY:
+		  case RL2_MAP_LAYER_NETWORK:
+		      do_paint_layer_vector (sqlite, data, aux_lyr, aux);
+		      if (aux_lyr->has_labels)
+			  aux->update_labels = 1;
+		      break;
+		  default:
+		      break;
+		  };
 	    }
+	  aux_lyr = aux_lyr->next;
+      }
 
     if (aux->has_labels && aux->update_labels)
       {
@@ -1414,6 +1414,7 @@ do_create_text_symbolizer (const char *style_internal_name,
     char *prev;
     const char *cstr;
     char uuid[64];
+    char *cleared;
 
     if (style_internal_name != NULL)
 	do_set_style_name (lyr, style_internal_name);
@@ -1478,16 +1479,20 @@ do_create_text_symbolizer (const char *style_internal_name,
 	  sqlite3_free (prev);
 	  prev = xml;
       }
-    xml = sqlite3_mprintf ("%s<Label>%s</Label>", prev, sym->label);
+    cleared = rl2_clean_xml (sym->label);
+    xml = sqlite3_mprintf ("%s<Label>%s</Label>", prev, cleared);
+    free (cleared);
     sqlite3_free (prev);
     prev = xml;
     xml = sqlite3_mprintf ("%s<Font>", prev);
     sqlite3_free (prev);
     prev = xml;
+    cleared = rl2_clean_xml (sym->font->family);
     xml =
 	sqlite3_mprintf
 	("%s<SvgParameter name=\"font-family\">%s</SvgParameter>", prev,
-	 sym->font->family);
+	 cleared);
+    free (cleared);
     sqlite3_free (prev);
     prev = xml;
     if (sym->font->style == RL2_FONTSTYLE_ITALIC)

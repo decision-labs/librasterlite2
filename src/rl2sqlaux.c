@@ -46,8 +46,6 @@ the terms of any one of the MPL, the GPL or the LGPL.
 #include <string.h>
 #include <float.h>
 #include <limits.h>
-#include <stdint.h>
-#include <inttypes.h>
 
 #ifdef _WIN32
 #include <io.h>
@@ -4963,7 +4961,65 @@ get_payload_from_rgb_rgba_opaque (unsigned int width, unsigned int height,
 	  if (rl2_rgb_to_png (width, height, rgb, image, image_sz) != RL2_OK)
 	      goto error;
       }
-    else if (format == RL2_OUTPUT_FORMAT_TIFF)
+    else if (format == RL2_OUTPUT_FORMAT_PNG_8)
+      {
+	  /* converting from TrueColor to PaletteBased */
+	  unsigned char *pixbuf;
+	  rl2PalettePtr palette;
+	  if (rl2_quantize_color (width, height, rgb, 256, &pixbuf, &palette) !=
+	      RL2_OK)
+	      goto error;
+	  if (pixbuf == NULL || palette == NULL)
+	    {
+		if (pixbuf != NULL)
+		    free (pixbuf);
+		if (palette != NULL)
+		    rl2_destroy_palette (palette);
+		goto error;
+	    }
+	  ret =
+	      rl2_palette_pixbuf_to_png (width, height, pixbuf, palette, image,
+					 image_sz);
+	  free (pixbuf);
+	  rl2_destroy_palette (palette);
+	  if (ret != RL2_OK)
+	      goto error;
+      }
+    else if (format == RL2_OUTPUT_FORMAT_GIF)
+      {
+	  /* converting from TrueColor to PaletteBased */
+	  unsigned char sample_type = RL2_SAMPLE_UINT8;
+	  unsigned char *pixbuf;
+	  rl2PalettePtr palette;
+	  rl2PrivPalettePtr plt;
+	  if (rl2_quantize_color (width, height, rgb, 256, &pixbuf, &palette) !=
+	      RL2_OK)
+	      goto error;
+	  if (pixbuf == NULL || palette == NULL)
+	    {
+		if (pixbuf != NULL)
+		    free (pixbuf);
+		if (palette != NULL)
+		    rl2_destroy_palette (palette);
+		goto error;
+	    }
+	  plt = (rl2PrivPalettePtr) palette;
+	  if (plt->nEntries <= 2)
+	      sample_type = RL2_SAMPLE_1_BIT;
+	  else if (plt->nEntries <= 4)
+	      sample_type = RL2_SAMPLE_2_BIT;
+	  else if (plt->nEntries <= 16)
+	      sample_type = RL2_SAMPLE_4_BIT;
+	  ret =
+	      rl2_data_to_gif (pixbuf, palette, width, height, sample_type,
+			       RL2_PIXEL_PALETTE, image, image_sz);
+	  free (pixbuf);
+	  rl2_destroy_palette (palette);
+	  if (ret != RL2_OK)
+	      goto error;
+      }
+    else if (format == RL2_OUTPUT_FORMAT_TIFF
+	     || format == RL2_OUTPUT_FORMAT_GEOTIFF)
       {
 	  if (srid > 0)
 	    {
@@ -4978,6 +5034,30 @@ get_payload_from_rgb_rgba_opaque (unsigned int width, unsigned int height,
 		    RL2_OK)
 		    goto error;
 	    }
+      }
+    else if (format == RL2_OUTPUT_FORMAT_TIFF_8)
+      {
+	  /* converting from TrueColor to PaletteBased */
+	  unsigned char *pixbuf;
+	  rl2PalettePtr palette;
+	  if (rl2_quantize_color (width, height, rgb, 256, &pixbuf, &palette) !=
+	      RL2_OK)
+	      goto error;
+	  if (pixbuf == NULL || palette == NULL)
+	    {
+		if (pixbuf != NULL)
+		    free (pixbuf);
+		if (palette != NULL)
+		    rl2_destroy_palette (palette);
+		goto error;
+	    }
+	  ret =
+	      rl2_palette_pixbuf_to_tiff (width, height, pixbuf, palette, image,
+					  image_sz);
+	  free (pixbuf);
+	  rl2_destroy_palette (palette);
+	  if (ret != RL2_OK)
+	      goto error;
       }
     else if (format == RL2_OUTPUT_FORMAT_PDF)
       {
@@ -5044,6 +5124,14 @@ get_payload_from_rgb_rgba_transparent (unsigned int width,
 					image_sz, opacity);
 	  if (ret != RL2_OK)
 	      goto error;
+      }
+    else if (format == RL2_OUTPUT_FORMAT_RGBA)
+      {
+	  unsigned char *rgba = rgb_alpha_to_rgba (width, height, rgb, alpha);
+	  if (rgba == NULL)
+	      goto error;
+	  *image = rgba;
+	  *image_sz = width * height * 4;
       }
     else if (format == RL2_OUTPUT_FORMAT_JPEG)
       {
@@ -5721,7 +5809,8 @@ get_raster_band_histogram (rl2PrivBandStatisticsPtr band,
 
 RL2_PRIVATE int
 set_coverage_infos (sqlite3 * sqlite, const char *coverage_name,
-		    const char *title, const char *abstract, int is_queryable)
+		    const char *title, const char *abstract, int is_queryable,
+		    int is_opaque)
 {
 /* auxiliary function: updates the Coverage descriptive infos */
     int ret;
@@ -5758,7 +5847,7 @@ set_coverage_infos (sqlite3 * sqlite, const char *coverage_name,
     if (!exists)
 	return 0;
 /* updating the Coverage */
-    if (is_queryable < 0)
+    if (is_queryable < 0 && is_opaque < 0)
       {
 	  sql = "UPDATE main.raster_coverages SET title = ?, abstract = ? "
 	      "WHERE Lower(coverage_name) = Lower(?)";
@@ -5777,7 +5866,7 @@ set_coverage_infos (sqlite3 * sqlite, const char *coverage_name,
 	  sqlite3_bind_text (stmt, 3, coverage_name, strlen (coverage_name),
 			     SQLITE_STATIC);
       }
-    else
+    else if (is_opaque < 0)
       {
 	  sql =
 	      "UPDATE main.raster_coverages SET title = ?, abstract = ?, is_queryable = ? "
@@ -5798,6 +5887,55 @@ set_coverage_infos (sqlite3 * sqlite, const char *coverage_name,
 	      is_queryable = 1;
 	  sqlite3_bind_int (stmt, 3, is_queryable);
 	  sqlite3_bind_text (stmt, 4, coverage_name, strlen (coverage_name),
+			     SQLITE_STATIC);
+      }
+    else if (is_queryable < 0)
+      {
+	  sql =
+	      "UPDATE main.raster_coverages SET title = ?, abstract = ?, is_opaque = ? "
+	      "WHERE Lower(coverage_name) = Lower(?)";
+	  ret = sqlite3_prepare_v2 (sqlite, sql, strlen (sql), &stmt, NULL);
+	  if (ret != SQLITE_OK)
+	    {
+		fprintf (stderr, "SetCoverageInfos: \"%s\"\n",
+			 sqlite3_errmsg (sqlite));
+		goto stop;
+	    }
+	  sqlite3_reset (stmt);
+	  sqlite3_clear_bindings (stmt);
+	  sqlite3_bind_text (stmt, 1, title, strlen (title), SQLITE_STATIC);
+	  sqlite3_bind_text (stmt, 2, abstract, strlen (abstract),
+			     SQLITE_STATIC);
+	  if (is_opaque)
+	      is_opaque = 1;
+	  sqlite3_bind_int (stmt, 3, is_opaque);
+	  sqlite3_bind_text (stmt, 4, coverage_name, strlen (coverage_name),
+			     SQLITE_STATIC);
+      }
+    else
+      {
+	  sql =
+	      "UPDATE main.raster_coverages SET title = ?, abstract = ?, is_queryable = ?, is_opaque = ? "
+	      "WHERE Lower(coverage_name) = Lower(?)";
+	  ret = sqlite3_prepare_v2 (sqlite, sql, strlen (sql), &stmt, NULL);
+	  if (ret != SQLITE_OK)
+	    {
+		fprintf (stderr, "SetCoverageInfos: \"%s\"\n",
+			 sqlite3_errmsg (sqlite));
+		goto stop;
+	    }
+	  sqlite3_reset (stmt);
+	  sqlite3_clear_bindings (stmt);
+	  sqlite3_bind_text (stmt, 1, title, strlen (title), SQLITE_STATIC);
+	  sqlite3_bind_text (stmt, 2, abstract, strlen (abstract),
+			     SQLITE_STATIC);
+	  if (is_queryable)
+	      is_queryable = 1;
+	  sqlite3_bind_int (stmt, 3, is_queryable);
+	  if (is_opaque)
+	      is_opaque = 1;
+	  sqlite3_bind_int (stmt, 4, is_opaque);
+	  sqlite3_bind_text (stmt, 5, coverage_name, strlen (coverage_name),
 			     SQLITE_STATIC);
       }
     ret = sqlite3_step (stmt);
@@ -6758,6 +6896,16 @@ do_paint_map_from_raster (struct aux_raster_render *args)
 		format_id = RL2_OUTPUT_FORMAT_PNG;
 		ok_format = 1;
 	    }
+	  if (strcmp (format, "image/png8") == 0)
+	    {
+		format_id = RL2_OUTPUT_FORMAT_PNG_8;
+		ok_format = 1;
+	    }
+	  if (strcmp (format, "image/gif") == 0)
+	    {
+		format_id = RL2_OUTPUT_FORMAT_GIF;
+		ok_format = 1;
+	    }
 	  if (strcmp (format, "image/jpeg") == 0)
 	    {
 		format_id = RL2_OUTPUT_FORMAT_JPEG;
@@ -6768,9 +6916,30 @@ do_paint_map_from_raster (struct aux_raster_render *args)
 		format_id = RL2_OUTPUT_FORMAT_TIFF;
 		ok_format = 1;
 	    }
-	  if (strcmp (format, "application/x-pdf") == 0)
+	  if (strcmp (format, "image/geotiff") == 0)
+	    {
+		format_id = RL2_OUTPUT_FORMAT_GEOTIFF;
+		ok_format = 1;
+	    }
+	  if (strcmp (format, "image/tiff8") == 0)
+	    {
+		format_id = RL2_OUTPUT_FORMAT_TIFF_8;
+		ok_format = 1;
+	    }
+	  if (strcmp (format, "image/geotiff8") == 0)
+	    {
+		format_id = RL2_OUTPUT_FORMAT_GEOTIFF_8;
+		ok_format = 1;
+	    }
+	  if (strcmp (format, "application/x-pdf") == 0
+	      || strcmp (format, "application/pdf") == 0)
 	    {
 		format_id = RL2_OUTPUT_FORMAT_PDF;
+		ok_format = 1;
+	    }
+	  if (strcmp (format, "image/vnd.rl2rgba") == 0)
+	    {
+		format_id = RL2_OUTPUT_FORMAT_RGBA;
 		ok_format = 1;
 	    }
       }
@@ -7400,6 +7569,7 @@ rl2_map_image_blob_from_raster (sqlite3 * sqlite, const void *data,
     aux.height = height;
     aux.style_name = style_name;
     aux.xml_style = NULL;
+    aux.syntetic_band = RL2_SYNTETIC_NONE;
     aux.out_pixel = RL2_PIXEL_UNKNOWN;
     aux.output = malloc (sizeof (struct aux_raster_image));
     aux.output->bg_red = 255;
@@ -8021,6 +8191,16 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
 		format_id = RL2_OUTPUT_FORMAT_PNG;
 		ok_format = 1;
 	    }
+	  if (strcmp (format, "image/png8") == 0)
+	    {
+		format_id = RL2_OUTPUT_FORMAT_PNG_8;
+		ok_format = 1;
+	    }
+	  if (strcmp (format, "image/gif") == 0)
+	    {
+		format_id = RL2_OUTPUT_FORMAT_GIF;
+		ok_format = 1;
+	    }
 	  if (strcmp (format, "image/jpeg") == 0)
 	    {
 		format_id = RL2_OUTPUT_FORMAT_JPEG;
@@ -8031,9 +8211,30 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
 		format_id = RL2_OUTPUT_FORMAT_TIFF;
 		ok_format = 1;
 	    }
-	  if (strcmp (format, "application/x-pdf") == 0)
+	  if (strcmp (format, "image/geotiff") == 0)
+	    {
+		format_id = RL2_OUTPUT_FORMAT_GEOTIFF;
+		ok_format = 1;
+	    }
+	  if (strcmp (format, "image/tiff8") == 0)
+	    {
+		format_id = RL2_OUTPUT_FORMAT_TIFF_8;
+		ok_format = 1;
+	    }
+	  if (strcmp (format, "image/geotiff8") == 0)
+	    {
+		format_id = RL2_OUTPUT_FORMAT_GEOTIFF_8;
+		ok_format = 1;
+	    }
+	  if (strcmp (format, "application/x-pdf") == 0
+	      || strcmp (format, "application/pdf") == 0)
 	    {
 		format_id = RL2_OUTPUT_FORMAT_PDF;
+		ok_format = 1;
+	    }
+	  if (strcmp (format, "image/vnd.rl2rgba") == 0)
+	    {
+		format_id = RL2_OUTPUT_FORMAT_RGBA;
 		ok_format = 1;
 	    }
       }
@@ -8099,14 +8300,17 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
       }
     rl2_is_multilayer_topogeo (multi, &is_topogeo);
     rl2_is_multilayer_toponet (multi, &is_toponet);
-    if (lyr_stl != NULL && aux->immediate_labels)
+    if (lyr_stl != NULL)
       {
 	  /* checking if the Style has Text Labels */
 	  has_labels = rl2_style_has_labels (lyr_stl);
-	  if (has_labels)
-	      ctx_labels = rl2_graph_create_context (aux->data, width, height);
-	  if (ctx_labels != NULL)
-	      rl2_prime_background (ctx_labels, 0, 0, 0, 0);	/* labels layer: always transparent */
+	  if (aux->immediate_labels && has_labels)
+	    {
+		ctx_labels =
+		    rl2_graph_create_context (aux->data, width, height);
+		if (ctx_labels != NULL)
+		    rl2_prime_background (ctx_labels, 0, 0, 0, 0);	/* labels layer: always transparent */
+	    }
       }
 
     for (j = 0; j < rl2_get_multilayer_count (multi); j++)
@@ -8840,7 +9044,6 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
   done:
     if (aux->output == NULL)
       {
-	  fprintf (stderr, "*** medrallami\n");
 	  rl2_destroy_multi_layer (multi);
 	  if (lyr_stl != NULL)
 	      rl2_destroy_feature_type_style (lyr_stl);
@@ -8892,7 +9095,6 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
 	      rl2_graph_destroy_context (ctx_labels);
 	  return RL2_OK;
       }
-    fprintf (stderr, "*** non medrallami\n");
 
     if (is_topogeo)
       {
@@ -8937,7 +9139,6 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
     if (ctx_labels != NULL)
       {
 	  /* merging Label sub-layer */
-	  fprintf (stderr, "********* merging\n");
 	  rl2GraphicsContextPtr ctx_out =
 	      rl2_get_canvas_ctx (canvas, RL2_CANVAS_BASE_CTX);
 	  rl2_graph_merge (ctx_out, ctx_labels);
@@ -9796,5 +9997,373 @@ rl2_image_blob_from_map_config (sqlite3 * sqlite, const void *data,
 	rl2_destroy_map_config (map_config);
     if (aux != NULL)
 	rl2_destroy_map_config_aux (aux);
+    return RL2_ERROR;
+}
+
+static unsigned char
+parse_hex (const char *byte)
+{
+/* attempting to parse an hexadecimal byte */
+    const char hi = byte[0];
+    const char lo = byte[1];
+    unsigned char hex;
+    switch (hi)
+      {
+      case 'f':
+      case 'F':
+	  hex = 15 * 16;
+	  break;
+      case 'e':
+      case 'E':
+	  hex = 14 * 16;
+	  break;
+      case 'd':
+      case 'D':
+	  hex = 13 * 16;
+	  break;
+      case 'c':
+      case 'C':
+	  hex = 12 * 16;
+	  break;
+      case 'b':
+      case 'B':
+	  hex = 11 * 16;
+	  break;
+      case 'a':
+      case 'A':
+	  hex = 10 * 16;
+	  break;
+      case '9':
+	  hex = 9 * 16;
+	  break;
+      case '8':
+	  hex = 8 * 16;
+	  break;
+      case '7':
+	  hex = 7 * 16;
+	  break;
+      case '6':
+	  hex = 6 * 16;
+	  break;
+      case '5':
+	  hex = 5 * 16;
+	  break;
+      case '4':
+	  hex = 4 * 16;
+	  break;
+      case '3':
+	  hex = 3 * 16;
+	  break;
+      case '2':
+	  hex = 2 * 16;
+	  break;
+      case '1':
+	  hex = 1 * 16;
+	  break;
+      case '0':
+	  hex = 0;
+	  break;
+      };
+    switch (lo)
+      {
+      case 'f':
+      case 'F':
+	  hex += 15;
+	  break;
+      case 'e':
+      case 'E':
+	  hex += 14;
+	  break;
+      case 'd':
+      case 'D':
+	  hex += 13;
+	  break;
+      case 'c':
+      case 'C':
+	  hex += 12;
+	  break;
+      case 'b':
+      case 'B':
+	  hex += 11;
+	  break;
+      case 'a':
+      case 'A':
+	  hex += 10;
+	  break;
+      case '9':
+	  hex += 9;
+	  break;
+      case '8':
+	  hex += 8;
+	  break;
+      case '7':
+	  hex += 7;
+	  break;
+      case '6':
+	  hex += 6;
+	  break;
+      case '5':
+	  hex = 5;
+	  break;
+      case '4':
+	  hex += 4;
+	  break;
+      case '3':
+	  hex += 3;
+	  break;
+      case '2':
+	  hex += 2;
+	  break;
+      case '1':
+	  hex += 1;
+	  break;
+      case '0':
+	  hex += 0;
+	  break;
+      };
+    return hex;
+}
+
+RL2_DECLARE int
+rl2_raster_legend_graphic (sqlite3 * sqlite,
+			   const char *db_prefix,
+			   const char *cvg_name, int type,
+			   const char *style_name,
+			   int width, int height, const char *format,
+			   const char *font_name, double font_size,
+			   int font_italic, int font_bold,
+			   const char *font_color, unsigned char **img,
+			   int *img_size)
+{
+/* attempting to create a Legend Graphic (for Raster layer) */
+    rl2CoverageStylePtr cvg_stl = NULL;
+    int ok_style = 0;
+    int valid_font_color = 1;
+    char hex[2];
+    unsigned char red;
+    unsigned char green;
+    unsigned char blue;
+    rl2LegendGraphic aux;
+    unsigned char *rgb = NULL;
+
+    *img = NULL;
+    *img_size = 0;
+
+/* validating the style */
+    ok_style = 0;
+    if (style_name == NULL)
+	style_name = "default";
+    if (strcasecmp (style_name, "default") == 0)
+	ok_style = 1;
+    else
+      {
+	  /* attempting to get a Coverage Style */
+	  cvg_stl =
+	      rl2_create_coverage_style_from_dbms (sqlite, db_prefix,
+						   cvg_name, style_name);
+	  if (cvg_stl == NULL)
+	      goto error;
+	  ok_style = 1;
+      }
+    if (!ok_style)
+	goto error;
+
+/* validating the font color */
+    if (strlen (font_color) != 7)
+	valid_font_color = 0;
+    else
+      {
+	  int i;
+	  if (*(font_color + 0) != '#')
+	      valid_font_color = 0;
+	  for (i = 1; i < 7; i++)
+	    {
+		char h = *(font_color + i);
+		if ((h >= '0' && h <= '9') || (h >= 'a' && h <= 'f')
+		    || (h >= 'A' && h <= 'F'))
+		    ;
+		else
+		    valid_font_color = 0;
+	    }
+      }
+    if (!valid_font_color)
+	goto error;
+    hex[0] = *(font_color + 1);
+    hex[1] = *(font_color + 2);
+    red = parse_hex (hex);
+    hex[0] = *(font_color + 3);
+    hex[1] = *(font_color + 4);
+    green = parse_hex (hex);
+    hex[0] = *(font_color + 5);
+    hex[1] = *(font_color + 6);
+    blue = parse_hex (hex);
+
+/*preparing the auxiliary struct for passing arguments */
+    aux.layer_name = cvg_name;
+    aux.style_name = style_name;
+    aux.cvg_stl = cvg_stl;
+    aux.lyr_stl = NULL;
+    aux.raster_type = type;
+    aux.width = width;
+    aux.height = height;
+    aux.font_name = font_name;
+    aux.font_size = font_size;
+    aux.font_italic = font_italic;
+    aux.font_bold = font_bold;
+    aux.font_red = red;
+    aux.font_green = green;
+    aux.font_blue = blue;
+    rgb = rl2_paint_raster_legend_graphic (&aux);
+    if (rgb == NULL)
+	goto error;
+
+    if (strcasecmp (format, "image/jpeg") == 0)
+      {
+	  if (rl2_rgb_to_jpeg
+	      (aux.LegendWidth, aux.LegendHeight, rgb, 90, img,
+	       img_size) != RL2_OK)
+	      goto error;
+      }
+    else if (strcasecmp (format, "image/png") == 0)
+      {
+	  if (rl2_rgb_to_png
+	      (aux.LegendWidth, aux.LegendHeight, rgb, img, img_size) != RL2_OK)
+	      goto error;
+      }
+    else
+	goto error;
+
+    free (rgb);
+    if (cvg_stl != NULL)
+	rl2_destroy_coverage_style (cvg_stl);
+    return RL2_OK;
+
+  error:
+    if (rgb != NULL)
+	free (rgb);
+    if (cvg_stl != NULL)
+	rl2_destroy_coverage_style (cvg_stl);
+    return RL2_ERROR;
+}
+
+RL2_DECLARE int
+rl2_vector_legend_graphic (sqlite3 * sqlite,
+			   const char *db_prefix,
+			   const char *cvg_name, int type,
+			   const char *style_name,
+			   int width, int height, const char *format,
+			   const char *font_name, double font_size,
+			   int font_italic, int font_bold,
+			   const char *font_color, unsigned char **img,
+			   int *img_size)
+{
+/* attempting to create a Legend Graphic (for Vector layer) */
+    rl2FeatureTypeStylePtr lyr_stl = NULL;
+    int ok_style = 0;
+    int valid_font_color = 1;
+    char hex[2];
+    unsigned char red;
+    unsigned char green;
+    unsigned char blue;
+    rl2LegendGraphic aux;
+    unsigned char *rgb = NULL;
+
+    *img = NULL;
+    *img_size = 0;
+
+/* validating the style */
+    ok_style = 0;
+    if (style_name == NULL)
+	style_name = "default";
+    if (strcasecmp (style_name, "default") == 0)
+	ok_style = 1;
+    else
+      {
+	  /* attempting to get a FeatureType Style */
+	  lyr_stl =
+	      rl2_create_feature_type_style_from_dbms (sqlite, db_prefix,
+						       cvg_name, style_name);
+	  if (lyr_stl == NULL)
+	      goto error;
+	  ok_style = 1;
+      }
+    if (!ok_style)
+	goto error;
+
+/* validating the font color */
+    if (strlen (font_color) != 7)
+	valid_font_color = 0;
+    else
+      {
+	  int i;
+	  if (*(font_color + 0) != '#')
+	      valid_font_color = 0;
+	  for (i = 1; i < 7; i++)
+	    {
+		char h = *(font_color + i);
+		if ((h >= '0' && h <= '9') || (h >= 'a' && h <= 'f')
+		    || (h >= 'A' && h <= 'F'))
+		    ;
+		else
+		    valid_font_color = 0;
+	    }
+      }
+    if (!valid_font_color)
+	goto error;
+    hex[0] = *(font_color + 1);
+    hex[1] = *(font_color + 2);
+    red = parse_hex (hex);
+    hex[0] = *(font_color + 3);
+    hex[1] = *(font_color + 4);
+    green = parse_hex (hex);
+    hex[0] = *(font_color + 5);
+    hex[1] = *(font_color + 6);
+    blue = parse_hex (hex);
+
+/*preparing the auxiliary struct for passing arguments */
+    aux.layer_name = cvg_name;
+    aux.style_name = style_name;
+    aux.cvg_stl = NULL;
+    aux.lyr_stl = lyr_stl;
+    aux.vector_type = type;
+    aux.width = width;
+    aux.height = height;
+    aux.font_name = font_name;
+    aux.font_size = font_size;
+    aux.font_italic = font_italic;
+    aux.font_bold = font_bold;
+    aux.font_red = red;
+    aux.font_green = green;
+    aux.font_blue = blue;
+    rgb = rl2_paint_vector_legend_graphic (sqlite, &aux);
+    if (rgb == NULL)
+	goto error;
+
+    if (strcasecmp (format, "image/jpeg") == 0)
+      {
+	  if (rl2_rgb_to_jpeg
+	      (aux.LegendWidth, aux.LegendHeight, rgb, 90, img,
+	       img_size) != RL2_OK)
+	      goto error;
+      }
+    else if (strcasecmp (format, "image/png") == 0)
+      {
+	  if (rl2_rgb_to_png
+	      (aux.LegendWidth, aux.LegendHeight, rgb, img, img_size) != RL2_OK)
+	      goto error;
+      }
+    else
+	goto error;
+
+    free (rgb);
+    if (lyr_stl != NULL)
+	rl2_destroy_feature_type_style (lyr_stl);
+    return RL2_OK;
+
+  error:
+    if (rgb != NULL)
+	free (rgb);
+    if (lyr_stl != NULL)
+	rl2_destroy_feature_type_style (lyr_stl);
     return RL2_ERROR;
 }

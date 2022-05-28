@@ -1,0 +1,7 @@
+GetRasterCoverageMinScaleDenominator- Text Prefix
+:memory: #use in-memory database
+SELECT RL2_GetRasterCoverageMinScaleDenominator('prefix', 'coverage');
+1 # rows (not including the header row)
+1 # columns
+RL2_GetRasterCoverageMinScaleDenominator('prefix', 'coverage')
+-1

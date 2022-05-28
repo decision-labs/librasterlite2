@@ -91,7 +91,8 @@ insert_into_raster_coverages (sqlite3 * handle, const char *coverage,
 			      int blob_no_data_sz, int strict_resolution,
 			      int mixed_resolutions, int section_paths,
 			      int section_md5, int section_summary,
-			      int is_queryable)
+			      int is_queryable, int is_opaque, double min_scale,
+			      double max_scale)
 {
 /* inserting into "raster_coverages" */
     int ret;
@@ -105,8 +106,9 @@ insert_into_raster_coverages (sqlite3 * handle, const char *coverage,
 	"pixel_type, num_bands, compression, quality, tile_width, "
 	"tile_height, horz_resolution, vert_resolution, srid, "
 	"nodata_pixel, palette, strict_resolution, mixed_resolutions, "
-	"section_paths, section_md5, section_summary, is_queryable) VALUES "
-	"(Lower(?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	"section_paths, section_md5, section_summary, is_queryable, "
+	"is_opaque, min_scale, max_scale) VALUES "
+	"(Lower(?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     ret = sqlite3_prepare_v2 (handle, sql, strlen (sql), &stmt, NULL);
     if (ret != SQLITE_OK)
       {
@@ -261,6 +263,17 @@ insert_into_raster_coverages (sqlite3 * handle, const char *coverage,
     if (is_queryable)
 	is_queryable = 1;
     sqlite3_bind_int (stmt, 19, is_queryable);
+    if (is_opaque)
+	is_opaque = 1;
+    sqlite3_bind_int (stmt, 20, is_opaque);
+    if (min_scale < 0.0)
+	sqlite3_bind_null (stmt, 21);
+    else
+	sqlite3_bind_double (stmt, 21, min_scale);
+    if (max_scale < 0.0)
+	sqlite3_bind_null (stmt, 22);
+    else
+	sqlite3_bind_double (stmt, 22, max_scale);
     ret = sqlite3_step (stmt);
     if (ret == SQLITE_DONE || ret == SQLITE_ROW)
 	goto coverage_registered;
@@ -797,7 +810,8 @@ rl2_create_dbms_coverage (sqlite3 * handle, const char *coverage,
 			  rl2PalettePtr palette, int strict_resolution,
 			  int mixed_resolutions, int section_paths,
 			  int section_md5, int section_summary,
-			  int is_queryable)
+			  int is_queryable, int is_opaque, double min_scale,
+			  double max_scale)
 {
 /* creating a DBMS-based Coverage */
     unsigned char *blob = NULL;
@@ -821,7 +835,7 @@ rl2_create_dbms_coverage (sqlite3 * handle, const char *coverage,
 	 tile_width, tile_height, srid, x_res, y_res, blob,
 	 blob_size, blob_no_data, blob_no_data_sz, strict_resolution,
 	 mixed_resolutions, section_paths, section_md5, section_summary,
-	 is_queryable))
+	 is_queryable, is_opaque, min_scale, max_scale))
 	goto error;
     if (mixed_resolutions)
       {
@@ -1210,6 +1224,141 @@ rl2_is_dbms_coverage_auto_ndvi_enabled (sqlite3 * handle, const char *db_prefix,
 	return RL2_TRUE;
     else
 	return RL2_FALSE;
+
+  error:
+    if (stmt != NULL)
+	sqlite3_finalize (stmt);
+    return RL2_ERROR;
+}
+
+RL2_DECLARE int
+rl2_set_dbms_coverage_visibility_range (sqlite3 * handle, const char *coverage,
+					double min_scale, double max_scale)
+{
+/* setting the Visibility Range Min and Max values */
+    int ret;
+    sqlite3_stmt *stmt = NULL;
+    const char *sql;
+    int old_changes = sqlite3_total_changes (handle);
+    int new_changes;
+
+/* updating the Coverage */
+    sql = "UPDATE main.raster_coverages SET min_scale = ?, max_scale = ? "
+	"WHERE Lower(coverage_name) = Lower(?)";
+    ret = sqlite3_prepare_v2 (handle, sql, strlen (sql), &stmt, NULL);
+    if (ret != SQLITE_OK)
+      {
+	  printf ("UPDATE SetVisibilityRange SQL error: %s\n",
+		  sqlite3_errmsg (handle));
+	  goto error;
+      }
+
+    sqlite3_reset (stmt);
+    sqlite3_clear_bindings (stmt);
+    if (min_scale < 0.0)
+	sqlite3_bind_null (stmt, 1);
+    else
+	sqlite3_bind_double (stmt, 1, min_scale);
+    if (max_scale < 0.0)
+	sqlite3_bind_null (stmt, 2);
+    else
+	sqlite3_bind_double (stmt, 2, max_scale);
+    sqlite3_bind_text (stmt, 3, coverage, strlen (coverage), SQLITE_STATIC);
+    ret = sqlite3_step (stmt);
+    if (ret == SQLITE_DONE || ret == SQLITE_ROW)
+	;
+    else
+      {
+	  fprintf (stderr,
+		   "sqlite3_step() error: UPDATE SetVisibilityRange \"%s\"\n",
+		   sqlite3_errmsg (handle));
+	  goto error;
+      }
+    sqlite3_finalize (stmt);
+    new_changes = sqlite3_total_changes (handle);
+    if (old_changes == new_changes)
+	return RL2_FALSE;
+    else
+	return RL2_TRUE;
+
+  error:
+    if (stmt != NULL)
+	sqlite3_finalize (stmt);
+    return RL2_ERROR;
+}
+
+RL2_DECLARE int
+rl2_get_dbms_coverage_visibility_range (sqlite3 * handle, const char *db_prefix,
+					const char *coverage, double *min_scale,
+					double *max_scale)
+{
+/* 
+/  attempting to retrieve the Visibility Range for some Raster Coverage
+*/
+    int ret;
+    sqlite3_stmt *stmt = NULL;
+    char *sql;
+    int count = 0;
+    char *xdb_prefix;
+    double min;
+    double max;
+
+    if (db_prefix == NULL)
+	db_prefix = "MAIN";
+    xdb_prefix = rl2_double_quoted_sql (db_prefix);
+    sql =
+	sqlite3_mprintf
+	("SELECT min_scale, max_scale FROM \"%s\".raster_coverages "
+	 "WHERE Lower(coverage_name) = Lower(?)", xdb_prefix);
+    free (xdb_prefix);
+    ret = sqlite3_prepare_v2 (handle, sql, strlen (sql), &stmt, NULL);
+    sqlite3_free (sql);
+    if (ret != SQLITE_OK)
+      {
+	  printf ("SELECT SetVisibilityRange SQL error: %s\n",
+		  sqlite3_errmsg (handle));
+	  goto error;
+      }
+
+/* querying the covrage */
+    sqlite3_reset (stmt);
+    sqlite3_clear_bindings (stmt);
+    sqlite3_bind_text (stmt, 1, coverage, strlen (coverage), SQLITE_STATIC);
+    while (1)
+      {
+	  ret = sqlite3_step (stmt);
+	  if (ret == SQLITE_DONE)
+	      break;
+	  if (ret == SQLITE_ROW)
+	    {
+		if (sqlite3_column_type (stmt, 0) == SQLITE_NULL)
+		    min = -1.0;
+		else if (sqlite3_column_type (stmt, 0) == SQLITE_FLOAT)
+		    min = sqlite3_column_double (stmt, 0);
+		if (sqlite3_column_type (stmt, 1) == SQLITE_NULL)
+		    max = -1.0;
+		else if (sqlite3_column_type (stmt, 1) == SQLITE_FLOAT)
+		    max = sqlite3_column_double (stmt, 1);
+		count++;
+	    }
+	  else
+	    {
+		fprintf (stderr,
+			 "SELECT SetVisibilityRange; sqlite3_step() error: %s\n",
+			 sqlite3_errmsg (handle));
+		goto error;
+	    }
+      }
+    sqlite3_finalize (stmt);
+    stmt = NULL;
+
+/* validation checks */
+    if (count != 1)
+	goto error;
+
+    *min_scale = min;
+    *max_scale = max;
+    return RL2_TRUE;
 
   error:
     if (stmt != NULL)
@@ -9219,6 +9368,9 @@ rl2_copy_raster_coverage (sqlite3 * sqlite, const char *db_prefix,
     int section_md5 = 0;
     int section_summary = 0;
     int is_queryable = 0;
+    int is_opaque = 0;
+    double min_scale = -1.0;
+    double max_scale = -1.0;
     rl2PixelPtr no_data = NULL;
     rl2PalettePtr palette = NULL;
     char *title = NULL;
@@ -9235,7 +9387,6 @@ rl2_copy_raster_coverage (sqlite3 * sqlite, const char *db_prefix,
     double ext_miny;
     double ext_maxx;
     double ext_maxy;
-    int ok_is_queryable = 0;
     int ok_red_band_index = 0;
     int ok_green_band_index = 0;
     int ok_blue_band_index = 0;
@@ -9250,7 +9401,7 @@ rl2_copy_raster_coverage (sqlite3 * sqlite, const char *db_prefix,
 
     xdb = rl2_double_quoted_sql (db_prefix);
 
-/* querying the ording Coverage defs */
+/* querying the origin Coverage defs */
     sql =
 	sqlite3_mprintf
 	("SELECT sample_type, pixel_type, num_bands, compression, quality, tile_width, "
@@ -9258,8 +9409,9 @@ rl2_copy_raster_coverage (sqlite3 * sqlite, const char *db_prefix,
 	 "strict_resolution, mixed_resolutions, section_paths, section_md5, "
 	 "section_summary, title, abstract, statistics, geo_minx, geo_miny, "
 	 "geo_maxx, geo_maxy, extent_minx, extent_miny, extent_maxx, extent_maxy, "
-	 "is_queryable, red_band_index, green_band_index, blue_band_index, "
-	 "nir_band_index, enable_auto_ndvi, palette, is_queryable "
+	 "red_band_index, green_band_index, blue_band_index, "
+	 "nir_band_index, enable_auto_ndvi, palette, is_queryable, "
+	 "is_opaque, min_scale, max_scale "
 	 "FROM \"%s\".raster_coverages WHERE Lower(coverage_name) = Lower(?)",
 	 xdb);
     ret = sqlite3_prepare_v2 (sqlite, sql, strlen (sql), &stmt, NULL);
@@ -9689,43 +9841,44 @@ rl2_copy_raster_coverage (sqlite3 * sqlite, const char *db_prefix,
 		  }
 		if (sqlite3_column_type (stmt, 27) == SQLITE_INTEGER)
 		  {
-		      is_queryable = sqlite3_column_int (stmt, 27);
-		      ok_is_queryable = 1;
+		      red_band_index = sqlite3_column_int (stmt, 27);
+		      ok_red_band_index = 1;
 		  }
 		if (sqlite3_column_type (stmt, 28) == SQLITE_INTEGER)
 		  {
-		      red_band_index = sqlite3_column_int (stmt, 28);
+		      green_band_index = sqlite3_column_int (stmt, 28);
 		      ok_red_band_index = 1;
 		  }
 		if (sqlite3_column_type (stmt, 29) == SQLITE_INTEGER)
 		  {
-		      green_band_index = sqlite3_column_int (stmt, 29);
+		      blue_band_index = sqlite3_column_int (stmt, 29);
 		      ok_red_band_index = 1;
 		  }
 		if (sqlite3_column_type (stmt, 30) == SQLITE_INTEGER)
 		  {
-		      blue_band_index = sqlite3_column_int (stmt, 30);
+		      nir_band_index = sqlite3_column_int (stmt, 30);
 		      ok_red_band_index = 1;
 		  }
 		if (sqlite3_column_type (stmt, 31) == SQLITE_INTEGER)
 		  {
-		      nir_band_index = sqlite3_column_int (stmt, 31);
-		      ok_red_band_index = 1;
-		  }
-		if (sqlite3_column_type (stmt, 32) == SQLITE_INTEGER)
-		  {
-		      enable_auto_ndvi = sqlite3_column_int (stmt, 32);
+		      enable_auto_ndvi = sqlite3_column_int (stmt, 31);
 		      ok_enable_auto_ndvi = 1;
 		  }
-		if (sqlite3_column_type (stmt, 33) == SQLITE_BLOB)
+		if (sqlite3_column_type (stmt, 32) == SQLITE_BLOB)
 		  {
 		      const unsigned char *blob =
-			  sqlite3_column_blob (stmt, 33);
-		      int blob_sz = sqlite3_column_bytes (stmt, 33);
+			  sqlite3_column_blob (stmt, 32);
+		      int blob_sz = sqlite3_column_bytes (stmt, 32);
 		      palette = rl2_deserialize_dbms_palette (blob, blob_sz);
 		  }
+		if (sqlite3_column_type (stmt, 33) == SQLITE_INTEGER)
+		    is_queryable = sqlite3_column_int (stmt, 33);
 		if (sqlite3_column_type (stmt, 34) == SQLITE_INTEGER)
-		    is_queryable = sqlite3_column_int (stmt, 34);
+		    is_opaque = sqlite3_column_int (stmt, 34);
+		if (sqlite3_column_type (stmt, 35) == SQLITE_FLOAT)
+		    min_scale = sqlite3_column_double (stmt, 35);
+		if (sqlite3_column_type (stmt, 36) == SQLITE_FLOAT)
+		    max_scale = sqlite3_column_double (stmt, 36);
 		if (ok_sample && ok_pixel && ok_num_bands && ok_compression
 		    && ok_quality && ok_tile_width && ok_tile_height
 		    && ok_x_res && ok_y_res && ok_srid && ok_nodata
@@ -9752,7 +9905,8 @@ rl2_copy_raster_coverage (sqlite3 * sqlite, const char *db_prefix,
 				    horz_res, vert_res, no_data, palette,
 				    strict_resolution, mixed_resolutions,
 				    section_paths, section_md5,
-				    section_summary, is_queryable);
+				    section_summary, is_queryable, is_opaque,
+				    min_scale, max_scale);
     if (no_data != NULL)
 	rl2_destroy_pixel (no_data);
     if (palette != NULL)
@@ -9764,7 +9918,7 @@ rl2_copy_raster_coverage (sqlite3 * sqlite, const char *db_prefix,
     sql = "UPDATE main.raster_coverages SET title = ?, "
 	"abstract = ?, statistics = ?, geo_minx = ?, geo_miny = ?, geo_maxx = ?, "
 	"geo_maxy = ?, extent_minx = ?, extent_miny = ?, extent_maxx = ?, "
-	"extent_maxy = ?, is_queryable = ?, red_band_index = ?, green_band_index = ?, "
+	"extent_maxy = ?, red_band_index = ?, green_band_index = ?, "
 	"blue_band_index = ?, nir_band_index = ?, enable_auto_ndvi = ? "
 	"WHERE Lower(coverage_name) = Lower(?)";
     ret = sqlite3_prepare_v2 (sqlite, sql, strlen (sql), &stmt, NULL);
@@ -9815,31 +9969,27 @@ rl2_copy_raster_coverage (sqlite3 * sqlite, const char *db_prefix,
 	  sqlite3_bind_null (stmt, 10);
 	  sqlite3_bind_null (stmt, 11);
       }
-    if (!ok_is_queryable)
+    if (!ok_red_band_index)
 	sqlite3_bind_null (stmt, 12);
     else
-	sqlite3_bind_int (stmt, 12, is_queryable);
-    if (!ok_red_band_index)
+	sqlite3_bind_int (stmt, 12, red_band_index);
+    if (!ok_green_band_index)
 	sqlite3_bind_null (stmt, 13);
     else
-	sqlite3_bind_int (stmt, 13, red_band_index);
-    if (!ok_green_band_index)
+	sqlite3_bind_int (stmt, 13, green_band_index);
+    if (!ok_blue_band_index)
 	sqlite3_bind_null (stmt, 14);
     else
-	sqlite3_bind_int (stmt, 14, green_band_index);
-    if (!ok_blue_band_index)
+	sqlite3_bind_int (stmt, 14, blue_band_index);
+    if (!ok_nir_band_index)
 	sqlite3_bind_null (stmt, 15);
     else
-	sqlite3_bind_int (stmt, 15, blue_band_index);
-    if (!ok_nir_band_index)
+	sqlite3_bind_int (stmt, 15, nir_band_index);
+    if (!ok_enable_auto_ndvi)
 	sqlite3_bind_null (stmt, 16);
     else
-	sqlite3_bind_int (stmt, 16, nir_band_index);
-    if (!ok_enable_auto_ndvi)
-	sqlite3_bind_null (stmt, 17);
-    else
-	sqlite3_bind_int (stmt, 17, enable_auto_ndvi);
-    sqlite3_bind_text (stmt, 18, coverage_name, strlen (coverage_name),
+	sqlite3_bind_int (stmt, 16, enable_auto_ndvi);
+    sqlite3_bind_text (stmt, 17, coverage_name, strlen (coverage_name),
 		       SQLITE_STATIC);
     ret = sqlite3_step (stmt);
     sqlite3_finalize (stmt);

@@ -116,7 +116,9 @@ am__v_lt_1 =
 am_rl2tool_OBJECTS = rl2tool.$(OBJEXT)
 rl2tool_OBJECTS = $(am_rl2tool_OBJECTS)
 rl2tool_DEPENDENCIES =
-am_wmslite_OBJECTS = wmslite.$(OBJEXT)
+am_wmslite_OBJECTS = wmslitecgi.$(OBJEXT) wmslite_config.$(OBJEXT) \
+	wmslite_miniserver.$(OBJEXT) wmslite_sql.$(OBJEXT) \
+	wmslite_capabilities.$(OBJEXT) wmslite_common.$(OBJEXT)
 wmslite_OBJECTS = $(am_wmslite_OBJECTS)
 wmslite_DEPENDENCIES =
 AM_V_P = $(am__v_P_@AM_V@)
@@ -135,7 +137,10 @@ DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/. -I$(top_builddir)/./headers
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/rl2sniff.Po ./$(DEPDIR)/rl2tool.Po \
-	./$(DEPDIR)/wmslite.Po
+	./$(DEPDIR)/wmslite_capabilities.Po \
+	./$(DEPDIR)/wmslite_common.Po ./$(DEPDIR)/wmslite_config.Po \
+	./$(DEPDIR)/wmslite_miniserver.Po ./$(DEPDIR)/wmslite_sql.Po \
+	./$(DEPDIR)/wmslitecgi.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -279,6 +284,8 @@ RANLIB = @RANLIB@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
+SQLITE3_CFLAGS = @SQLITE3_CFLAGS@
+SQLITE3_LIBS = @SQLITE3_LIBS@
 STRIP = @STRIP@
 VERSION = @VERSION@
 abs_builddir = @abs_builddir@
@@ -344,7 +351,10 @@ AM_LDFLAGS = -L../src
 AM_CPPFLAGS = @CFLAGS@ @CPPFLAGS@ -I$(top_srcdir)/headers
 rl2sniff_SOURCES = rl2sniff.c
 rl2tool_SOURCES = rl2tool.c
-wmslite_SOURCES = wmslite.c
+wmslite_SOURCES = wmslite.h wmslitecgi.c wmslite_config.c \
+	wmslite_miniserver.c wmslite_sql.c wmslite_capabilities.c \
+	wmslite_common.c
+
 rl2sniff_LDADD = @LIBPNG_LIBS@ @LIBWEBP_LIBS@ @LIBLZMA_LIBS@ \
 	@LIBLZ4_LIBS@ @LIBZSTD_LIBS@ @LIBOPENJP2_LIBS@ \
 	@LIBCURL_LIBS@ @LIBXML2_LIBS@ @LIBFONTCONFIG_LIBS@ \
@@ -476,7 +486,12 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rl2sniff.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rl2tool.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wmslite.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wmslite_capabilities.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wmslite_common.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wmslite_config.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wmslite_miniserver.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wmslite_sql.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wmslitecgi.Po@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -640,7 +655,12 @@ clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am
 distclean: distclean-am
 		-rm -f ./$(DEPDIR)/rl2sniff.Po
 	-rm -f ./$(DEPDIR)/rl2tool.Po
-	-rm -f ./$(DEPDIR)/wmslite.Po
+	-rm -f ./$(DEPDIR)/wmslite_capabilities.Po
+	-rm -f ./$(DEPDIR)/wmslite_common.Po
+	-rm -f ./$(DEPDIR)/wmslite_config.Po
+	-rm -f ./$(DEPDIR)/wmslite_miniserver.Po
+	-rm -f ./$(DEPDIR)/wmslite_sql.Po
+	-rm -f ./$(DEPDIR)/wmslitecgi.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -688,7 +708,12 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 		-rm -f ./$(DEPDIR)/rl2sniff.Po
 	-rm -f ./$(DEPDIR)/rl2tool.Po
-	-rm -f ./$(DEPDIR)/wmslite.Po
+	-rm -f ./$(DEPDIR)/wmslite_capabilities.Po
+	-rm -f ./$(DEPDIR)/wmslite_common.Po
+	-rm -f ./$(DEPDIR)/wmslite_config.Po
+	-rm -f ./$(DEPDIR)/wmslite_miniserver.Po
+	-rm -f ./$(DEPDIR)/wmslite_sql.Po
+	-rm -f ./$(DEPDIR)/wmslitecgi.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

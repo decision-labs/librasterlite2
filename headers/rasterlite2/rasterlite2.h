@@ -213,12 +213,24 @@ extern "C"
 #define RL2_OUTPUT_FORMAT_UNKNOWN	0x70
 /** RasterLite2 constant: output format JPEG */
 #define RL2_OUTPUT_FORMAT_JPEG		0x71
-/** RasterLite2 constant: output format PNG */
+/** RasterLite2 constant: output format PNG TrueColor */
 #define RL2_OUTPUT_FORMAT_PNG		0x72
-/** RasterLite2 constant: output format TIFF */
-#define RL2_OUTPUT_FORMAT_TIFF		0x73
+/** RasterLite2 constant: output format PNG Palette 256 */
+#define RL2_OUTPUT_FORMAT_PNG_8		0x73
+/** RasterLite2 constant: output format TIFF TrueColor */
+#define RL2_OUTPUT_FORMAT_TIFF		0x74
+/** RasterLite2 constant: output format TIFF Palette 256 */
+#define RL2_OUTPUT_FORMAT_TIFF_8	0x75
+/** RasterLite2 constant: output format TIFF TrueColor */
+#define RL2_OUTPUT_FORMAT_GEOTIFF	0x76
+/** RasterLite2 constant: output format TIFF Palette 256 */
+#define RL2_OUTPUT_FORMAT_GEOTIFF_8	0x77
+/** RasterLite2 constant: output format GIF */
+#define RL2_OUTPUT_FORMAT_GIF		0x78
 /** RasterLite2 constant: output format PDF */
-#define RL2_OUTPUT_FORMAT_PDF		0x74
+#define RL2_OUTPUT_FORMAT_PDF		0x7a
+/** RasterLite2 constant: output format RGBA (raw pixel buffer) */
+#define RL2_OUTPUT_FORMAT_RGBA		0x7b
 
 /** RasterLite2 constant: contrast enhancement NONE */
 #define RL2_CONTRAST_ENHANCEMENT_NONE		0x90
@@ -796,6 +808,13 @@ extern "C"
  \return the version string.
  */
     RL2_DECLARE const char *rl2_openJPEG_version (void);
+
+/**
+ Return the current Leptonica version.
+
+ \return the version string.
+ */
+    RL2_DECLARE char *rl2_leptonica_version (void);
 
 #ifdef LOADABLE_EXTENSION
     RL2_DECLARE int
@@ -4112,7 +4131,9 @@ extern "C"
 				  rl2PixelPtr no_data, rl2PalettePtr palette,
 				  int strict_resolution, int mixed_resolutions,
 				  int section_paths, int section_md5,
-				  int section_summary, int is_queryable);
+				  int section_summary, int is_queryable,
+				  int is_opaque, double min_scale,
+				  double max_scale);
 
     RL2_DECLARE int
 	rl2_set_dbms_coverage_default_bands (sqlite3 * handle,
@@ -4139,6 +4160,19 @@ extern "C"
 	rl2_is_dbms_coverage_auto_ndvi_enabled (sqlite3 * handle,
 						const char *db_prefix,
 						const char *coverage);
+
+    RL2_DECLARE int
+	rl2_set_dbms_coverage_visibility_range (sqlite3 * handle,
+						const char *coverage,
+						double min_scale,
+						double max_scale);
+
+    RL2_DECLARE int
+	rl2_get_dbms_coverage_visibility_range (sqlite3 * handle,
+						const char *db_prefix,
+						const char *coverage,
+						double *min_scale,
+						double *max_scale);
 
     RL2_DECLARE int
 	rl2_delete_dbms_section (sqlite3 * handle, const char *coverage,
@@ -4790,6 +4824,28 @@ extern "C"
 	rl2_delete_all_pyramids (sqlite3 * handle, const char *coverage);
 
 /**
+ Exports a palette-based pixbuffer as an in-memory stored PNG image
+
+ \param width the PNG image width.
+ \param height the PNG image height.
+ \param pixels pointer to the pixbuffer.
+ \param plt pointer to the Palette
+ \param png on completion will point to the memory block storing the created PNG image.
+ \param png_size on completion the variable referenced by this
+ pointer will contain the size (in bytes) of the PNG image.
+ 
+ \return RL2_OK on success: RL2_ERROR on failure.
+ 
+ \sa rl2_rgb_alpha_to_png, rl2_rgb_to_jpeg, rl2_rgb_to_tiff, 
+ rl2_rgb_to_geotiff, rl2_rgba_to_pdf
+ */
+    RL2_DECLARE int
+	rl2_palette_pixbuf_to_png (unsigned int width, unsigned int height,
+				   const unsigned char *pixbuf,
+				   rl2PalettePtr plt, unsigned char **png,
+				   int *png_size);
+
+/**
  Exports an RGB buffer as an in-memory stored PNG image
 
  \param width the PNG image width.
@@ -4919,6 +4975,27 @@ extern "C"
 			    double maxx, double maxy, int srid,
 			    const unsigned char *rgb, unsigned char **geotiff,
 			    int *geotiff_size);
+
+/**
+ Exports a palette-based pixbuffer as an in-memory stored TIFF image
+
+ \param width the TIFF image width.
+ \param height the TIFF image height.
+ \param pixels pointer to the pixbuffer.
+ \param plt pointer to the Palette
+ \param tiff on completion will point to the memory block storing the created TIFF image.
+ \param tiff_size on completion the variable referenced by this
+ pointer will contain the size (in bytes) of the TIFF image.
+ 
+ \return RL2_OK on success: RL2_ERROR on failure.
+ 
+ \sa rl2_palette_pixbuf_to_png
+ */
+    RL2_DECLARE int
+	rl2_palette_pixbuf_to_tiff (unsigned int width, unsigned int height,
+				    const unsigned char *pixels,
+				    rl2PalettePtr plt, unsigned char **tiff,
+				    int *tiff_size);
 
 /**
  Exports a Grayscale buffer as an in-memory stored PNG image
@@ -6259,6 +6336,32 @@ extern "C"
 						    unsigned char **img,
 						    int *img_size);
 
+    RL2_DECLARE int rl2_raster_legend_graphic (sqlite3 * sqlite,
+					       const char *db_prefix,
+					       const char *cvg_name, int type,
+					       const char *style_name,
+					       int width, int height,
+					       const char *format,
+					       const char *font_name,
+					       double font_size,
+					       int font_italic, int font_bold,
+					       const char *font_color,
+					       unsigned char **img,
+					       int *img_size);
+
+    RL2_DECLARE int rl2_vector_legend_graphic (sqlite3 * sqlite,
+					       const char *db_prefix,
+					       const char *cvg_name, int type,
+					       const char *style_name,
+					       int width, int height,
+					       const char *format,
+					       const char *font_name,
+					       double font_size,
+					       int font_italic, int font_bold,
+					       const char *font_color,
+					       unsigned char **img,
+					       int *img_size);
+
     RL2_DECLARE rl2FeatureTypeStylePtr rl2_feature_type_style_from_xml (const
 									char
 									*name,
@@ -6282,6 +6385,11 @@ extern "C"
     RL2_DECLARE int rl2_serialize_map_config (rl2MapConfigPtr map_config_obj,
 					      unsigned char **blob,
 					      int *blob_sz);
+
+    RL2_DECLARE int rl2_quantize_color (int width, int height,
+					const unsigned char *rgb,
+					int num_colors, unsigned char **pixbuf,
+					rl2PalettePtr * palette);
 
 #ifdef _WIN32
     RL2_DECLARE FILE *rl2_win_fopen (const char *path, const char *mode);

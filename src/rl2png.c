@@ -1141,6 +1141,36 @@ rl2_gray_alpha_to_png (unsigned int width, unsigned int height,
     return RL2_OK;
 }
 
+RL2_DECLARE int
+rl2_palette_pixbuf_to_png (unsigned int width, unsigned int height,
+			   const unsigned char *pixbuf, rl2PalettePtr palette,
+			   unsigned char **png, int *png_size)
+{
+/* creating a PNG image from an palette-based pixbuffer */
+    unsigned char sample_type = RL2_SAMPLE_UINT8;
+    unsigned char *blob;
+    int blob_size;
+    rl2PrivPalettePtr plt = (rl2PrivPalettePtr) palette;
+    if (pixbuf == NULL)
+	return RL2_ERROR;
+    if (palette == NULL)
+	return RL2_ERROR;
+
+    if (plt->nEntries <= 2)
+	sample_type = RL2_SAMPLE_1_BIT;
+    else if (plt->nEntries <= 4)
+	sample_type = RL2_SAMPLE_2_BIT;
+    else if (plt->nEntries <= 16)
+	sample_type = RL2_SAMPLE_4_BIT;
+
+    if (compress_palette_png (pixbuf, width, height, palette, sample_type,
+			      &blob, &blob_size) != RL2_OK)
+	return RL2_ERROR;
+    *png = blob;
+    *png_size = blob_size;
+    return RL2_OK;
+}
+
 RL2_PRIVATE int
 rl2_data_to_png (const unsigned char *pixels, const unsigned char *mask,
 		 double opacity, rl2PalettePtr plt, unsigned int width,

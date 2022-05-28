@@ -1,5 +1,6 @@
 
-noinst_HEADERS = rasterlite2_private.h rl2svg_private.h
+noinst_HEADERS = rasterlite2_private.h rl2svg_private.h \
+	rl2paint_private.h
 nobase_include_HEADERS = rasterlite2/rasterlite2.h \
 	rasterlite2/rl2config.h \
 	rasterlite2/rl2config.h.in \

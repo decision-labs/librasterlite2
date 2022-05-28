@@ -45,8 +45,6 @@ the terms of any one of the MPL, the GPL or the LGPL.
 #include <stdio.h>
 #include <string.h>
 #include <float.h>
-#include <stdint.h>
-#include <inttypes.h>
 #include <limits.h>
 
 #ifdef _WIN32
@@ -706,13 +704,6 @@ do_aux_render_image_blob (struct aux_renderer *aux)
 
     if (aux->reproject_on_the_fly)
 	return do_aux_reproject_image_blob (aux);
-    /*
-       if (aux->mask != NULL)
-       {
-       free (aux->mask);
-       aux->mask = NULL;
-       }
-     */
 
     if (aux->base_width == aux->width && aux->base_height == aux->height)
       {
@@ -962,7 +953,9 @@ do_aux_render_image_blob (struct aux_renderer *aux)
 	  else
 	    {
 		/* RGB */
-		if (aux->transparent && aux->format_id == RL2_OUTPUT_FORMAT_PNG)
+		if ((aux->transparent
+		     && aux->format_id == RL2_OUTPUT_FORMAT_PNG)
+		    || (aux->format_id == RL2_OUTPUT_FORMAT_RGBA))
 		  {
 		      if (alpha == NULL)
 			  goto error;
@@ -4654,44 +4647,44 @@ rl2_draw_vector_feature (void *p_ctx, sqlite3 * handle, const void *priv_data,
 	  sym = default_symbolizer;
       }
 
-if (!mode_labels)
-{
-	/* we'll render all geometries */
-    if (geom->first_polygon != NULL)
-	draw_polygons (ctx, handle, sym, height, minx, miny, maxx, maxy,
-		       x_res, y_res, geom);
-    if (geom->first_linestring != NULL)
-	draw_lines (ctx, handle, sym, height, minx, miny, maxx, maxy, x_res,
-		    y_res, geom);
-    if (geom->first_point != NULL)
-	draw_points (ctx, handle, sym, height, minx, miny, maxx, maxy, x_res,
-		     y_res, geom);
-}
-else
-{
-	  /* we'll render any eventual TextSymbolizer */
-    if (sym != NULL)
+    if (!mode_labels)
       {
-	  item = sym->first;
-	  while (item != NULL)
+	  /* we'll render all geometries */
+	  if (geom->first_polygon != NULL)
+	      draw_polygons (ctx, handle, sym, height, minx, miny, maxx, maxy,
+			     x_res, y_res, geom);
+	  if (geom->first_linestring != NULL)
+	      draw_lines (ctx, handle, sym, height, minx, miny, maxx, maxy,
+			  x_res, y_res, geom);
+	  if (geom->first_point != NULL)
+	      draw_points (ctx, handle, sym, height, minx, miny, maxx, maxy,
+			   x_res, y_res, geom);
+      }
+    else
+      {
+	  /* we'll render any eventual TextSymbolizer */
+	  if (sym != NULL)
 	    {
-		if (item->symbolizer_type == RL2_TEXT_SYMBOLIZER
-		    && item->symbolizer != NULL)
+		item = sym->first;
+		while (item != NULL)
 		  {
-		      rl2PrivTextSymbolizerPtr text =
-			  (rl2PrivTextSymbolizerPtr) (item->symbolizer);
-		      if (text->label != NULL)
+		      if (item->symbolizer_type == RL2_TEXT_SYMBOLIZER
+			  && item->symbolizer != NULL)
 			{
-			    draw_labels (ctx, handle,
-					 priv_data, text, height,
-					 minx, miny, maxx, maxy,
-					 x_res, y_res, geom);
+			    rl2PrivTextSymbolizerPtr text =
+				(rl2PrivTextSymbolizerPtr) (item->symbolizer);
+			    if (text->label != NULL)
+			      {
+				  draw_labels (ctx, handle,
+					       priv_data, text, height,
+					       minx, miny, maxx, maxy,
+					       x_res, y_res, geom);
+			      }
 			}
+		      item = item->next;
 		  }
-		item = item->next;
 	    }
       }
-  }
 
     if (default_symbolizer != NULL)
 	rl2_destroy_vector_symbolizer (default_symbolizer);

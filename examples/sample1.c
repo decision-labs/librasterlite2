@@ -392,7 +392,10 @@ main (int argc, char *argv[])
 				  1,	/* enabling Section Paths recording */
 				  1,	/* enabling Section MD5 checksum */
 				  1,	/* enabling Section Summary */
-				  1	/* enabling IsQueryable */
+				  1,	/* enabling IsQueryable */
+				  1,	/* enabling IsOpaque */
+				  -1.0,	/* no MinScale (Visibility Range) */
+				  -1.0	/* no MaxScale (Visibility Range) */
 	) != RL2_OK)
 	return 0;
 

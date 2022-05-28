@@ -737,6 +737,20 @@ extern "C"
     RL2_DECLARE int is_wms_layer_queryable (rl2WmsLayerPtr handle);
 
 /**
+ Tests if some WMS-Layer object declares the Cascaded property
+
+ \param handle the pointer to a valid WMS-Layer returned by a previous call
+ to get_wms_catalog_layer().
+
+ \return the number of Cascading WMS servers: a negative number if 
+ undefined/unspecified or if isn't a valid WMS-Layer.
+ 
+ \sa get_wms_layer_name, get_wms_layer_title, get_wms_layer_abstract, 
+ is_wms_layer_transparent 
+ */
+    RL2_DECLARE int get_wms_layer_cascaded (rl2WmsLayerPtr handle);
+
+/**
  Return the total count of Styles supported by a WMS-Layer object
 
  \param handle the pointer to a valid WMS-Layer returned by a previous call

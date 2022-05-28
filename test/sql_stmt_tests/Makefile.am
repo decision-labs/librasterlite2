@@ -115,6 +115,9 @@ EXTRA_DIST = getmaxthreads1.testcase \
 	createcov_8_mband_webp1.testcase \
 	createcov_8_mband_webp2.testcase \
 	createcov_double_grid1.testcase \
+	createcov_double_grid2.testcase \
+	createcov_double_grid3.testcase \
+	createcov_double_grid4.testcase \
 	createcov_double_grid_deflate.testcase \
 	createcov_double_grid_deflateno.testcase \
 	createcov_double_grid_lzma.testcase \
@@ -138,6 +141,9 @@ EXTRA_DIST = getmaxthreads1.testcase \
 	createcov_err16.testcase \
 	createcov_err17.testcase \
 	createcov_err18.testcase \
+	createcov_err19.testcase \
+	createcov_err20.testcase \
+	createcov_err21.testcase \
 	createcov_float_grid1.testcase \
 	createcov_float_grid_deflate.testcase \
 	createcov_float_grid_deflateno.testcase \
@@ -497,6 +503,10 @@ EXTRA_DIST = getmaxthreads1.testcase \
 	exportsectraw8.testcase \
 	exportsectraw9.testcase \
 	exportsectraw10.testcase \
+	getcvgminscale1.testcase \
+	getcvgminscale2.testcase \
+	getcvgminscale3.testcase \
+	getcvgminscale4.testcase \
 	importraw1.testcase \
 	importraw2.testcase \
 	importraw3.testcase \
@@ -669,6 +679,20 @@ EXTRA_DIST = getmaxthreads1.testcase \
 	setcoverageinfos4.testcase \
 	setcoverageinfos5.testcase \
 	setcoverageinfos6.testcase \
+	setcoverageinfos7.testcase \
+	setcoverageinfos8.testcase \
+	setcoverageinfos9.testcase \
+	setcoverageinfos10.testcase \
+	setcvgvisrange1.testcase \
+	setcvgvisrange2.testcase \
+	setcvgvisrange3.testcase \
+	setcvgvisrange4.testcase \
+	setcvgvisrange5.testcase \
+	setcvgvisrange6.testcase \
+	setcvgvisrange8.testcase \
+	setcvgvisrange9.testcase \
+	setcvgvisrange10.testcase \
+	setcvgvisrange11.testcase \
 	setdefaultbands1.testcase \
 	setdefaultbands2.testcase \
 	setdefaultbands3.testcase \

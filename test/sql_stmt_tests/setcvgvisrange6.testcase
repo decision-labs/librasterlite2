@@ -1,0 +1,7 @@
+SetRasterCoverageVisibilityRange- BLOB MinScale
+:memory: #use in-memory database
+SELECT RL2_SetRasterCoverageVisibilityRange('coverage', zeroblob(4), NULL);
+1 # rows (not including the header row)
+1 # columns
+RL2_SetRasterCoverageVisibilityRange('coverage', zeroblob(4), NULL)
+-1

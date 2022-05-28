@@ -11,6 +11,7 @@ all: ./static_bin/rl2sniff.exe ./static_bin/rl2tool.exe \
 ./static_bin/rl2sniff.exe: ./tools/rl2sniff.o 
 	$(GG) ./tools/rl2sniff.o -o ./static_bin/rl2sniff.exe \
 	/mingw64/local/lib/librasterlite2.a \
+	/mingw64/local/lib/libleptonica.a \
 	/mingw64/local/lib/libspatialite.a \
 	/mingw64/local/lib/libminizip.a \
 	/mingw64/local/lib/libsqlite3.a \
@@ -31,8 +32,7 @@ all: ./static_bin/rl2sniff.exe ./static_bin/rl2tool.exe \
 	/mingw64/local/lib/libpng.a \
 	/mingw64/local/lib/libopenjp2.a \
 	/mingw64/local/lib/libcurl.a \
-	/mingw64/local/lib/libssl.a \
-	/mingw64/local/lib/libcrypto.a \
+	/mingw64/local/lib64/libssl.a /mingw64/local/lib64/libcrypto.a \
 	/mingw64/local/lib/libxml2.a \
 	/mingw64/local/lib/libexpat.a \
 	/mingw64/local/lib/liblz4.a \
@@ -40,12 +40,13 @@ all: ./static_bin/rl2sniff.exe ./static_bin/rl2tool.exe \
 	/mingw64/local/lib/liblzma.a \
 	/mingw64/local/lib/libz.a \
 	/mingw64/local/lib/libiconv.a \
-	-lm -lmsimg32 -lws2_32 -lgdi32 -lwldap32 -static-libstdc++ -static-libgcc
+	-lm -lmsimg32 -lws2_32 -lgdi32 -lwldap32 -lcrypt32 -static-libstdc++ -static-libgcc
 	strip --strip-all ./static_bin/rl2sniff.exe
 	
 ./static_bin/rl2tool.exe: ./tools/rl2tool.o 
 	$(GG) ./tools/rl2tool.o -o ./static_bin/rl2tool.exe \
 	/mingw64/local/lib/librasterlite2.a \
+	/mingw64/local/lib/libleptonica.a \
 	/mingw64/local/lib/libspatialite.a \
 	/mingw64/local/lib/libminizip.a \
 	/mingw64/local/lib/libsqlite3.a \
@@ -66,8 +67,7 @@ all: ./static_bin/rl2sniff.exe ./static_bin/rl2tool.exe \
 	/mingw64/local/lib/libpng.a \
 	/mingw64/local/lib/libopenjp2.a \
 	/mingw64/local/lib/libcurl.a \
-	/mingw64/local/lib/libssl.a \
-	/mingw64/local/lib/libcrypto.a \
+	/mingw64/local/lib64/libssl.a /mingw64/local/lib64/libcrypto.a \
 	/mingw64/local/lib/libxml2.a \
 	/mingw64/local/lib/libexpat.a \
 	/mingw64/local/lib/liblz4.a \
@@ -75,17 +75,21 @@ all: ./static_bin/rl2sniff.exe ./static_bin/rl2tool.exe \
 	/mingw64/local/lib/liblzma.a \
 	/mingw64/local/lib/libz.a \
 	/mingw64/local/lib/libiconv.a \
-	-lm -lmsimg32 -lws2_32 -lgdi32 -lwldap32 -static-libstdc++ -static-libgcc
+	-lm -lmsimg32 -lws2_32 -lgdi32 -lwldap32 -lcrypt32 -static-libstdc++ -static-libgcc
 	strip --strip-all ./static_bin/rl2tool.exe
 
-./static_bin/wmslite.exe: ./tools/wmslite.o 
-	$(GG) ./tools/wmslite.o -o ./static_bin/wmslite.exe \
+./static_bin/wmslite.exe:  ./tools/wmslite_capabilities.o ./tools/wmslite_config.o \
+		./tools/wmslite_sql.o ./tools/wmslite_common.o ./tools/wmslite_miniserver.o \
+		./tools/wmslitecgi.o
+	$(GG) ./tools/wmslite_capabilities.o ./tools/wmslite_config.o ./tools/wmslite_sql.o \
+		./tools/wmslite_common.o ./tools/wmslite_miniserver.o ./tools/wmslitecgi.o \
+		-o ./static_bin/wmslite.exe \
 	/mingw64/local/lib/librasterlite2.a \
+	/mingw64/local/lib/libleptonica.a \
 	/mingw64/local/lib/libspatialite.a \
 	/mingw64/local/lib/libminizip.a \
 	/mingw64/local/lib/libsqlite3.a \
 	/mingw64/local/lib/librttopo.a \
-	/mingw64/local/lib/libproj.a \
 	/mingw64/local/lib/libgeos_c.a \
 	/mingw64/local/lib/libgeos.a \
 	/mingw64/local/lib/libfreexl.a \
@@ -101,8 +105,8 @@ all: ./static_bin/rl2sniff.exe ./static_bin/rl2tool.exe \
 	/mingw64/local/lib/libpng.a \
 	/mingw64/local/lib/libopenjp2.a \
 	/mingw64/local/lib/libcurl.a \
-	/mingw64/local/lib/libssl.a \
-	/mingw64/local/lib/libcrypto.a \
+	/mingw64/local/lib/libproj.a \
+	/mingw64/local/lib64/libssl.a /mingw64/local/lib64/libcrypto.a \
 	/mingw64/local/lib/libxml2.a \
 	/mingw64/local/lib/libexpat.a \
 	/mingw64/local/lib/liblz4.a \
@@ -110,7 +114,8 @@ all: ./static_bin/rl2sniff.exe ./static_bin/rl2tool.exe \
 	/mingw64/local/lib/liblzma.a \
 	/mingw64/local/lib/libz.a \
 	/mingw64/local/lib/libiconv.a \
-	-lm -lmsimg32 -lws2_32 -lgdi32 -lwldap32 -static-libstdc++ -static-libgcc
+	/mingw64/local/lib/libfcgi.a \
+	-lm -lmsimg32 -lws2_32 -lgdi32 -lwldap32 -lcrypt32 -static-libstdc++ -static-libgcc
 	strip --strip-all ./static_bin/wmslite.exe
 
 ./tools/rl2sniff.o: 
@@ -119,5 +124,24 @@ all: ./static_bin/rl2sniff.exe ./static_bin/rl2tool.exe \
 ./tools/rl2tool.o: 
 	$(CC) $(CFLAGS) ./tools/rl2tool.c -c
 
-	./tools/wmslite.o:
+./tools/wmslite.o:
 	$(CC) $(CFLAGS) ./tools/wmslite.c -c
+	
+./tools/wmslite_capabilities.o:
+	$(CC) $(CFLAGS) ./tools/wmslite_capabilities.c -c
+	
+./tools/wmslite_config.o:
+	$(CC) $(CFLAGS) ./tools/wmslite_config.c -c
+	
+./tools/wmslite_sql.o:
+	$(CC) $(CFLAGS) ./tools/wmslite_sql.c -c
+	
+./tools/wmslite_common.o:
+	$(CC) $(CFLAGS) ./tools/wmslite_common.c -c
+	
+./tools/wmslite_miniserver.o:
+	$(CC) $(CFLAGS) ./tools/wmslite_miniserver.c -c
+	
+./tools/wmslitecgi.o:
+	$(CC) $(CFLAGS) ./tools/wmslitecgi.c -c
+

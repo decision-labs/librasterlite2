@@ -707,12 +707,18 @@ extern "C"
  */
     typedef struct rl2_map_config
     {
+/** Valid Configuration */
+	int valid;
 /** Configuration Name */
 	char *name;
 /** Title */
 	char *title;
 /** Abstract */
 	char *abstract;
+/** MinVisibilityScale */
+	double min_scale;
+/** MaxVisibilityScale */
+	double max_scale;
 /** Multithread rendering enabled */
 	int multithread_enabled;
 /** Number of concurrent threads */

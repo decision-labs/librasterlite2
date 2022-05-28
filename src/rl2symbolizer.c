@@ -46,8 +46,6 @@ the terms of any one of the MPL, the GPL or the LGPL.
 #include <string.h>
 #include <float.h>
 #include <limits.h>
-#include <stdint.h>
-#include <inttypes.h>
 
 #ifdef _WIN32
 #include <io.h>

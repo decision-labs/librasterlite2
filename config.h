@@ -126,7 +126,7 @@
 #define PACKAGE_NAME "librasterlite2"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "librasterlite2 1.1.0-beta2"
+#define PACKAGE_STRING "librasterlite2 2.0.0-devel"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "librasterlite2"
@@ -135,7 +135,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.1.0-beta2"
+#define PACKAGE_VERSION "2.0.0-devel"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1

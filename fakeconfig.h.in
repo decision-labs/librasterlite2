@@ -3,6 +3,9 @@
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
+/* Define to 1 if you have the <fcgi_stdio.h> header file. */
+#undef HAVE_FCGI_STDIO_H
+
 /* Define to 1 if you have the <float.h> header file. */
 #undef HAVE_FLOAT_H
 
@@ -23,6 +26,12 @@
 
 /* Define to 1 if you have the <jpeglib.h> header file. */
 #undef HAVE_JPEGLIB_H
+
+/* Define to 1 if you have the <leptonica/allheaders.h> header file. */
+#undef HAVE_LEPTONICA_ALLHEADERS_H
+
+/* Define to 1 if you have the `fcgi' library (-lfcgi). */
+#undef HAVE_LIBFCGI
 
 /* Define to 1 if you have the `geotiff' library (-lgeotiff). */
 #undef HAVE_LIBGEOTIFF
@@ -117,6 +126,9 @@
 
 /* Must be defined in order to disable debug mode. */
 #undef NDEBUG
+
+/* Should be defined in order to disable Leptonica support. */
+#undef OMIT_LEPTONICA
 
 /* Should be defined in order to disable LZ4 support. */
 #undef OMIT_LZ4

@@ -1,6 +1,6 @@
 /*
 
- rl2paint -- Cairco graphics functions
+ rl2paint -- Cairo graphics functions
 
  version 0.1, 2013 September 29
 
@@ -74,153 +74,130 @@ the terms of any one of the MPL, the GPL or the LGPL.
 #include <cairo/cairo-ft.h>
 #endif /* end Android conditionals */
 
-#define RL2_SURFACE_IMG 2671
-#define RL2_SURFACE_SVG 1267
-#define RL2_SURFACE_PDF	1276
+#include "rl2paint_private.h"
 
-struct rl2_graphics_pen
+struct aux_utf8_text
 {
-/* a struct wrapping a Cairo Pen */
-    int is_solid_color;
-    int is_linear_gradient;
-    int is_pattern;
-    double red;
-    double green;
-    double blue;
-    double alpha;
-    double x0;
-    double y0;
-    double x1;
-    double y1;
-    double red2;
-    double green2;
-    double blue2;
-    double alpha2;
-    cairo_pattern_t *pattern;
-    double width;
-    double *dash_array;
-    int dash_count;
-    double dash_offset;
-    int line_cap;
-    int line_join;
+/* an internal struct wrapping UTF8 text strings */
+    char *buf;
+    char **chars;
+    int n_bytes;
+    int n_chars;
+    int is_reverse;
 };
 
-struct rl2_graphics_brush
+static struct aux_utf8_text *
+create_aux_utf8_text (const char *text)
 {
-/* a struct wrapping a Cairo Brush */
-    int is_solid_color;
-    int is_linear_gradient;
-    int is_pattern;
-    double red;
-    double green;
-    double blue;
-    double alpha;
-    double x0;
-    double y0;
-    double x1;
-    double y1;
-    double red2;
-    double green2;
-    double blue2;
-    double alpha2;
-    cairo_pattern_t *pattern;
-};
+/* creating and initializing an internal UTF8 text string */
+    struct aux_utf8_text *ptr;
+    int len;
+    int i;
+    const char *c = text;
 
-typedef struct rl2_graphics_context
-{
-/* a Cairo based painting context */
-    int type;
-    cairo_surface_t *surface;
-    cairo_surface_t *clip_surface;
-    cairo_t *cairo;
-    cairo_t *clip_cairo;
-    struct rl2_graphics_pen current_pen;
-    struct rl2_graphics_brush current_brush;
-    double font_red;
-    double font_green;
-    double font_blue;
-    double font_alpha;
-    int with_font_halo;
-    double halo_radius;
-    double halo_red;
-    double halo_green;
-    double halo_blue;
-    double halo_alpha;
-    struct rl2_advanced_labeling *labeling;
-} RL2GraphContext;
-typedef RL2GraphContext *RL2GraphContextPtr;
+    if (text == 0)
+	return NULL;
+    len = strlen (text);
+    if (len == 0)
+	return NULL;
 
-typedef struct rl2_priv_graphics_pattern
-{
-/* a Cairo based pattern */
-    int width;
-    int height;
-    unsigned char *rgba;
-    cairo_surface_t *bitmap;
-    cairo_pattern_t *pattern;
-} RL2PrivGraphPattern;
-typedef RL2PrivGraphPattern *RL2PrivGraphPatternPtr;
+/* initializing an empty struct */
+    ptr = malloc (sizeof (struct aux_utf8_text));
+    ptr->buf = malloc (len * 5);
+    ptr->chars = malloc (sizeof (char *) * len);
+    ptr->n_bytes = len;
+    ptr->n_chars = 0;
+    ptr->is_reverse = 0;
+    for (i = 0; i < ptr->n_bytes; i++)
+      {
+	  *(ptr->chars + i) = ptr->buf + (i * 5);
+	  memset (ptr->buf + (i * 5), '\0', 5);
+      }
 
-typedef struct rl2_graphics_font
-{
-/* a struct wrapping a Cairo/FreeType Font */
-    int toy_font;
-    char *facename;
-    cairo_font_face_t *cairo_font;
-    cairo_scaled_font_t *cairo_scaled_font;
-    struct rl2_private_tt_font *tt_font;
-    double size;
-    double font_red;
-    double font_green;
-    double font_blue;
-    double font_alpha;
-    int with_halo;
-    double halo_radius;
-    double halo_red;
-    double halo_green;
-    double halo_blue;
-    double halo_alpha;
-    int style;
-    int weight;
-} RL2GraphFont;
-typedef RL2GraphFont *RL2GraphFontPtr;
+    i = 0;
+    while (*c != '\0')
+      {
+	  /* extracting UTF8 chars */
+	  unsigned char byte = *c;
+	  char *utf8char = *(ptr->chars + i);
+	  int incr;
+	  if ((byte | 0x7f) == 0x7f)
+	    {
+		/* found a single byte UTF8 char */
+		*utf8char = *c;
+		incr = 1;
+	    }
+	  else if ((byte & 0xc0) == 0xc0)
+	    {
+		/* found a two bytes UTF9 char */
+		memcpy (utf8char, c, 2);
+		incr = 2;
+	    }
+	  else if ((byte & 0xe0) == 0xe0)
+	    {
+		/* found a three bytes UTF8 char */
+		memcpy (utf8char, c, 3);
+		incr = 3;
+	    }
+	  else if ((byte & 0xf0) == 0xf0)
+	    {
+		/* found a four bytes UTF8 char */
+		memcpy (utf8char, c, 4);
+		incr = 4;
+	    }
+	  else
+	    {
+		/* invalid UTF8 char */
+		*utf8char = '?';
+		incr = 1;
+	    }
+	  ptr->n_chars += 1;
+	  i++;
+	  c += incr;
+      }
 
-typedef struct rl2_graphics_bitmap
-{
-/* a Cairo based symbol bitmap */
-    int width;
-    int height;
-    unsigned char *rgba;
-    cairo_surface_t *bitmap;
-    cairo_pattern_t *pattern;
-} RL2GraphBitmap;
-typedef RL2GraphBitmap *RL2GraphBitmapPtr;
+    return ptr;
+}
 
-typedef struct rl2_priv_affine_transform_data
+void
+destroy_aux_utf8_text (struct aux_utf8_text *ptr)
 {
-    double xx;
-    double xy;
-    double yx;
-    double yy;
-    double x_off;
-    double y_off;
-    int orig_ok;
-    int orig_width;
-    int orig_height;
-    double orig_minx;
-    double orig_miny;
-    double orig_x_res;
-    double orig_y_res;
-    int dest_ok;
-    int dest_width;
-    int dest_height;
-    double dest_minx;
-    double dest_miny;
-    double dest_x_res;
-    double dest_y_res;
-    int max_threads;
-} rl2PrivAffineTransformData;
-typedef rl2PrivAffineTransformData *rl2PrivAffineTransformDataPtr;
+/* memory cleanup: freeing an internal UTF8 text string */
+    if (ptr == NULL)
+	return;
+    if (ptr->buf != NULL)
+	free (ptr->buf);
+    if (ptr->chars != NULL)
+	free (ptr->chars);
+    free (ptr);
+}
+
+static void
+reverse_aux_utf8_text (struct aux_utf8_text *ptr)
+{
+/* inverting the order of chars for an internal UTF8 text string */
+    int i;
+    char *buf;
+    if (ptr == NULL)
+	return;
+
+    buf = malloc (ptr->n_chars * 5);
+    for (i = 0; i < ptr->n_chars; i++)
+      {
+	  int ir = ptr->n_chars - (i + 1);
+	  char *in = *(ptr->chars + i);
+	  char *out = buf + (ir * 5);
+	  memcpy (out, in, 5);
+      }
+    for (i = 0; i < ptr->n_chars; i++)
+      {
+	  char *in = buf + (i * 5);
+	  char *out = *(ptr->chars + i);
+	  memcpy (out, in, 5);
+      }
+    ptr->is_reverse = 1;
+    free (buf);
+}
 
 static unsigned char
 unpremultiply (unsigned char c, unsigned char a)
@@ -333,7 +310,7 @@ rl2_graph_create_context (const void *priv_data, int width, int height)
     return NULL;
 }
 
-static int
+RL2_PRIVATE int
 rl2cr_endian_arch ()
 {
 /* checking if target CPU is a little-endian one */
@@ -461,7 +438,7 @@ destroy_svg_context (RL2GraphContextPtr ctx)
 static void
 destroy_pdf_context (RL2GraphContextPtr ctx)
 {
-/* freeing an PDF Graphics Context */
+/* freeing a PDF Graphics Context */
     if (ctx == NULL)
 	return;
     cairo_surface_finish (ctx->clip_surface);
@@ -3006,6 +2983,16 @@ rl2_pre_check_collision (const void *context, double xl,
     return 0;
 }
 
+static double
+do_estimate_char_radius (double font_width, double font_height)
+{
+/* estimating the mean size of a character */
+    double factor = 3.0;	/* heuristic values for scale adjusting */
+    double radius = sqrt ((font_width * font_width) +
+			  (font_height * font_height)) / factor;
+    return radius;
+}
+
 RL2_PRIVATE void
 rl2_estimate_text_length (void *context, const char *text, double *length,
 			  double *extra)
@@ -3033,9 +3020,7 @@ rl2_estimate_text_length (void *context, const char *text, double *length,
     while (*p++ != '\0')
 	count++;
     cairo_font_extents (cairo, &extents);
-    radius =
-	sqrt ((extents.max_x_advance * extents.max_x_advance) +
-	      (extents.height * extents.height)) / 2.0;
+    radius = do_estimate_char_radius (extents.max_x_advance, extents.height);
     *length = radius * count;
     *extra = radius;
 }
@@ -3068,9 +3053,7 @@ rl2_estimate_text_length_height (void *context, const char *text,
     while (*p++ != '\0')
 	count++;
     cairo_font_extents (cairo, &extents);
-    radius =
-	sqrt ((extents.max_x_advance * extents.max_x_advance) +
-	      (extents.height * extents.height)) / 2.0;
+    radius = do_estimate_char_radius (extents.max_x_advance, extents.height);
     *length = radius * count;
     *extra = radius;
     *height = extents.height;
@@ -3089,9 +3072,7 @@ do_estimate_text_length (cairo_t * cairo, const char *text, double *length,
     while (*p++ != '\0')
 	count++;
     cairo_font_extents (cairo, &extents);
-    radius =
-	sqrt ((extents.max_x_advance * extents.max_x_advance) +
-	      (extents.height * extents.height)) / 2.0;
+    radius = do_estimate_char_radius (extents.max_x_advance, extents.height);
     *length = radius * count;
     *extra = radius;
 }
@@ -3366,21 +3347,6 @@ check_reverse (sqlite3 * sqlite, rl2GeometryPtr geom, double text_length)
     return 0;
 }
 
-static void
-reverse_text (const char *in, char *dest, int len)
-{
-/* reversing a text string */
-    char *out;
-    int n = 1;
-    while (*in != '\0')
-      {
-	  out = dest + len - n;
-	  *out = *in++;
-	  n++;
-      }
-    *(dest + len) = '\0';
-}
-
 static rl2GeometryPtr
 rl2_draw_wrapped_label (sqlite3 * handle, rl2GraphicsContextPtr context,
 			cairo_t * cairo, const char *text, rl2GeometryPtr geom)
@@ -3394,30 +3360,101 @@ rl2_draw_wrapped_label (sqlite3 * handle, rl2GraphicsContextPtr context,
     double m;
     double rads;
     double angle;
-    char buf[2];
+    int i;
     rl2GeometryPtr g2;
-    rl2GeometryPtr g = rl2_clone_curve (geom);
+    rl2GeometryPtr g;
     rl2GeometryPtr circle;
-    char *rev_text = NULL;
-    const char *c = text;
     cairo_font_extents_t extents;
+    struct aux_utf8_text *utf8;
+    int collision = 0;
+    RL2GraphContextPtr ctx = (RL2GraphContextPtr) context;
+    int anti_collision = 0;
+    if (ctx == NULL)
+	return NULL;
+    if (ctx->labeling == NULL)
+	return NULL;
+    anti_collision = ctx->labeling->no_colliding_labels;
+
+    if (text == NULL)
+	return NULL;
+    if (strlen (text) == 0)
+	return NULL;
+    if (geom == NULL)
+	return NULL;
+    g = rl2_clone_curve (geom);
+    if (g == NULL)
+	return NULL;
+    utf8 = create_aux_utf8_text (text);
 
     cairo_font_extents (cairo, &extents);
-    radius =
-	sqrt ((extents.max_x_advance * extents.max_x_advance) +
-	      (extents.height * extents.height)) / 2.0;
+    radius = do_estimate_char_radius (extents.max_x_advance, extents.height);
+
     if (check_reverse (handle, g, radius * strlen (text)))
       {
 	  /* reverse text */
-	  int len = strlen (text);
-	  rev_text = malloc (len + 1);
-	  reverse_text (text, rev_text, len);
-	  c = rev_text;
+	  reverse_aux_utf8_text (utf8);
       }
-    while (*c != '\0' && g != NULL)
+
+    if (anti_collision)
       {
-	  buf[0] = *c;
-	  buf[1] = '\0';
+	  /* pre-checking for eventual collisions */
+	  int ret;
+	  rl2GeometryPtr auxg = rl2_clone_curve (geom);
+	  if (auxg == NULL)
+	      goto end_collision;
+	  for (i = 0; i < utf8->n_chars; i++)
+	    {
+		/* testing all characters one at each time */
+		if (auxg == NULL)
+		    break;
+		get_aux_start_point (auxg, &x0, &y0);
+		circle = rl2_build_circle (x0, y0, radius);
+		if (!get_aux_interception_point
+		    (handle, auxg, circle, &x1, &y1))
+		  {
+		      rl2_destroy_geometry (circle);
+		      rl2_destroy_geometry (auxg);
+		      auxg = NULL;
+		      break;
+		  }
+		m = (y1 - y0) / (x1 - x0);
+		rads = atan (m);
+		angle = rads / .0174532925199432958;
+		if (x1 < x0 && utf8->is_reverse == 0)
+		    angle += 180.0;
+		ret =
+		    rl2_pre_check_collision (context, x0, y0,
+					     *(utf8->chars + i), 0.0, 0.0, NULL,
+					     angle, 0.5, 0.5);
+		g2 = aux_reduce_curve (handle, auxg, circle, x0, y0);
+		rl2_destroy_geometry (circle);
+		rl2_destroy_geometry (auxg);
+		auxg = g2;
+		if (!ret)
+		  {
+		      /* at least a character collides */
+		      collision = 1;
+		      break;
+		  }
+	    }
+	end_collision:
+	  if (auxg != NULL)
+	      rl2_destroy_geometry (auxg);
+      }
+    if (collision)
+      {
+	  /* a collision was detected: quitting */
+	  destroy_aux_utf8_text (utf8);
+	  if (g != NULL)
+	      rl2_destroy_geometry (g);
+	  return NULL;
+      }
+
+    for (i = 0; i < utf8->n_chars; i++)
+      {
+	  /* actually drawing the warped label */
+	  if (g == NULL)
+	      break;
 	  get_aux_start_point (g, &x0, &y0);
 	  circle = rl2_build_circle (x0, y0, radius);
 	  if (!get_aux_interception_point (handle, g, circle, &x1, &y1))
@@ -3430,17 +3467,16 @@ rl2_draw_wrapped_label (sqlite3 * handle, rl2GraphicsContextPtr context,
 	  m = (y1 - y0) / (x1 - x0);
 	  rads = atan (m);
 	  angle = rads / .0174532925199432958;
-	  if (x1 < x0 && rev_text == NULL)
+	  if (x1 < x0 && utf8->is_reverse == 0)
 	      angle += 180.0;
-	  rl2_graph_draw_text (context, buf, x0, y0, angle, 0.5, 0.5);
-	  c++;
+	  rl2_graph_draw_prechecked_text (context, *(utf8->chars + i), x0, y0,
+					  angle, 0.5, 0.5);
 	  g2 = aux_reduce_curve (handle, g, circle, x0, y0);
 	  rl2_destroy_geometry (circle);
 	  rl2_destroy_geometry (g);
 	  g = g2;
       }
-    if (rev_text)
-	free (rev_text);
+    destroy_aux_utf8_text (utf8);
     return g;
 }
 
@@ -4545,7 +4581,7 @@ rl2_graph_draw_mark_symbol (rl2GraphicsContextPtr context, int mark_type,
 	  break;
       };
 
-/* fillingt and stroking the path */
+/* filling and stroking the path */
     if (fill && !stroke)
 	rl2_graph_fill_path (ctx, RL2_CLEAR_PATH);
     else if (stroke && !fill)
@@ -4582,6 +4618,62 @@ rl2_graph_merge (rl2GraphicsContextPtr context_out,
     cairo_set_source_surface (ctx_out->cairo, ctx_in->surface, 0, 0);
     cairo_paint (ctx_out->cairo);
     return RL2_OK;
+}
+
+RL2_DECLARE unsigned char *
+rl2_graph_get_context_rgba_array (rl2GraphicsContextPtr context)
+{
+/* creating an RGBA buffer from the given Context */
+    int width;
+    int height;
+    int x;
+    int y;
+    unsigned char *p_in;
+    unsigned char *p_out;
+    unsigned char *rgba;
+    int little_endian = rl2cr_endian_arch ();
+    RL2GraphContextPtr ctx = (RL2GraphContextPtr) context;
+
+    if (ctx == NULL)
+	return NULL;
+
+    width = cairo_image_surface_get_width (ctx->surface);
+    height = cairo_image_surface_get_height (ctx->surface);
+    rgba = malloc (width * height * 4);
+    if (rgba == NULL)
+	return NULL;
+
+    p_in = cairo_image_surface_get_data (ctx->surface);
+    p_out = rgba;
+    for (y = 0; y < height; y++)
+      {
+	  for (x = 0; x < width; x++)
+	    {
+		unsigned char r;
+		unsigned char g;
+		unsigned char b;
+		unsigned char a;
+		if (little_endian)
+		  {
+		      b = *p_in++;
+		      g = *p_in++;
+		      r = *p_in++;
+		      a = *p_in++;
+		  }
+		else
+		  {
+		      a = *p_in++;
+		      r = *p_in++;
+		      g = *p_in++;
+		      b = *p_in++;
+		  }
+		*p_out++ = r;
+		*p_out++ = g;
+		*p_out++ = b;
+		*p_out++ = a;
+	    }
+      }
+    return rgba;
 }
 
 RL2_DECLARE unsigned char *
@@ -5634,7 +5726,7 @@ rl2_copy_wms_tile (rl2GraphicsContextPtr out, rl2GraphicsContextPtr in,
 
     if (ctx_out == NULL || ctx_in == NULL)
 	return RL2_ERROR;
-	
+
     cairo_save (ctx_out->cairo);
     cairo_translate (ctx_out->cairo, base_x, base_y);
     cairo_set_source_surface (ctx_out->cairo, ctx_in->surface, 0, 0);

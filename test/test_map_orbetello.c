@@ -76,6 +76,27 @@ execute_with_retval (sqlite3 * sqlite, const char *sql)
     return retcode;
 }
 
+static double
+execute_with_dbl_retval (sqlite3 * sqlite, const char *sql)
+{
+/* executing an SQL statement then returning a DOUBLE result */
+    sqlite3_stmt *stmt;
+    int ret;
+    double retval = -1.0;
+
+    ret = sqlite3_prepare_v2 (sqlite, sql, strlen (sql), &stmt, NULL);
+    if (ret != SQLITE_OK)
+	return SQLITE_ERROR;
+    ret = sqlite3_step (stmt);
+    if (ret == SQLITE_DONE || ret == SQLITE_ROW)
+      {
+	  if (sqlite3_column_type (stmt, 0) == SQLITE_FLOAT)
+	      retval = sqlite3_column_double (stmt, 0);
+      }
+    sqlite3_finalize (stmt);
+    return retval;
+}
+
 static int
 execute_check (sqlite3 * sqlite, const char *sql)
 {
@@ -2265,6 +2286,7 @@ drop_coverage (sqlite3 * sqlite, unsigned char compression, int tile_sz,
 {
 /* dropping some DBMS Coverage */
     int ret;
+    double dblval;
     char *err_msg = NULL;
     const char *coverage = NULL;
     char *sql;
@@ -2327,10 +2349,132 @@ drop_coverage (sqlite3 * sqlite, unsigned char compression, int tile_sz,
     sqlite3_free (sql);
     if (ret != SQLITE_OK)
       {
-	  fprintf (stderr, "SetRasterCoverageInfos #1 \"%s\" error: %s\n",
+	  fprintf (stderr, "SetRasterCoverageInfos #2 \"%s\" error: %s\n",
 		   coverage, err_msg);
 	  sqlite3_free (err_msg);
 	  *retcode += -2;
+	  return 0;
+      }
+
+/* setting a Title, Abstract, and IsOpaque for this DBMS Coverage */
+    sql =
+	sqlite3_mprintf ("SELECT RL2_SetRasterCoverageInfos(%Q, %Q, %Q, -1, 1)",
+			 coverage, "this is an other tile",
+			 "this is an other abstact");
+    ret = execute_check (sqlite, sql);
+    sqlite3_free (sql);
+    if (ret != SQLITE_OK)
+      {
+	  fprintf (stderr, "SetRasterCoverageInfos #3 \"%s\" error: %s\n",
+		   coverage, err_msg);
+	  sqlite3_free (err_msg);
+	  *retcode += -3;
+	  return 0;
+      }
+
+/* setting a Title, Abstract, IsQueryable and IsOpaque for this DBMS Coverage */
+    sql =
+	sqlite3_mprintf ("SELECT RL2_SetRasterCoverageInfos(%Q, %Q, %Q, 1, 1)",
+			 coverage, "this is an other tile",
+			 "this is an other abstact");
+    ret = execute_check (sqlite, sql);
+    sqlite3_free (sql);
+    if (ret != SQLITE_OK)
+      {
+	  fprintf (stderr, "SetRasterCoverageInfos #4 \"%s\" error: %s\n",
+		   coverage, err_msg);
+	  sqlite3_free (err_msg);
+	  *retcode += -4;
+	  return 0;
+      }
+
+/* setting a Visibility Range for this DBMS Coverage */
+    sql =
+	sqlite3_mprintf
+	("SELECT RL2_SetRasterCoverageVisibilityRange(%Q, 1000.0, NULL)",
+	 coverage);
+    ret = execute_check (sqlite, sql);
+    sqlite3_free (sql);
+    if (ret != SQLITE_OK)
+      {
+	  fprintf (stderr,
+		   "SetRasterCoverageVisibilityRange #1 \"%s\" error: %s\n",
+		   coverage, err_msg);
+	  sqlite3_free (err_msg);
+	  *retcode += -5;
+	  return 0;
+      }
+/* checking MinScaleDenominator */
+    sql =
+	sqlite3_mprintf
+	("SELECT RL2_GetRasterCoverageMinScaleDenominator(NULL, %Q)", coverage);
+    dblval = execute_with_dbl_retval (sqlite, sql);
+    sqlite3_free (sql);
+    if (dblval != 1000.0)
+      {
+	  fprintf (stderr,
+		   "GetRasterCoverageMinScaleDenominator #1 \"%s\" unexpected value: %1.2f (was %1.2f)\n",
+		   coverage, dblval, 1000.0);
+	  *retcode += -6;
+	  return 0;
+      }
+/* checking MaxScaleDenominator */
+    sql =
+	sqlite3_mprintf
+	("SELECT RL2_GetRasterCoverageMaxScaleDenominator(NULL, %Q)", coverage);
+    dblval = execute_with_dbl_retval (sqlite, sql);
+    sqlite3_free (sql);
+    if (dblval != -1.0)
+      {
+	  fprintf (stderr,
+		   "GetRasterCoverageMaxScaleDenominator #1 \"%s\" unexpected value: %1.2f (was %1.2f)\n",
+		   coverage, dblval, -1.0);
+	  *retcode += -7;
+	  return 0;
+      }
+
+/* setting another Visibility Range for this DBMS Coverage */
+    sql =
+	sqlite3_mprintf
+	("SELECT RL2_SetRasterCoverageVisibilityRange(%Q, NULL, 1000000.0)",
+	 coverage);
+    ret = execute_check (sqlite, sql);
+    sqlite3_free (sql);
+    if (ret != SQLITE_OK)
+      {
+	  fprintf (stderr,
+		   "SetRasterCoverageVisibilityRange #2 \"%s\" error: %s\n",
+		   coverage, err_msg);
+	  sqlite3_free (err_msg);
+	  *retcode += -8;
+	  return 0;
+      }
+/* checking MinScaleDenominator */
+    sql =
+	sqlite3_mprintf
+	("SELECT RL2_GetRasterCoverageMinScaleDenominator(NULL, %Q)", coverage);
+    dblval = execute_with_dbl_retval (sqlite, sql);
+    sqlite3_free (sql);
+    if (dblval != -1.0)
+      {
+	  fprintf (stderr,
+		   "GetRasterCoverageMinScaleDenominator #2 \"%s\" unexpected value: %1.2f (was %1.2f)\n",
+		   coverage, dblval, -1.0);
+	  *retcode += -9;
+	  return 0;
+      }
+/* checking MaxScaleDenominator */
+    sql =
+	sqlite3_mprintf
+	("SELECT RL2_GetRasterCoverageMaxScaleDenominator(NULL, %Q)", coverage);
+    dblval = execute_with_dbl_retval (sqlite, sql);
+    sqlite3_free (sql);
+    if (dblval != 1000000.0)
+      {
+	  fprintf (stderr,
+		   "GetRasterCoverageMaxScaleDenominator #2 \"%s\" unexpected value: %1.2f (was %1.2f)\n",
+		   coverage, dblval, 1000000.0);
+	  *retcode += -10;
 	  return 0;
       }
 
@@ -2345,7 +2489,7 @@ drop_coverage (sqlite3 * sqlite, unsigned char compression, int tile_sz,
 	  fprintf (stderr, "SetRasterCoverageCopyright #1 \"%s\" error: %s\n",
 		   coverage, err_msg);
 	  sqlite3_free (err_msg);
-	  *retcode += -3;
+	  *retcode += -11;
 	  return 0;
       }
 
@@ -2360,7 +2504,7 @@ drop_coverage (sqlite3 * sqlite, unsigned char compression, int tile_sz,
 	  fprintf (stderr, "SetRasterCoverageCopyright #2 \"%s\" error: %s\n",
 		   coverage, err_msg);
 	  sqlite3_free (err_msg);
-	  *retcode += -4;
+	  *retcode += -12;
 	  return 0;
       }
 
@@ -2375,7 +2519,7 @@ drop_coverage (sqlite3 * sqlite, unsigned char compression, int tile_sz,
 	  fprintf (stderr, "SetRasterCoverageCopyright #3 \"%s\" error: %s\n",
 		   coverage, err_msg);
 	  sqlite3_free (err_msg);
-	  *retcode += -5;
+	  *retcode += -13;
 	  return 0;
       }
 
@@ -2388,7 +2532,7 @@ drop_coverage (sqlite3 * sqlite, unsigned char compression, int tile_sz,
 	  fprintf (stderr, "DropRasterCoverage \"%s\" error: %s\n", coverage,
 		   err_msg);
 	  sqlite3_free (err_msg);
-	  *retcode += -6;
+	  *retcode += -14;
 	  return 0;
       }
 

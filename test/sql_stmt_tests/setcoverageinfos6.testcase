@@ -1,4 +1,4 @@
-SetRasterCoverageInfos - not existing coverage - long format
+SetRasterCoverageInfos - not existing coverage - IsQueryable
 :memory: #use in-memory database
 SELECT RL2_SetRasterCoverageInfos('coverage', 'title', 'abstract', 1);
 1 # rows (not including the header row)

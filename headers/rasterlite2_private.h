@@ -41,6 +41,8 @@ the terms of any one of the MPL, the GPL or the LGPL.
  
 */
 
+#include <stdint.h>
+
 /**
  \file rasterlite2_private.h
 
@@ -278,6 +280,15 @@ extern "C"
 #define MAP_CONFIG_START	0xe5;
 #define MAP_CONFIG_END		0x5e;
 #define MAP_CONFIG_OPTIONS	0x42;
+
+/* Geometry classes for Legend Graphic */
+#define RL2_GEOM_UNKNOWN	0
+#define RL2_GEOM_POINT		1
+#define RL2_GEOM_LINESTRING	2
+#define RL2_GEOM_POLYGON	3
+#define RL2_GEOM_COLLECTION	4
+#define RL2_GEOM_TOPOLOGY	5
+#define RL2_GEOM_NETWORK	6
 
     struct Control_Points
     {
@@ -524,17 +535,17 @@ extern "C"
 	int isGeoTiff;
 	TIFF *in;
 	int isTiled;
-	uint32 width;
-	uint32 height;
-	uint32 tileWidth;
-	uint32 tileHeight;
-	uint32 rowsPerStrip;
-	uint16 bitsPerSample;
-	uint16 samplesPerPixel;
-	uint16 photometric;
-	uint16 compression;
-	uint16 sampleFormat;
-	uint16 planarConfig;
+	uint32_t width;
+	uint32_t height;
+	uint32_t tileWidth;
+	uint32_t tileHeight;
+	uint32_t rowsPerStrip;
+	uint16_t bitsPerSample;
+	uint16_t samplesPerPixel;
+	uint16_t photometric;
+	uint16_t compression;
+	uint16_t sampleFormat;
+	uint16_t planarConfig;
 	unsigned short maxPalette;
 	unsigned char *red;
 	unsigned char *green;
@@ -568,17 +579,17 @@ extern "C"
 	TIFF *out;
 	GTIF *gtif;
 	void *tiffBuffer;
-	uint32 width;
-	uint32 height;
+	uint32_t width;
+	uint32_t height;
 	int isTiled;
-	uint32 tileWidth;
-	uint32 tileHeight;
-	uint32 rowsPerStrip;
-	uint16 bitsPerSample;
-	uint16 samplesPerPixel;
-	uint16 photometric;
-	uint16 compression;
-	uint16 sampleFormat;
+	uint32_t tileWidth;
+	uint32_t tileHeight;
+	uint32_t rowsPerStrip;
+	uint16_t bitsPerSample;
+	uint16_t samplesPerPixel;
+	uint16_t photometric;
+	uint16_t compression;
+	uint16_t sampleFormat;
 	unsigned short maxPalette;
 	unsigned char *red;
 	unsigned char *green;
@@ -1047,6 +1058,34 @@ extern "C"
 	struct rl2_priv_child_style *next;
     } rl2PrivChildStyle;
     typedef rl2PrivChildStyle *rl2PrivChildStylePtr;
+
+    typedef struct rl2_priv_line_style_ref
+    {
+	rl2PrivLineSymbolizerPtr style;
+	struct rl2_priv_line_style_ref *next;
+    } rl2PrivLineStyleRef;
+    typedef rl2PrivLineStyleRef *rl2PrivLineStyleRefPtr;
+
+    typedef struct rl2_priv_multi_line_style
+    {
+	rl2PrivLineStyleRefPtr first;
+	rl2PrivLineStyleRefPtr last;
+    } rl2PrivMultiLineStyle;
+    typedef rl2PrivMultiLineStyle *rl2PrivMultiLineStylePtr;
+
+    typedef struct rl2_priv_polyg_style_ref
+    {
+	rl2PrivPolygonSymbolizerPtr style;
+	struct rl2_priv_polyg_style_ref *next;
+    } rl2PrivPolygStyleRef;
+    typedef rl2PrivPolygStyleRef *rl2PrivPolygStyleRefPtr;
+
+    typedef struct rl2_priv_multi_polyg_style
+    {
+	rl2PrivPolygStyleRefPtr first;
+	rl2PrivPolygStyleRefPtr last;
+    } rl2PrivMultiPolygStyle;
+    typedef rl2PrivMultiPolygStyle *rl2PrivMultiPolygStylePtr;
 
     typedef struct wms_retry_item
     {
@@ -1643,7 +1682,7 @@ extern "C"
     {
 	void *opaque_thread_id;
 	char layer_type;
-	sqlite3 * sqlite;
+	sqlite3 *sqlite;
 	const void *data;
 	rl2PrivMapLayerPtr aux_lyr;
 	rl2PrivMapConfigAuxPtr aux;
@@ -1678,6 +1717,28 @@ extern "C"
 	int finished;
     } rl2TiledWms;
     typedef rl2TiledWms *rl2TiledWmsPtr;
+
+    typedef struct rl2_legend_graphic
+    {
+	const char *layer_name;
+	const char *style_name;
+	rl2CoverageStylePtr cvg_stl;
+	rl2FeatureTypeStylePtr lyr_stl;
+	int raster_type;
+	int vector_type;
+	int width;
+	int height;
+	const char *font_name;
+	double font_size;
+	int font_italic;
+	int font_bold;
+	unsigned char font_red;
+	unsigned char font_green;
+	unsigned char font_blue;
+	int LegendWidth;
+	int LegendHeight;
+    } rl2LegendGraphic;
+    typedef rl2LegendGraphic *rl2LegendGraphicPtr;
 
     RL2_PRIVATE int
 	rl2_blob_from_file (const char *path, unsigned char **blob,
@@ -2533,7 +2594,8 @@ extern "C"
     RL2_PRIVATE int set_coverage_infos (sqlite3 * handle,
 					const char *coverage_name,
 					const char *title,
-					const char *abstract, int is_queryable);
+					const char *abstract, int is_queryable,
+					int is_opaque);
 
     RL2_PRIVATE int set_coverage_copyright (sqlite3 * handle,
 					    const char
@@ -2710,8 +2772,9 @@ extern "C"
 
     RL2_PRIVATE void rl2_destroy_variant_value (rl2PrivVariantValuePtr value);
 
-    RL2_PRIVATE void rl2_draw_vector_feature (void *ctx, 
-					      sqlite3 * handle, const void *priv_data,
+    RL2_PRIVATE void rl2_draw_vector_feature (void *ctx,
+					      sqlite3 * handle,
+					      const void *priv_data,
 					      rl2VectorSymbolizerPtr symbolizer,
 					      int height, double minx,
 					      double miny, double maxx,
@@ -3009,6 +3072,17 @@ extern "C"
     RL2_PRIVATE double rl2_standard_scale (sqlite3 * handle, int srid,
 					   int width, int height, double ext_x,
 					   double ext_y);
+
+    RL2_PRIVATE char *rl2_clean_xml (const char *dirty);
+
+    RL2_PRIVATE unsigned char
+	*rl2_paint_raster_legend_graphic (rl2LegendGraphicPtr aux);
+
+    RL2_PRIVATE unsigned char
+	*rl2_paint_vector_legend_graphic (sqlite3 * sqlite,
+					  rl2LegendGraphicPtr aux);
+
+    RL2_PRIVATE int rl2cr_endian_arch ();
 
 #ifdef __cplusplus
 }
