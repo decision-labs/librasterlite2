@@ -25,6 +25,9 @@
 /* Define to 1 if you have the <jpeglib.h> header file. */
 #define HAVE_JPEGLIB_H 1
 
+/* Define to 1 if you have the <leptonica/allheaders.h> header file. */
+#define HAVE_LEPTONICA_ALLHEADERS_H 1
+
 /* Define to 1 if you have the `geotiff' library (-lgeotiff). */
 #define HAVE_LIBGEOTIFF 1
 
@@ -141,7 +144,7 @@
 #define STDC_HEADERS 1
 
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
-#define TIME_WITH_SYS_TIME 1
+/* #undef TIME_WITH_SYS_TIME */
 
 /* Define to 1 if your <sys/time.h> declares `struct tm'. */
 /* #undef TM_IN_SYS_TIME */

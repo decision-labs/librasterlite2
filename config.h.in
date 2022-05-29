@@ -24,6 +24,9 @@
 /* Define to 1 if you have the <jpeglib.h> header file. */
 #undef HAVE_JPEGLIB_H
 
+/* Define to 1 if you have the <leptonica/allheaders.h> header file. */
+#undef HAVE_LEPTONICA_ALLHEADERS_H
+
 /* Define to 1 if you have the `geotiff' library (-lgeotiff). */
 #undef HAVE_LIBGEOTIFF
 

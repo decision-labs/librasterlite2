@@ -1,5 +1,8 @@
 /* ./rl2config.h.in - manually maintained */
 
+/* Should be defined in order to disable Leptonica support. */
+#undef OMIT_LEPTONICA
+
 /* Should be defined in order to disable LZ4 support. */
 #undef OMIT_LZ4
 

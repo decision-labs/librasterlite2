@@ -1,6 +1,9 @@
 /* ./headers/rasterlite2/rl2config.h.  Generated from rl2config.h.in by configure.  */
 /* ./rl2config.h.in - manually maintained */
 
+/* Should be defined in order to disable Leptonica support. */
+/* #undef OMIT_LEPTONICA */
+
 /* Should be defined in order to disable LZ4 support. */
 /* #undef OMIT_LZ4 */
 

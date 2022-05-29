@@ -4913,8 +4913,10 @@ query_TileService (rl2WmsCachePtr cache_handle,
 		curl_easy_setopt (curl, CURLOPT_PROXY, proxy);
 	    }
 
+#ifdef CURLSSLOPT_NATIVE_CA
 	  /* enabling System CA cert store (Windows / Mac OsX */
 	  curl_easy_setopt (curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
+#endif
 
 	  /* no progress meter please */
 	  curl_easy_setopt (curl, CURLOPT_NOPROGRESS, 1L);
@@ -5019,8 +5021,10 @@ create_wms_catalog (rl2WmsCachePtr cache_handle, const char *url,
 		curl_easy_setopt (curl, CURLOPT_PROXY, proxy);
 	    }
 
+#ifdef CURLSSLOPT_NATIVE_CA
 	  /* enabling System CA cert store (Windows / Mac OsX */
 	  curl_easy_setopt (curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
+#endif
 
 	  /* no progress meter please */
 	  curl_easy_setopt (curl, CURLOPT_NOPROGRESS, 1L);
@@ -7247,8 +7251,10 @@ do_wms_GetMap_get (rl2WmsCachePtr cache_handle, const char *url,
 		curl_easy_setopt (curl, CURLOPT_PROXY, proxy);
 	    }
 
+#ifdef CURLSSLOPT_NATIVE_CA
 	  /* enabling System CA cert store (Windows / Mac OsX */
 	  curl_easy_setopt (curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
+#endif
 
 	  /* no progress meter please */
 	  curl_easy_setopt (curl, CURLOPT_NOPROGRESS, 1L);
@@ -7478,8 +7484,10 @@ do_wms_GetMap_blob (const char *url, const char *version, const char *layer,
 	  /* setting the URL */
 	  curl_easy_setopt (curl, CURLOPT_URL, request);
 
+#ifdef CURLSSLOPT_NATIVE_CA
 	  /* enabling System CA cert store (Windows / Mac OsX */
 	  curl_easy_setopt (curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
+#endif
 
 	  /* no progress meter please */
 	  curl_easy_setopt (curl, CURLOPT_NOPROGRESS, 1L);
@@ -7627,8 +7635,10 @@ do_wms_GetMap_TileService_get (rl2WmsCachePtr cache_handle, const char *url,
 		curl_easy_setopt (curl, CURLOPT_PROXY, proxy);
 	    }
 
+#ifdef CURLSSLOPT_NATIVE_CA
 	  /* enabling System CA cert store (Windows / Mac OsX */
 	  curl_easy_setopt (curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
+#endif
 
 	  /* no progress meter please */
 	  curl_easy_setopt (curl, CURLOPT_NOPROGRESS, 1L);
@@ -7850,8 +7860,10 @@ do_wms_GetFeatureInfo_get (const char *url, const char *proxy,
 		curl_easy_setopt (curl, CURLOPT_PROXY, proxy);
 	    }
 
+#ifdef CURLSSLOPT_NATIVE_CA
 	  /* enabling System CA cert store (Windows / Mac OsX */
 	  curl_easy_setopt (curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
+#endif
 
 	  /* no progress meter please */
 	  curl_easy_setopt (curl, CURLOPT_NOPROGRESS, 1L);
