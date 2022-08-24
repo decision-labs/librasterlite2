@@ -9072,8 +9072,6 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
 		    rl2_graph_merge (ctx_out, ctx_in);
 		do_set_canvas_ready (canvas, RL2_CANVAS_BASE_CTX);
 	    }
-	  if (ctx_labels != NULL)
-	      rl2_graph_destroy_context (ctx_labels);
 	  if (is_toponet)
 	    {
 		/* merging Network sub-Layers */

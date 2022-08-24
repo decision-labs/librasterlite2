@@ -1711,7 +1711,9 @@ rl2_graph_pattern_recolor (rl2GraphicsPatternPtr ptrn, unsigned char r,
 		aux_pattern_get_pixel (x, y, width, bitmap, &red, &green,
 				       &blue, &alpha);
 		if (alpha != 0)
-		    aux_pattern_set_pixel (x, y, width, bitmap, r, g, b, alpha);
+		    aux_pattern_set_pixel (x, y, width, bitmap, r, g, b, 255);
+		else
+		    aux_pattern_set_pixel (x, y, width, bitmap, 0, 0, 0, 0);
 	    }
       }
     cairo_surface_mark_dirty (pattern->bitmap);
@@ -1729,7 +1731,10 @@ rl2_graph_pattern_recolor (rl2GraphicsPatternPtr ptrn, unsigned char r,
 					     &green, &blue, &alpha);
 		      if (red < 64 && green < 64 && blue < 64)
 			  aux_pattern_set_pixel (x, y, width, bitmap, r, g, b,
-						 alpha);
+						 255);
+		      else
+			  aux_pattern_set_pixel (x, y, width, bitmap, 0, 0, 0,
+						 0);
 		  }
 	    }
 	  cairo_surface_mark_dirty (pattern->bitmap);

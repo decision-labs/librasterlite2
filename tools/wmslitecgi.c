@@ -165,13 +165,8 @@ main (int argc, char *argv[])
     int server_mode = 0;
     int i;
 
-    for (i = 1; i < argc; i++)
-      {
-	  /* parsing the invocation arguments (if any) */
-	  if (strcasecmp (argv[i], "--mini-server") == 0
-	      || strcmp (argv[i], "-svr") == 0)
+    if (argc > 1)
 	      server_mode = 1;
-      }
     if (server_mode)
       {
 	  /* mini-server entry point */

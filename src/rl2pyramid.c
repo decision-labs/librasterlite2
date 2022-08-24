@@ -2195,8 +2195,8 @@ rescale_monolithic_rgba (const void *priv_data, int id_level,
     rl2GraphicsContextPtr ctx = NULL;
     rl2GraphicsBitmapPtr base_tile = NULL;
     unsigned char *rgba = NULL;
-    unsigned int x;
-    unsigned int y;
+    double x;
+    double y;
     int ret;
     double shift_x;
     double shift_y;
@@ -2248,8 +2248,8 @@ rescale_monolithic_rgba (const void *priv_data, int id_level,
 		shift_y = maxy - tile_y;
 		scale_x = 1.0 / (double) factor;
 		scale_y = 1.0 / (double) factor;
-		x = (int) (shift_x / res_x);
-		y = (int) (shift_y / res_y);
+		x = shift_x / res_x;
+		y = shift_y / res_y;
 		rl2_graph_draw_rescaled_bitmap (ctx, base_tile,
 						scale_x, scale_y, x, y);
 		rl2_graph_destroy_bitmap (base_tile);
@@ -6535,7 +6535,6 @@ rl2_build_monolithic_pyramid (sqlite3 * handle, const void *priv_data,
 			    mask = NULL;
 			    goto done;
 			}
-
 		      if (pixel_type == RL2_PIXEL_MONOCHROME)
 			{
 			    if (no_data == NULL)
