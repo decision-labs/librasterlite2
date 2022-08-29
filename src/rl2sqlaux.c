@@ -8959,7 +8959,8 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
 								 maxy, x_res,
 								 y_res, geom,
 								 variant,
-								 aux->mode_labels);
+								 aux->
+								 mode_labels);
 				    }
 			      }
 			    rl2_destroy_geometry (geom);

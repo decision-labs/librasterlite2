@@ -114,82 +114,53 @@ do_paint_layer_vector (sqlite3 * sqlite, const void *data,
 			  ret =
 			      rl2_map_image_paint_from_vector_ex (sqlite, data,
 								  (rl2CanvasPtr)
+								  aux_lyr->canvas,
+								  aux_lyr->prefix,
+								  aux_lyr->layer->
+								  name, blob,
+								  blob_sz, 0,
 								  aux_lyr->
-								  canvas,
-								  aux_lyr->
-								  prefix,
-								  aux_lyr->
-								  layer->name,
-								  blob, blob_sz,
-								  0,
-								  aux_lyr->style_name,
+								  style_name,
 								  (unsigned char
-								   *)
-								  aux_lyr->xml_style,
-								  aux_lyr->
-								  layer->
-								  topology_style->
-								  show_nodes,
-								  aux_lyr->
-								  layer->
-								  topology_style->
-								  show_edges,
-								  aux_lyr->
-								  layer->
-								  topology_style->
-								  show_faces,
-								  aux_lyr->
-								  layer->
-								  topology_style->
-								  show_edge_seeds,
-								  aux_lyr->
-								  layer->
-								  topology_style->
-								  show_face_seeds);
+								   *) aux_lyr->
+								  xml_style,
+								  aux_lyr->layer->topology_style->show_nodes,
+								  aux_lyr->layer->topology_style->show_edges,
+								  aux_lyr->layer->topology_style->show_faces,
+								  aux_lyr->layer->topology_style->show_edge_seeds,
+								  aux_lyr->layer->topology_style->show_face_seeds);
 		      else if (aux_lyr->layer->type == RL2_MAP_LAYER_NETWORK)
 			  ret =
 			      rl2_map_image_paint_from_vector_ex (sqlite, data,
 								  (rl2CanvasPtr)
+								  aux_lyr->canvas,
+								  aux_lyr->prefix,
+								  aux_lyr->layer->
+								  name, blob,
+								  blob_sz, 0,
 								  aux_lyr->
-								  canvas,
-								  aux_lyr->
-								  prefix,
-								  aux_lyr->
-								  layer->name,
-								  blob, blob_sz,
-								  0,
-								  aux_lyr->style_name,
+								  style_name,
 								  (unsigned char
-								   *)
-								  aux_lyr->xml_style,
-								  aux_lyr->
-								  layer->
-								  network_style->
-								  show_nodes,
-								  aux_lyr->
-								  layer->
-								  network_style->
-								  show_links, 0,
-								  aux_lyr->
-								  layer->
-								  network_style->
-								  show_link_seeds,
+								   *) aux_lyr->
+								  xml_style,
+								  aux_lyr->layer->network_style->show_nodes,
+								  aux_lyr->layer->network_style->show_links,
+								  0,
+								  aux_lyr->layer->network_style->show_link_seeds,
 								  0);
 		      else
 			  ret = rl2_map_image_paint_from_vector (sqlite, data,
 								 (rl2CanvasPtr)
+								 aux_lyr->canvas,
+								 aux_lyr->prefix,
+								 aux_lyr->layer->
+								 name, blob,
+								 blob_sz, 0,
 								 aux_lyr->
-								 canvas,
-								 aux_lyr->
-								 prefix,
-								 aux_lyr->
-								 layer->name,
-								 blob, blob_sz,
-								 0,
-								 aux_lyr->style_name,
+								 style_name,
 								 (unsigned char
-								  *)
-								 aux_lyr->xml_style);
+								  *) aux_lyr->
+								 xml_style);
 		      if (ret == RL2_OK)
 			  ret = rl2_graph_merge (aux->ctx, aux_lyr->ctx);
 		  }
@@ -297,7 +268,8 @@ do_paint_layer_raster (sqlite3 * sqlite, const void *data,
 							   aux_lyr->style_name,
 							   (unsigned char *)
 							   aux_lyr->xml_style,
-							   aux_lyr->syntetic_band);
+							   aux_lyr->
+							   syntetic_band);
 		      if (ret == RL2_OK)
 			  ret = rl2_graph_merge (aux->ctx, aux_lyr->ctx);
 		  }
@@ -609,7 +581,11 @@ check_map_labels (sqlite3 * sqlite, rl2PrivMapLayerPtr lyr)
       {
 	  /* quick style */
 	  if (style->text_sym != NULL)
-	      lyr->has_labels = 1;
+	    {
+		rl2PrivTextSymbolizerPtr priv_sym =
+		    (rl2PrivTextSymbolizerPtr) (style->text_sym);
+		lyr->has_labels = 1;
+	    }
       }
     else if (layer->vector_style_internal_name != NULL)
       {
@@ -617,8 +593,7 @@ check_map_labels (sqlite3 * sqlite, rl2PrivMapLayerPtr lyr)
 	  rl2FeatureTypeStylePtr lyr_stl =
 	      rl2_create_feature_type_style_from_dbms (sqlite, layer->prefix,
 						       layer->name,
-						       layer->
-						       vector_style_internal_name);
+						       layer->vector_style_internal_name);
 	  if (lyr_stl != NULL)
 	    {
 		lyr->has_labels = rl2_style_has_labels (lyr_stl);
@@ -1467,7 +1442,7 @@ do_create_text_symbolizer (const char *style_internal_name,
 	  prev = xml;
 	  xml =
 	      sqlite3_mprintf ("%s<Title>%s</Title>", prev,
-			       "Quick Style - Polygon Symbolizer");
+			       "Quick Style - Text Symbolizer");
 	  sqlite3_free (prev);
 	  prev = xml;
 	  xml =
@@ -1831,6 +1806,11 @@ do_create_feature_type_xml (rl2PrivMapLayerPtr lyr)
     if (vector != NULL)
       {
 	  /* Vector Symbolizers */
+	  int text_alone = 0;
+	  if (vector->text_sym != NULL && vector->text_alone)
+	      text_alone = 1;
+	  if (text_alone)
+	      goto skip_geometry;
 	  if (vector->point_sym != NULL)
 	    {
 		/* Point Symbolizer */
@@ -1880,6 +1860,7 @@ do_create_feature_type_xml (rl2PrivMapLayerPtr lyr)
 		      prev = xml;
 		  }
 	    }
+	skip_geometry:
 	  if (vector->text_sym != NULL)
 	    {
 		/* Text Symbolizer */
