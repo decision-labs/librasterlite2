@@ -9790,8 +9790,6 @@ fnct_GetMapImageFromRaster (sqlite3_context * context, int argc,
 	valid_mime = 1;
     if (strcasecmp (format, "application/x-pdf") == 0)
 	valid_mime = 1;
-    if (strcasecmp (format, "image/vnd.rl2rgba") == 0)
-	valid_mime = 1;
 #ifndef OMIT_LEPTONICA
     if (strcasecmp (format, "image/png8") == 0)
 	valid_mime = 1;
@@ -9811,10 +9809,9 @@ fnct_GetMapImageFromRaster (sqlite3_context * context, int argc,
     sqlite = sqlite3_context_db_handle (context);
     data = sqlite3_user_data (context);
 
-    if (strcasecmp (format, "image/png") != 0
-	&& strcasecmp (format, "image/vnd.rl2rgba") != 0)
+    if (strcasecmp (format, "image/png") != 0)
       {
-	  /* only PNG  or RGBA can support real transparencies */
+	  /* only PNG cam support real transparencies */
 	  transparent = 0;
       }
 
@@ -9940,8 +9937,6 @@ fnct_GetStyledMapImageFromRaster (sqlite3_context * context, int argc,
 	valid_mime = 1;
     if (strcasecmp (format, "application/x-pdf") == 0)
 	valid_mime = 1;
-    if (strcasecmp (format, "image/vnd.rl2rgba") == 0)
-	valid_mime = 1;
 #ifndef OMIT_LEPTONICA
     if (strcasecmp (format, "image/png8") == 0)
 	valid_mime = 1;
@@ -9961,10 +9956,9 @@ fnct_GetStyledMapImageFromRaster (sqlite3_context * context, int argc,
     sqlite = sqlite3_context_db_handle (context);
     data = sqlite3_user_data (context);
 
-    if (strcasecmp (format, "image/png") != 0
-	&& strcasecmp (format, "image/vnd.rl2rgba") != 0)
+    if (strcasecmp (format, "image/png") != 0)
       {
-	  /* only PNG  or RGBA can support real transparencies */
+	  /* only PNG can support real transparencies */
 	  transparent = 0;
       }
 
@@ -10093,8 +10087,6 @@ fnct_GetMapImageFromVector (sqlite3_context * context, int argc,
 	valid_mime = 1;
     if (strcasecmp (format, "application/x-pdf") == 0)
 	valid_mime = 1;
-    if (strcasecmp (format, "image/vnd.rl2rgba") == 0)
-	valid_mime = 1;
 #ifndef OMIT_LEPTONICA
     if (strcasecmp (format, "image/png8") == 0)
 	valid_mime = 1;
@@ -10114,10 +10106,9 @@ fnct_GetMapImageFromVector (sqlite3_context * context, int argc,
     sqlite = sqlite3_context_db_handle (context);
     data = sqlite3_user_data (context);
 
-    if (strcasecmp (format, "image/png") != 0
-	&& strcasecmp (format, "image/vnd.rl2rgba") != 0)
+    if (strcasecmp (format, "image/png") != 0)
       {
-	  /* only PNG  or RGBA can support real transparencies */
+	  /* only PNG can support real transparencies */
 	  transparent = 0;
       }
 
@@ -10244,8 +10235,6 @@ fnct_GetStyledMapImageFromVector (sqlite3_context * context, int argc,
 	valid_mime = 1;
     if (strcasecmp (format, "application/x-pdf") == 0)
 	valid_mime = 1;
-    if (strcasecmp (format, "image/vnd.rl2rgba") == 0)
-	valid_mime = 1;
 #ifndef OMIT_LEPTONICA
     if (strcasecmp (format, "image/png8") == 0)
 	valid_mime = 1;
@@ -10265,10 +10254,9 @@ fnct_GetStyledMapImageFromVector (sqlite3_context * context, int argc,
     sqlite = sqlite3_context_db_handle (context);
     data = sqlite3_user_data (context);
 
-    if (strcasecmp (format, "image/png") != 0
-	&& strcasecmp (format, "image/vnd.rl2rgba") != 0)
+    if (strcasecmp (format, "image/png") != 0)
       {
-	  /* only PNG  or RGBA can support real transparencies */
+	  /* only PNG can support real transparencies */
 	  transparent = 0;
       }
 
@@ -10378,8 +10366,6 @@ fnct_GetMapImageFromWMS (sqlite3_context * context, int argc,
 	valid_mime = 1;
     if (strcasecmp (format, "application/x-pdf") == 0)
 	valid_mime = 1;
-    if (strcasecmp (format, "image/vnd.rl2rgba") == 0)
-	valid_mime = 1;
 #ifndef OMIT_LEPTONICA
     if (strcasecmp (format, "image/png8") == 0)
 	valid_mime = 1;
@@ -10398,10 +10384,9 @@ fnct_GetMapImageFromWMS (sqlite3_context * context, int argc,
 
     sqlite = sqlite3_context_db_handle (context);
 
-    if (strcasecmp (format, "image/png") != 0
-	&& strcasecmp (format, "image/vnd.rl2rgba") != 0)
+    if (strcasecmp (format, "image/png") != 0)
       {
-	  /* only PNG  or RGBA can support real transparencies */
+	  /* only PNG can support real transparencies */
 	  transparent = 0;
       }
 

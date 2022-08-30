@@ -231,6 +231,10 @@ extern "C"
 #define RL2_OUTPUT_FORMAT_PDF		0x7a
 /** RasterLite2 constant: output format RGBA (raw pixel buffer) */
 #define RL2_OUTPUT_FORMAT_RGBA		0x7b
+/** RasterLite2 constant: output format ARGB (raw pixel buffer) */
+#define RL2_OUTPUT_FORMAT_ARGB		0x7c
+/** RasterLite2 constant: output format RGB (raw pixel buffer) */
+#define RL2_OUTPUT_FORMAT_RGB		0x7d
 
 /** RasterLite2 constant: contrast enhancement NONE */
 #define RL2_CONTRAST_ENHANCEMENT_NONE		0x90

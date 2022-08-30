@@ -5125,14 +5125,6 @@ get_payload_from_rgb_rgba_transparent (unsigned int width,
 	  if (ret != RL2_OK)
 	      goto error;
       }
-    else if (format == RL2_OUTPUT_FORMAT_RGBA)
-      {
-	  unsigned char *rgba = rgb_alpha_to_rgba (width, height, rgb, alpha);
-	  if (rgba == NULL)
-	      goto error;
-	  *image = rgba;
-	  *image_sz = width * height * 4;
-      }
     else if (format == RL2_OUTPUT_FORMAT_JPEG)
       {
 	  rgb_alpha_to_rgb (width, height, rgb, alpha);
@@ -6937,11 +6929,6 @@ do_paint_map_from_raster (struct aux_raster_render *args)
 		format_id = RL2_OUTPUT_FORMAT_PDF;
 		ok_format = 1;
 	    }
-	  if (strcmp (format, "image/vnd.rl2rgba") == 0)
-	    {
-		format_id = RL2_OUTPUT_FORMAT_RGBA;
-		ok_format = 1;
-	    }
       }
     if (!ok_format)
 	goto error;
@@ -8232,11 +8219,6 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
 		format_id = RL2_OUTPUT_FORMAT_PDF;
 		ok_format = 1;
 	    }
-	  if (strcmp (format, "image/vnd.rl2rgba") == 0)
-	    {
-		format_id = RL2_OUTPUT_FORMAT_RGBA;
-		ok_format = 1;
-	    }
       }
     if (!ok_format)
 	goto error;
@@ -8959,8 +8941,7 @@ do_paint_map_from_vector (struct aux_vector_render *aux)
 								 maxy, x_res,
 								 y_res, geom,
 								 variant,
-								 aux->
-								 mode_labels);
+								 aux->mode_labels);
 				    }
 			      }
 			    rl2_destroy_geometry (geom);

@@ -114,53 +114,82 @@ do_paint_layer_vector (sqlite3 * sqlite, const void *data,
 			  ret =
 			      rl2_map_image_paint_from_vector_ex (sqlite, data,
 								  (rl2CanvasPtr)
-								  aux_lyr->canvas,
-								  aux_lyr->prefix,
-								  aux_lyr->layer->
-								  name, blob,
-								  blob_sz, 0,
 								  aux_lyr->
-								  style_name,
+								  canvas,
+								  aux_lyr->
+								  prefix,
+								  aux_lyr->
+								  layer->name,
+								  blob, blob_sz,
+								  0,
+								  aux_lyr->style_name,
 								  (unsigned char
-								   *) aux_lyr->
-								  xml_style,
-								  aux_lyr->layer->topology_style->show_nodes,
-								  aux_lyr->layer->topology_style->show_edges,
-								  aux_lyr->layer->topology_style->show_faces,
-								  aux_lyr->layer->topology_style->show_edge_seeds,
-								  aux_lyr->layer->topology_style->show_face_seeds);
+								   *)
+								  aux_lyr->xml_style,
+								  aux_lyr->
+								  layer->
+								  topology_style->
+								  show_nodes,
+								  aux_lyr->
+								  layer->
+								  topology_style->
+								  show_edges,
+								  aux_lyr->
+								  layer->
+								  topology_style->
+								  show_faces,
+								  aux_lyr->
+								  layer->
+								  topology_style->
+								  show_edge_seeds,
+								  aux_lyr->
+								  layer->
+								  topology_style->
+								  show_face_seeds);
 		      else if (aux_lyr->layer->type == RL2_MAP_LAYER_NETWORK)
 			  ret =
 			      rl2_map_image_paint_from_vector_ex (sqlite, data,
 								  (rl2CanvasPtr)
-								  aux_lyr->canvas,
-								  aux_lyr->prefix,
-								  aux_lyr->layer->
-								  name, blob,
-								  blob_sz, 0,
 								  aux_lyr->
-								  style_name,
-								  (unsigned char
-								   *) aux_lyr->
-								  xml_style,
-								  aux_lyr->layer->network_style->show_nodes,
-								  aux_lyr->layer->network_style->show_links,
+								  canvas,
+								  aux_lyr->
+								  prefix,
+								  aux_lyr->
+								  layer->name,
+								  blob, blob_sz,
 								  0,
-								  aux_lyr->layer->network_style->show_link_seeds,
+								  aux_lyr->style_name,
+								  (unsigned char
+								   *)
+								  aux_lyr->xml_style,
+								  aux_lyr->
+								  layer->
+								  network_style->
+								  show_nodes,
+								  aux_lyr->
+								  layer->
+								  network_style->
+								  show_links, 0,
+								  aux_lyr->
+								  layer->
+								  network_style->
+								  show_link_seeds,
 								  0);
 		      else
 			  ret = rl2_map_image_paint_from_vector (sqlite, data,
 								 (rl2CanvasPtr)
-								 aux_lyr->canvas,
-								 aux_lyr->prefix,
-								 aux_lyr->layer->
-								 name, blob,
-								 blob_sz, 0,
 								 aux_lyr->
-								 style_name,
+								 canvas,
+								 aux_lyr->
+								 prefix,
+								 aux_lyr->
+								 layer->name,
+								 blob, blob_sz,
+								 0,
+								 aux_lyr->style_name,
 								 (unsigned char
-								  *) aux_lyr->
-								 xml_style);
+								  *)
+								 aux_lyr->xml_style);
 		      if (ret == RL2_OK)
 			  ret = rl2_graph_merge (aux->ctx, aux_lyr->ctx);
 		  }
@@ -268,8 +297,7 @@ do_paint_layer_raster (sqlite3 * sqlite, const void *data,
 							   aux_lyr->style_name,
 							   (unsigned char *)
 							   aux_lyr->xml_style,
-							   aux_lyr->
-							   syntetic_band);
+							   aux_lyr->syntetic_band);
 		      if (ret == RL2_OK)
 			  ret = rl2_graph_merge (aux->ctx, aux_lyr->ctx);
 		  }
@@ -581,11 +609,7 @@ check_map_labels (sqlite3 * sqlite, rl2PrivMapLayerPtr lyr)
       {
 	  /* quick style */
 	  if (style->text_sym != NULL)
-	    {
-		rl2PrivTextSymbolizerPtr priv_sym =
-		    (rl2PrivTextSymbolizerPtr) (style->text_sym);
-		lyr->has_labels = 1;
-	    }
+	      lyr->has_labels = 1;
       }
     else if (layer->vector_style_internal_name != NULL)
       {
@@ -593,13 +617,110 @@ check_map_labels (sqlite3 * sqlite, rl2PrivMapLayerPtr lyr)
 	  rl2FeatureTypeStylePtr lyr_stl =
 	      rl2_create_feature_type_style_from_dbms (sqlite, layer->prefix,
 						       layer->name,
-						       layer->vector_style_internal_name);
+						       layer->
+						       vector_style_internal_name);
 	  if (lyr_stl != NULL)
 	    {
 		lyr->has_labels = rl2_style_has_labels (lyr_stl);
 		rl2_destroy_feature_type_style (lyr_stl);
 	    }
       }
+}
+
+static int
+get_raw_pixels (int width, int height, const unsigned char *rgb,
+		const unsigned char *alpha, int format_id,
+		unsigned char **image, int *image_size)
+{
+/* preparing raw pixels */
+    unsigned char *outpix;
+    int size;
+    const unsigned char *p_rgb;
+    const unsigned char *p_alpha;
+    unsigned char *p_out;
+    int x;
+    int y;
+
+    if (format_id == RL2_OUTPUT_FORMAT_RGBA)
+      {
+	  size = width * height * 4;
+	  outpix = malloc (size);
+	  if (outpix == NULL)
+	      return 0;
+	  p_rgb = rgb;
+	  p_alpha = alpha;
+	  p_out = outpix;
+	  for (y = 0; y < height; y++)
+	    {
+		for (x = 0; x < width; x++)
+		  {
+		      *p_out++ = *p_rgb++;	/* red */
+		      *p_out++ = *p_rgb++;	/* green */
+		      *p_out++ = *p_rgb++;	/* blue */
+		      *p_out++ = *p_alpha++;	/* alpha */
+		  }
+	    }
+	  *image = outpix;
+	  *image_size = size;
+	  return 1;
+      }
+    if (format_id == RL2_OUTPUT_FORMAT_ARGB)
+      {
+	  size = width * height * 4;
+	  outpix = malloc (size);
+	  if (outpix == NULL)
+	      return 0;
+	  p_rgb = rgb;
+	  p_alpha = alpha;
+	  p_out = outpix;
+	  for (y = 0; y < height; y++)
+	    {
+		for (x = 0; x < width; x++)
+		  {
+		      *p_out++ = *p_alpha++;	/* alpha */
+		      *p_out++ = *p_rgb++;	/* red */
+		      *p_out++ = *p_rgb++;	/* green */
+		      *p_out++ = *p_rgb++;	/* blue */
+		  }
+	    }
+	  *image = outpix;
+	  *image_size = size;
+	  return 1;
+      }
+    if (format_id == RL2_OUTPUT_FORMAT_RGB)
+      {
+	  size = width * height * 3;
+	  outpix = malloc (size);
+	  if (outpix == NULL)
+	      return 0;
+	  p_rgb = rgb;
+	  p_alpha = alpha;
+	  p_out = outpix;
+	  for (y = 0; y < height; y++)
+	    {
+		for (x = 0; x < width; x++)
+		  {
+		      unsigned char alpha = *p_alpha++;	/* alpha */
+		      if (alpha > 128)
+			{
+			    *p_out++ = *p_rgb++;	/* red */
+			    *p_out++ = *p_rgb++;	/* green */
+			    *p_out++ = *p_rgb++;	/* blue */
+			}
+		      else
+			{
+			    /* almost tansparent pixels are WHITE */
+			    *p_out++ = 255;
+			    *p_out++ = 255;
+			    *p_out++ = 255;
+			}
+		  }
+	    }
+	  *image = outpix;
+	  *image_size = size;
+	  return 1;
+      }
+    return 0;
 }
 
 RL2_PRIVATE int
@@ -714,10 +835,23 @@ rl2_paint_map_config_aux (sqlite3 * sqlite, const void *data,
     if (rgb == NULL || alpha == NULL)
 	goto error;
 
+    if (aux->format_id == RL2_OUTPUT_FORMAT_RGBA
+	|| aux->format_id == RL2_OUTPUT_FORMAT_ARGB
+	|| aux->format_id == RL2_OUTPUT_FORMAT_RGB)
+      {
+	  /* RGBA - ARGB - RGB raw pixels */
+	  if (!get_raw_pixels
+	      (aux->width, aux->height, rgb, alpha, aux->format_id, &image,
+	       &image_size))
+	      goto error;
+	  goto done;
+      }
+
     if (!get_payload_from_rgb_rgba_transparent
 	(aux->width, aux->height, data, rgb, alpha, aux->format_id,
 	 aux->quality, &image, &image_size, 1.0, half_transparent))
 	goto error;
+  done:
     free (rgb);
     free (alpha);
     aux->image = image;
