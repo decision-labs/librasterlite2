@@ -4694,6 +4694,7 @@ rl2_graph_get_context_data (rl2GraphicsContextPtr context, unsigned char **data,
     unsigned char *p_out;
     unsigned char *cairo_data;
     int sz;
+    int little_endian = rl2cr_endian_arch ();
     RL2GraphContextPtr ctx = (RL2GraphContextPtr) context;
 
     *data = NULL;
@@ -4713,7 +4714,26 @@ rl2_graph_get_context_data (rl2GraphicsContextPtr context, unsigned char **data,
     for (y = 0; y < height; y++)
       {
 	  for (x = 0; x < width; x++)
-	      *p_out++ = *p_in++;
+	    {
+		if (little_endian)
+		  {
+		      unsigned char b = *p_in++;
+		      unsigned char g = *p_in++;
+		      unsigned char r = *p_in++;
+		      unsigned char a = *p_in++;
+		      *p_out++ = r;
+		      *p_out++ = g;
+		      *p_out++ = b;
+		      *p_out++ = a;
+		  }
+		else
+		  {
+		      *p_out++ = *p_in++;
+		      *p_out++ = *p_in++;
+		      *p_out++ = *p_in++;
+		      *p_out++ = *p_in++;
+		  }
+	    }
       }
     *data = cairo_data;
     *size = sz;
@@ -5776,6 +5796,58 @@ rl2_copy_wms_tile (rl2GraphicsContextPtr out, rl2GraphicsContextPtr in,
     cairo_set_source_surface (ctx_out->cairo, ctx_in->surface, 0, 0);
     cairo_paint (ctx_out->cairo);
     cairo_restore (ctx_out->cairo);
+    return RL2_OK;
+}
+
+RL2_DECLARE int
+rl2_aux_prepare_image (rl2GraphicsContextPtr context, void *data, int width,
+		       int height, int format_id, int quality,
+		       unsigned char **blob, unsigned int *blob_size)
+{
+/* creating an image from a Graphics context */
+    RL2GraphContextPtr ctx = (RL2GraphContextPtr) context;
+    int ok_format = 0;
+    unsigned char *rgb = NULL;
+    unsigned char *alpha = NULL;
+    int half_transparent = 0;
+    unsigned char *image = NULL;
+    int image_size;
+
+    *blob = NULL;
+    *blob_size = 0;
+
+    if (ctx == NULL || data == NULL)
+	return RL2_ERROR;
+
+    if (format_id == RL2_OUTPUT_FORMAT_PNG)
+	ok_format = 1;
+    if (format_id == RL2_OUTPUT_FORMAT_JPEG)
+	ok_format = 1;
+    if (format_id == RL2_OUTPUT_FORMAT_TIFF)
+	ok_format = 1;
+    if (!ok_format)
+	return RL2_ERROR;
+
+    /* retrieving RGB and ALPHA pixels */
+    rgb = rl2_graph_get_context_rgb_array (ctx);
+    alpha = rl2_graph_get_context_alpha_array (ctx, &half_transparent);
+    if (rgb == NULL || alpha == NULL)
+	return RL2_ERROR;
+
+    /* attempting to create the output image */
+    if (!get_payload_from_rgb_rgba_transparent
+	(width, height, data, rgb, alpha, format_id,
+	 quality, &image, &image_size, 1.0, half_transparent))
+      {
+	  free (rgb);
+	  free (alpha);
+	  return RL2_ERROR;
+      }
+
+    free (rgb);
+    free (alpha);
+    *blob = image;
+    *blob_size = image_size;
     return RL2_OK;
 }
 

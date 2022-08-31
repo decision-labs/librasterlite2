@@ -1922,6 +1922,12 @@ extern "C"
 				       rl2GraphicsContextPtr in, int base_x,
 				       int base_y);
 
+    RL2_DECLARE int rl2_aux_prepare_image (rl2GraphicsContextPtr ctx,
+					   void *data, int width, int height,
+					   int format_id, int quality,
+					   unsigned char **blob,
+					   unsigned int *blob_size);
+
 #ifdef __cplusplus
 }
 #endif
