@@ -275,7 +275,7 @@ extern "C"
  Retrieves the Width and Height from a Graphics Context
   
  \param handle the pointer to a valid Graphics Context.
- \param width on succesful completione the variable referenced by this
+ \param width on succesful completion the variable referenced by this
  pointer will contain the Width value.
  \param height on succesful completione the variable referenced by this
  pointer will contain the Height value.
@@ -1676,7 +1676,8 @@ extern "C"
 
  \return the pointer to the RGBA Array: NULL on failure.
  
- \sa rl2_graph_get_context_rgb_array, rl2_graph_get_context_alpha_array
+ \sa rl2_graph_get_context_rgb_array, rl2_graph_get_context_alpha_array,
+ rl2_graph_get_context_data
  
  \note you are responsible to destroy (before or after) any RGBA Array
  returned by rl2_graph_get_context_rgb_array() by invoking free().
@@ -1685,13 +1686,35 @@ extern "C"
 	*rl2_graph_get_context_rgba_array (rl2GraphicsContextPtr context);
 
 /**
+ Creates a Cairo ARGB Array corresponding to the current Canvas
+
+ \param context the pointer to a valid Graphics Context (aka Canvas).
+ \param data on succesful completion the variable referenced by this
+ pointer will contain the ARGB buffer from the Cairo context.
+ \param size on succesful completion the variable referenced by this
+ point will contain the ARGB buffer size (measured in bytes)-
+
+ \return 0 (false) on error, any other value on success.
+ 
+ \sa rl2_graph_get_context_rgba_array, rl2_graph_get_context_rgb_array, 
+ rl2_graph_get_context_alpha_array
+ 
+ \note you are responsible to destroy (before or after) any ARGB Array
+ returned by rl2_graph_get_context_data() by invoking free().
+ */
+    RL2_DECLARE int
+	rl2_graph_get_context_data (rl2GraphicsContextPtr context,
+				    unsigned char **data, int *size);
+
+/**
  Creates an RGB Array corresponding to the current Canvas
 
  \param context the pointer to a valid Graphics Context (aka Canvas).
 
  \return the pointer to the RGB Array: NULL on failure.
  
- \sa rl2_graph_get_context_alpha_array, rl2_graph_get_context_rgb_array
+ \sa rl2_graph_get_context_alpha_array, rl2_graph_get_context_rgba_array,
+ rl2_graph_get_context_data
  
  \note you are responsible to destroy (before or after) any RGB Array
  returned by rl2_graph_get_context_rgb_array() by invoking free().
@@ -1709,7 +1732,8 @@ extern "C"
 
  \return the pointer to the Array of Alpha Values: NULL on failure.
  
- \sa rl2_graph_get_context_rgb_array, rl2_graph_get_context_rgb_array
+ \sa rl2_graph_get_context_rgba_array, rl2_graph_get_context_rgb_array,
+ rl2_get_context_data
  
  \note you are responsible to destroy (before or after) any RGB Array
  returned by rl2_graph_get_context_alpha_array() by invoking free().

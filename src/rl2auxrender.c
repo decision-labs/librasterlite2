@@ -955,9 +955,7 @@ do_aux_render_image_blob (struct aux_renderer *aux)
 		/* RGB */
 		if ((aux->transparent
 		     && aux->format_id == RL2_OUTPUT_FORMAT_PNG)
-		    || aux->format_id == RL2_OUTPUT_FORMAT_RGBA
-		    || aux->format_id == RL2_OUTPUT_FORMAT_ARGB
-		    || aux->format_id == RL2_OUTPUT_FORMAT_RGB)
+		    || aux->format_id == RL2_OUTPUT_FORMAT_CAIRO_RGBA)
 		  {
 		      if (alpha == NULL)
 			  goto error;
@@ -1818,16 +1816,16 @@ draw_points (rl2GraphicsContextPtr ctx, sqlite3 * handle,
 					      if (mark->fill->graphic->first !=
 						  NULL)
 						{
-						    if (mark->fill->graphic->
-							first->type ==
+						    if (mark->fill->
+							graphic->first->type ==
 							RL2_EXTERNAL_GRAPHIC)
 						      {
 							  rl2PrivExternalGraphicPtr
 							      ext =
 							      (rl2PrivExternalGraphicPtr)
-							      (mark->fill->
-							       graphic->first->
-							       item);
+							      (mark->
+							       fill->graphic->
+							       first->item);
 							  xlink_href =
 							      ext->xlink_href;
 							  if (ext->first !=
@@ -1835,14 +1833,14 @@ draw_points (rl2GraphicsContextPtr ctx, sqlite3 * handle,
 							    {
 								recolor = 1;
 								red =
-								    ext->first->
-								    red;
+								    ext->
+								    first->red;
 								green =
-								    ext->first->
-								    green;
+								    ext->
+								    first->green;
 								blue =
-								    ext->first->
-								    blue;
+								    ext->
+								    first->blue;
 							    }
 						      }
 						}
@@ -1863,15 +1861,16 @@ draw_points (rl2GraphicsContextPtr ctx, sqlite3 * handle,
 						    if (mark->fill->opacity <=
 							0.0)
 							norm_opacity = 0;
-						    else if (mark->fill->
-							     opacity >= 1.0)
+						    else if (mark->
+							     fill->opacity >=
+							     1.0)
 							norm_opacity = 255;
 						    else
 						      {
 							  opacity =
 							      255.0 *
-							      mark->fill->
-							      opacity;
+							      mark->
+							      fill->opacity;
 							  if (opacity <= 0.0)
 							      norm_opacity = 0;
 							  else if (opacity >=
@@ -1919,12 +1918,12 @@ draw_points (rl2GraphicsContextPtr ctx, sqlite3 * handle,
 							norm_opacity = opacity;
 						}
 					      rl2_graph_set_brush (ctx,
-								   mark->fill->
-								   red,
-								   mark->fill->
-								   green,
-								   mark->fill->
-								   blue,
+								   mark->
+								   fill->red,
+								   mark->
+								   fill->green,
+								   mark->
+								   fill->blue,
 								   norm_opacity);
 					      fill = 1;
 					  }
@@ -1939,19 +1938,19 @@ draw_points (rl2GraphicsContextPtr ctx, sqlite3 * handle,
 					      unsigned char green;
 					      unsigned char blue;
 					      pattern_stroke = NULL;
-					      if (mark->stroke->graphic->
-						  first != NULL)
+					      if (mark->stroke->
+						  graphic->first != NULL)
 						{
-						    if (mark->stroke->graphic->
-							first->type ==
+						    if (mark->stroke->
+							graphic->first->type ==
 							RL2_EXTERNAL_GRAPHIC)
 						      {
 							  rl2PrivExternalGraphicPtr
 							      ext =
 							      (rl2PrivExternalGraphicPtr)
-							      (mark->stroke->
-							       graphic->first->
-							       item);
+							      (mark->
+							       stroke->graphic->
+							       first->item);
 							  xlink_href =
 							      ext->xlink_href;
 							  if (ext->first !=
@@ -1959,14 +1958,14 @@ draw_points (rl2GraphicsContextPtr ctx, sqlite3 * handle,
 							    {
 								recolor = 1;
 								red =
-								    ext->first->
-								    red;
+								    ext->
+								    first->red;
 								green =
-								    ext->first->
-								    green;
+								    ext->
+								    first->green;
 								blue =
-								    ext->first->
-								    blue;
+								    ext->
+								    first->blue;
 							    }
 						      }
 						}
@@ -1987,15 +1986,16 @@ draw_points (rl2GraphicsContextPtr ctx, sqlite3 * handle,
 						    if (mark->stroke->opacity <=
 							0.0)
 							norm_opacity = 0;
-						    else if (mark->stroke->
-							     opacity >= 1.0)
+						    else if (mark->
+							     stroke->opacity >=
+							     1.0)
 							norm_opacity = 255;
 						    else
 						      {
 							  opacity =
 							      255.0 *
-							      mark->stroke->
-							      opacity;
+							      mark->
+							      stroke->opacity;
 							  if (opacity <= 0.0)
 							      norm_opacity = 0;
 							  else if (opacity >=
@@ -2013,8 +2013,8 @@ draw_points (rl2GraphicsContextPtr ctx, sqlite3 * handle,
 						    if (pattern_stroke != NULL)
 						      {
 							  switch
-							      (mark->stroke->
-							       linecap)
+							      (mark->
+							       stroke->linecap)
 							    {
 							    case RL2_STROKE_LINECAP_ROUND:
 								pen_cap =
@@ -2030,8 +2030,8 @@ draw_points (rl2GraphicsContextPtr ctx, sqlite3 * handle,
 								break;
 							    };
 							  switch
-							      (mark->stroke->
-							       linejoin)
+							      (mark->
+							       stroke->linejoin)
 							    {
 							    case RL2_STROKE_LINEJOIN_BEVEL:
 								pen_join =
@@ -2046,29 +2046,31 @@ draw_points (rl2GraphicsContextPtr ctx, sqlite3 * handle,
 								    RL2_PEN_JOIN_MITER;
 								break;
 							    };
-							  if (mark->stroke->
-							      dash_count > 0
-							      && mark->stroke->
-							      dash_list != NULL)
+							  if (mark->
+							      stroke->dash_count
+							      > 0
+							      && mark->
+							      stroke->dash_list
+							      != NULL)
 							      rl2_graph_set_pattern_dashed_pen
 								  (ctx,
 								   pattern_stroke,
-								   mark->stroke->
-								   width,
+								   mark->
+								   stroke->width,
 								   pen_cap,
 								   pen_join,
-								   mark->stroke->
-								   dash_count,
-								   mark->stroke->
-								   dash_list,
-								   mark->stroke->
-								   dash_offset);
+								   mark->
+								   stroke->dash_count,
+								   mark->
+								   stroke->dash_list,
+								   mark->
+								   stroke->dash_offset);
 							  else
 							      rl2_graph_set_pattern_solid_pen
 								  (ctx,
 								   pattern_stroke,
-								   mark->stroke->
-								   width,
+								   mark->
+								   stroke->width,
 								   pen_cap,
 								   pen_join);
 							  stroke = 1;
@@ -2125,27 +2127,19 @@ draw_points (rl2GraphicsContextPtr ctx, sqlite3 * handle,
 						  && mark->stroke->dash_list !=
 						  NULL)
 						  rl2_graph_set_dashed_pen (ctx,
-									    mark->
-									    stroke->
-									    red,
-									    mark->
-									    stroke->
-									    green,
-									    mark->
-									    stroke->
-									    blue,
+									    mark->stroke->red,
+									    mark->stroke->green,
+									    mark->stroke->blue,
 									    norm_opacity,
-									    mark->
-									    stroke->
-									    width,
+									    mark->stroke->width,
 									    pen_cap,
 									    pen_join,
-									    mark->stroke->
-									    dash_count,
-									    mark->stroke->
-									    dash_list,
-									    mark->stroke->
-									    dash_offset);
+									    mark->
+									    stroke->dash_count,
+									    mark->
+									    stroke->dash_list,
+									    mark->
+									    stroke->dash_offset);
 					      else
 						  rl2_graph_set_solid_pen
 						      (ctx, mark->stroke->red,
@@ -2252,9 +2246,15 @@ draw_points (rl2GraphicsContextPtr ctx, sqlite3 * handle,
 								    well_known_type,
 								    gr->size, x,
 								    y,
-								    point_sym->graphic->rotation,
-								    point_sym->graphic->anchor_point_x,
-								    point_sym->graphic->anchor_point_y,
+								    point_sym->
+								    graphic->
+								    rotation,
+								    point_sym->
+								    graphic->
+								    anchor_point_x,
+								    point_sym->
+								    graphic->
+								    anchor_point_y,
 								    fill,
 								    stroke);
 				    }
@@ -2273,22 +2273,12 @@ draw_points (rl2GraphicsContextPtr ctx, sqlite3 * handle,
 								       out_width,
 								       out_height,
 								       x +
-								       point_sym->
-								       graphic->
-								       displacement_x,
+								       point_sym->graphic->displacement_x,
 								       y -
-								       point_sym->
-								       graphic->
-								       displacement_y,
-								       point_sym->
-								       graphic->
-								       rotation,
-								       point_sym->
-								       graphic->
-								       anchor_point_x,
-								       point_sym->
-								       graphic->
-								       anchor_point_y);
+								       point_sym->graphic->displacement_y,
+								       point_sym->graphic->rotation,
+								       point_sym->graphic->anchor_point_x,
+								       point_sym->graphic->anchor_point_y);
 				    }
 			      }
 			    point = point->next;
@@ -2419,8 +2409,8 @@ draw_lines (rl2GraphicsContextPtr ctx, sqlite3 * handle,
 				    {
 					rl2PrivExternalGraphicPtr ext =
 					    (rl2PrivExternalGraphicPtr)
-					    (line_sym->stroke->graphic->first->
-					     item);
+					    (line_sym->stroke->graphic->
+					     first->item);
 					xlink_href = ext->xlink_href;
 					if (ext->first != NULL)
 					  {
@@ -2529,34 +2519,36 @@ draw_lines (rl2GraphicsContextPtr ctx, sqlite3 * handle,
 			    if (line_sym->stroke->dash_count > 0
 				&& line_sym->stroke->dash_list != NULL)
 				rl2_add_to_multi_stroke_dash (multi_stroke,
-							      line_sym->stroke->
-							      red,
-							      line_sym->stroke->
-							      green,
-							      line_sym->stroke->
-							      blue,
+							      line_sym->
+							      stroke->red,
+							      line_sym->
+							      stroke->green,
+							      line_sym->
+							      stroke->blue,
 							      norm_opacity,
-							      line_sym->stroke->
-							      width, pen_cap,
-							      pen_join,
-							      line_sym->stroke->
-							      dash_count,
-							      line_sym->stroke->
-							      dash_list,
-							      line_sym->stroke->
-							      dash_offset,
-							      line_sym->perpendicular_offset);
+							      line_sym->
+							      stroke->width,
+							      pen_cap, pen_join,
+							      line_sym->
+							      stroke->dash_count,
+							      line_sym->
+							      stroke->dash_list,
+							      line_sym->
+							      stroke->dash_offset,
+							      line_sym->
+							      perpendicular_offset);
 			    else
 				rl2_add_to_multi_stroke (multi_stroke,
 							 line_sym->stroke->red,
-							 line_sym->stroke->
-							 green,
+							 line_sym->
+							 stroke->green,
 							 line_sym->stroke->blue,
 							 norm_opacity,
-							 line_sym->stroke->
-							 width, pen_cap,
+							 line_sym->
+							 stroke->width, pen_cap,
 							 pen_join,
-							 line_sym->perpendicular_offset);
+							 line_sym->
+							 perpendicular_offset);
 			}
 		  }
 	    }
@@ -2821,8 +2813,8 @@ draw_polygons (rl2GraphicsContextPtr ctx, sqlite3 * handle,
 				    {
 					rl2PrivExternalGraphicPtr ext =
 					    (rl2PrivExternalGraphicPtr)
-					    (polyg_sym->fill->graphic->first->
-					     item);
+					    (polyg_sym->fill->graphic->
+					     first->item);
 					xlink_href = ext->xlink_href;
 					if (ext->first != NULL)
 					  {
@@ -2915,8 +2907,8 @@ draw_polygons (rl2GraphicsContextPtr ctx, sqlite3 * handle,
 				    {
 					rl2PrivExternalGraphicPtr ext =
 					    (rl2PrivExternalGraphicPtr)
-					    (polyg_sym->stroke->graphic->first->
-					     item);
+					    (polyg_sym->stroke->graphic->
+					     first->item);
 					xlink_href = ext->xlink_href;
 					if (ext->first != NULL)
 					  {
@@ -2958,12 +2950,20 @@ draw_polygons (rl2GraphicsContextPtr ctx, sqlite3 * handle,
 				      && polyg_sym->stroke->dash_list != NULL)
 				      rl2_graph_set_pattern_dashed_pen (ctx,
 									pattern_stroke,
-									polyg_sym->stroke->width,
+									polyg_sym->
+									stroke->
+									width,
 									pen_cap,
 									pen_join,
-									polyg_sym->stroke->dash_count,
-									polyg_sym->stroke->dash_list,
-									polyg_sym->stroke->dash_offset);
+									polyg_sym->
+									stroke->
+									dash_count,
+									polyg_sym->
+									stroke->
+									dash_list,
+									polyg_sym->
+									stroke->
+									dash_offset);
 				  else
 				      rl2_graph_set_pattern_solid_pen
 					  (ctx, pattern_stroke,
@@ -3021,30 +3021,32 @@ draw_polygons (rl2GraphicsContextPtr ctx, sqlite3 * handle,
 			    if (polyg_sym->stroke->dash_count > 0
 				&& polyg_sym->stroke->dash_list != NULL)
 				rl2_graph_set_dashed_pen (ctx,
-							  polyg_sym->stroke->
-							  red,
-							  polyg_sym->stroke->
-							  green,
-							  polyg_sym->stroke->
-							  blue, norm_opacity,
-							  polyg_sym->stroke->
-							  width, pen_cap,
-							  pen_join,
-							  polyg_sym->stroke->
-							  dash_count,
-							  polyg_sym->stroke->
-							  dash_list,
-							  polyg_sym->stroke->
-							  dash_offset);
+							  polyg_sym->
+							  stroke->red,
+							  polyg_sym->
+							  stroke->green,
+							  polyg_sym->
+							  stroke->blue,
+							  norm_opacity,
+							  polyg_sym->
+							  stroke->width,
+							  pen_cap, pen_join,
+							  polyg_sym->
+							  stroke->dash_count,
+							  polyg_sym->
+							  stroke->dash_list,
+							  polyg_sym->
+							  stroke->dash_offset);
 			    else
 				rl2_graph_set_solid_pen (ctx,
 							 polyg_sym->stroke->red,
-							 polyg_sym->stroke->
-							 green,
-							 polyg_sym->stroke->
-							 blue, norm_opacity,
-							 polyg_sym->stroke->
-							 width, pen_cap,
+							 polyg_sym->
+							 stroke->green,
+							 polyg_sym->
+							 stroke->blue,
+							 norm_opacity,
+							 polyg_sym->
+							 stroke->width, pen_cap,
 							 pen_join);
 			    stroke = 1;
 			}
@@ -4590,8 +4592,8 @@ rl2_draw_vector_feature (void *p_ctx, sqlite3 * handle, const void *priv_data,
 				&& s->graphic->first->item != NULL)
 			      {
 				  rl2PrivMarkPtr mark =
-				      (rl2PrivMarkPtr) (s->graphic->first->
-							item);
+				      (rl2PrivMarkPtr) (s->graphic->
+							first->item);
 				  mark->well_known_type =
 				      RL2_GRAPHIC_MARK_SQUARE;
 				  mark->fill = rl2_create_default_fill ();

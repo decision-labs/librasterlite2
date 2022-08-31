@@ -4681,6 +4681,45 @@ rl2_graph_get_context_rgba_array (rl2GraphicsContextPtr context)
     return rgba;
 }
 
+RL2_DECLARE int
+rl2_graph_get_context_data (rl2GraphicsContextPtr context, unsigned char **data,
+			    int *size)
+{
+/* creating a Cairo ARGB buffer from the given Context */
+    int width;
+    int height;
+    int x;
+    int y;
+    unsigned char *p_in;
+    unsigned char *p_out;
+    unsigned char *cairo_data;
+    int sz;
+    RL2GraphContextPtr ctx = (RL2GraphContextPtr) context;
+
+    *data = NULL;
+    *size = 0;
+    if (ctx == NULL)
+	return 0;
+
+    width = cairo_image_surface_get_width (ctx->surface);
+    height = cairo_image_surface_get_height (ctx->surface);
+    sz = width * height * 4;
+    cairo_data = malloc (sz);
+    if (cairo_data == NULL)
+	return 0;
+
+    p_in = cairo_image_surface_get_data (ctx->surface);
+    p_out = cairo_data;
+    for (y = 0; y < height; y++)
+      {
+	  for (x = 0; x < width; x++)
+	      *p_out++ = *p_in++;
+      }
+    *data = cairo_data;
+    *size = sz;
+    return 1;
+}
+
 RL2_DECLARE unsigned char *
 rl2_graph_get_context_rgb_array (rl2GraphicsContextPtr context)
 {

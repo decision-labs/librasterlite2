@@ -210,31 +210,27 @@ extern "C"
 #define RL2_SCALE_8			0x34
 
 /** RasterLite2 constant: output format UNKNOWN */
-#define RL2_OUTPUT_FORMAT_UNKNOWN	0x70
+#define RL2_OUTPUT_FORMAT_UNKNOWN		0x70
 /** RasterLite2 constant: output format JPEG */
-#define RL2_OUTPUT_FORMAT_JPEG		0x71
+#define RL2_OUTPUT_FORMAT_JPEG			0x71
 /** RasterLite2 constant: output format PNG TrueColor */
-#define RL2_OUTPUT_FORMAT_PNG		0x72
+#define RL2_OUTPUT_FORMAT_PNG			0x72
 /** RasterLite2 constant: output format PNG Palette 256 */
-#define RL2_OUTPUT_FORMAT_PNG_8		0x73
+#define RL2_OUTPUT_FORMAT_PNG_8			0x73
 /** RasterLite2 constant: output format TIFF TrueColor */
-#define RL2_OUTPUT_FORMAT_TIFF		0x74
+#define RL2_OUTPUT_FORMAT_TIFF			0x74
 /** RasterLite2 constant: output format TIFF Palette 256 */
-#define RL2_OUTPUT_FORMAT_TIFF_8	0x75
+#define RL2_OUTPUT_FORMAT_TIFF_8		0x75
 /** RasterLite2 constant: output format TIFF TrueColor */
-#define RL2_OUTPUT_FORMAT_GEOTIFF	0x76
+#define RL2_OUTPUT_FORMAT_GEOTIFF		0x76
 /** RasterLite2 constant: output format TIFF Palette 256 */
-#define RL2_OUTPUT_FORMAT_GEOTIFF_8	0x77
+#define RL2_OUTPUT_FORMAT_GEOTIFF_8		0x77
 /** RasterLite2 constant: output format GIF */
-#define RL2_OUTPUT_FORMAT_GIF		0x78
+#define RL2_OUTPUT_FORMAT_GIF			0x78
 /** RasterLite2 constant: output format PDF */
-#define RL2_OUTPUT_FORMAT_PDF		0x7a
-/** RasterLite2 constant: output format RGBA (raw pixel buffer) */
-#define RL2_OUTPUT_FORMAT_RGBA		0x7b
-/** RasterLite2 constant: output format ARGB (raw pixel buffer) */
-#define RL2_OUTPUT_FORMAT_ARGB		0x7c
-/** RasterLite2 constant: output format RGB (raw pixel buffer) */
-#define RL2_OUTPUT_FORMAT_RGB		0x7d
+#define RL2_OUTPUT_FORMAT_PDF			0x7a
+/** RasterLite2 constant: output format CAIRO RGBA (raw pixel buffer) */
+#define RL2_OUTPUT_FORMAT_CAIRO_RGBA	0x7b
 
 /** RasterLite2 constant: contrast enhancement NONE */
 #define RL2_CONTRAST_ENHANCEMENT_NONE		0x90
