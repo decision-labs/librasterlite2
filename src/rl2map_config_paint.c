@@ -603,6 +603,7 @@ rl2_paint_map_config_aux (sqlite3 * sqlite, const void *data,
 			  rl2PrivMapConfigAuxPtr aux)
 {
 /* rendering a full MapConfiguration */
+    struct rl2_private_data *priv_data = (struct rl2_private_data *) data;
     rl2PrivMapLayerPtr aux_lyr;
     unsigned char *rgb = NULL;
     unsigned char *alpha = NULL;
@@ -612,6 +613,19 @@ rl2_paint_map_config_aux (sqlite3 * sqlite, const void *data,
 
     if (aux == NULL)
 	return RL2_ERROR;
+
+    /* setting Map Options as defined by Map Configuration */
+    if (aux->options.multithread_enabled)
+	priv_data->max_threads = aux->options.max_threads;
+    else
+	priv_data->max_threads = 1;
+    priv_data->max_wms_retries = aux->options.max_wms_retries;
+    priv_data->wms_pause = aux->options.wms_pause;
+    priv_data->labeling.no_colliding_labels = aux->options.label_anti_collision;
+    priv_data->labeling.label_wrap_text = aux->options.label_wrap_text;
+    priv_data->labeling.label_autorotate = aux->options.label_auto_rotate;
+    priv_data->labeling.label_shift_position =
+	aux->options.label_shift_position;
 
     aux->has_labels = 0;
     aux->update_labels = 0;

@@ -1649,8 +1649,24 @@ extern "C"
     } rl2PrivMapLayer;
     typedef rl2PrivMapLayer *rl2PrivMapLayerPtr;
 
+    typedef struct rl2_priv_map_config_options
+    {
+	int multithread_enabled;
+	int max_threads;
+	int srid;
+	int autotransform_enabled;
+	int max_wms_retries;
+	int wms_pause;
+	int label_anti_collision;
+	int label_wrap_text;
+	int label_auto_rotate;
+	int label_shift_position;
+    } rl2PrivMapConfigOptions;
+    typedef rl2PrivMapConfigOptions *rl2PrivMapConfigOptionsPtr;
+
     typedef struct rl2_priv_map_config_aux
     {
+	rl2PrivMapConfigOptions options;
 	int valid;
 	int width;
 	int height;

@@ -2346,8 +2346,7 @@ parse_graphic_fill_color_replacement (xmlNodePtr node,
 							  const char *value =
 							      (const char
 							       *)
-							      (grandchild2->
-							       content);
+							      (grandchild2->content);
 							  if (parse_hex_color
 							      (value, &red,
 							       &green, &blue))
@@ -3431,22 +3430,19 @@ parse_topology_internal_style (xmlNodePtr node, rl2MapLayerPtr lyr)
 			    const char *name;
 			    if (text->type == XML_TEXT_NODE)
 				name = (const char *) (text->content);
-			    if (lyr->
-				topology_internal_style->style_internal_name !=
-				NULL)
-				free (lyr->
-				      topology_internal_style->style_internal_name);
+			    if (lyr->topology_internal_style->
+				style_internal_name != NULL)
+				free (lyr->topology_internal_style->
+				      style_internal_name);
 			    lyr->topology_internal_style->style_internal_name =
 				NULL;
 			    if (name != NULL)
 			      {
 				  len = strlen (name);
-				  lyr->
-				      topology_internal_style->style_internal_name
-				      = malloc (len + 1);
-				  strcpy (lyr->
-					  topology_internal_style->style_internal_name,
-					  name);
+				  lyr->topology_internal_style->
+				      style_internal_name = malloc (len + 1);
+				  strcpy (lyr->topology_internal_style->
+					  style_internal_name, name);
 			      }
 			}
 		  }
@@ -3509,9 +3505,8 @@ parse_topology_internal_style (xmlNodePtr node, rl2MapLayerPtr lyr)
 				  if (strcmp
 				      ((const char *) (text->content),
 				       "true") == 0)
-				      lyr->
-					  topology_internal_style->show_edge_seeds
-					  = 1;
+				      lyr->topology_internal_style->
+					  show_edge_seeds = 1;
 			      }
 			}
 		  }
@@ -3526,9 +3521,8 @@ parse_topology_internal_style (xmlNodePtr node, rl2MapLayerPtr lyr)
 				  if (strcmp
 				      ((const char *) (text->content),
 				       "true") == 0)
-				      lyr->
-					  topology_internal_style->show_face_seeds
-					  = 1;
+				      lyr->topology_internal_style->
+					  show_face_seeds = 1;
 			      }
 			}
 		  }
@@ -3706,22 +3700,19 @@ parse_network_internal_style (xmlNodePtr node, rl2MapLayerPtr lyr)
 			    const char *name;
 			    if (text->type == XML_TEXT_NODE)
 				name = (const char *) (text->content);
-			    if (lyr->
-				network_internal_style->style_internal_name !=
-				NULL)
-				free (lyr->
-				      network_internal_style->style_internal_name);
+			    if (lyr->network_internal_style->
+				style_internal_name != NULL)
+				free (lyr->network_internal_style->
+				      style_internal_name);
 			    lyr->network_internal_style->style_internal_name =
 				NULL;
 			    if (name != NULL)
 			      {
 				  len = strlen (name);
-				  lyr->
-				      network_internal_style->style_internal_name
-				      = malloc (len + 1);
-				  strcpy (lyr->
-					  network_internal_style->style_internal_name,
-					  name);
+				  lyr->network_internal_style->
+				      style_internal_name = malloc (len + 1);
+				  strcpy (lyr->network_internal_style->
+					  style_internal_name, name);
 			      }
 			}
 		  }
@@ -3768,9 +3759,8 @@ parse_network_internal_style (xmlNodePtr node, rl2MapLayerPtr lyr)
 				  if (strcmp
 				      ((const char *) (text->content),
 				       "true") == 0)
-				      lyr->
-					  network_internal_style->show_link_seeds
-					  = 1;
+				      lyr->network_internal_style->
+					  show_link_seeds = 1;
 			      }
 			}
 		  }
@@ -4168,8 +4158,8 @@ parse_wms_style (xmlNodePtr node, rl2MapLayerPtr lyr)
 					if (lyr->wms_style->background_color !=
 					    NULL)
 					  {
-					      free (lyr->
-						    wms_style->background_color);
+					      free (lyr->wms_style->
+						    background_color);
 					      lyr->wms_style->background_color =
 						  NULL;
 					  }
@@ -4178,14 +4168,13 @@ parse_wms_style (xmlNodePtr node, rl2MapLayerPtr lyr)
 				    {
 					if (lyr->wms_style->background_color !=
 					    NULL)
-					    free (lyr->
-						  wms_style->background_color);
+					    free (lyr->wms_style->
+						  background_color);
 					len = strlen (value);
 					lyr->wms_style->background_color =
 					    malloc (len + 1);
-					strcpy (lyr->
-						wms_style->background_color,
-						value);
+					strcpy (lyr->wms_style->
+						background_color, value);
 				    }
 			      }
 			    text = text->next;
@@ -4660,8 +4649,8 @@ parse_map_background (xmlNodePtr node, rl2MapConfigPtr map_config)
 				  if (value != NULL)
 				    {
 					if (strcmp (value, "true") == 0)
-					    map_config->
-						map_background_transparent = 1;
+					    map_config->map_background_transparent
+						= 1;
 				    }
 			      }
 			}
@@ -7729,6 +7718,16 @@ rl2_create_map_config_aux (sqlite3 * sqlite, const void *data,
     rl2PrivMapLayerPtr aux_lyr;
     rl2PrivMapConfigAuxPtr aux = malloc (sizeof (rl2PrivMapConfigAux));
     aux->valid = 1;
+    aux->options.multithread_enabled = map_config->multithread_enabled;
+    aux->options.max_threads = map_config->max_threads;
+    aux->options.srid = map_config->srid;
+    aux->options.autotransform_enabled = map_config->autotransform_enabled;
+    aux->options.max_wms_retries = map_config->max_wms_retries;
+    aux->options.wms_pause = map_config->wms_pause;
+    aux->options.label_anti_collision = map_config->label_anti_collision;
+    aux->options.label_wrap_text = map_config->label_wrap_text;
+    aux->options.label_auto_rotate = map_config->label_auto_rotate;
+    aux->options.label_shift_position = map_config->label_shift_position;
     aux->width = width;
     aux->height = height;
     aux->pixel_ratio = 0.0;
@@ -8024,10 +8023,8 @@ rl2_create_map_config_aux (sqlite3 * sqlite, const void *data,
 							    aux_lyr->ctx_nodes,
 							    aux_lyr->ctx_edges,
 							    aux_lyr->ctx_faces,
-							    aux_lyr->
-							    ctx_edge_seeds,
-							    aux_lyr->
-							    ctx_face_seeds);
+							    aux_lyr->ctx_edge_seeds,
+							    aux_lyr->ctx_face_seeds);
 			}
 		      if (aux_lyr->canvas == NULL)
 			  aux_lyr->valid = 0;
@@ -8061,8 +8058,7 @@ rl2_create_map_config_aux (sqlite3 * sqlite, const void *data,
 				rl2_create_network_canvas (aux_lyr->ctx,
 							   aux_lyr->ctx_nodes,
 							   aux_lyr->ctx_links,
-							   aux_lyr->
-							   ctx_link_seeds);
+							   aux_lyr->ctx_link_seeds);
 			}
 		      if (aux_lyr->canvas == NULL)
 			  aux_lyr->valid = 0;
